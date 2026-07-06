@@ -1,0 +1,28 @@
+# Personal data — do not commit
+PlayLists/
+portals.json
+settings.json
+
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.env
+env/
+*.py[cod]
+*$py.class
+*.so
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# IDE
+.vscode/
+.idea/
+*.swp
