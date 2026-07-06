@@ -784,17 +784,18 @@ header {
 #snap-wrapper::-webkit-scrollbar-track { background: var(--bg); }
 #snap-wrapper::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 .snap-section {
-  min-height: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   padding: 0 32px;
   width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 }
 .snap-slide {
   scroll-snap-align: start;
   scroll-snap-stop: always;
-  min-height: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: stretch;
@@ -835,7 +836,7 @@ header {
   padding: 14px 20px;
 }
 .card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:14px}
-.step-label{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#0d1117;font-size:11px;font-weight:700;margin-right:6px;flex-shrink:0}
+.step-label{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--text);font-size:11px;font-weight:700;margin-right:6px;flex-shrink:0}
 .step-label.done{background:var(--green)}
 .step-label.dim{background:var(--border);color:var(--muted)}
 .fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
@@ -846,7 +847,7 @@ header {
 .field input::placeholder{color:var(--muted);opacity:.5}
 .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;outline:none;white-space:nowrap}
 .btn:disabled{opacity:.4;cursor:not-allowed}
-.btn-primary{background:var(--accent);color:#0d1117}
+.btn-primary{background:var(--accent);color:var(--text)}
 .btn-primary:not(:disabled):hover{filter:brightness(1.1)}
 .btn-success{background:var(--green);color:#0d1117}
 .btn-success:not(:disabled):hover{filter:brightness(1.1)}
@@ -882,16 +883,16 @@ header {
   animation: toast-in .2s ease;
   transition: opacity .3s, transform .3s;
 }
-.toast.toast-error  { border-color: var(--warn);  color: var(--warn); }
-.toast.toast-success{ border-color: var(--green); color: var(--green); }
-.toast.toast-info   { border-color: var(--accent);color: var(--accent); }
+.toast.toast-error  { border-color: var(--warn);  color: var(--text); }
+.toast.toast-success{ border-color: var(--green); color: var(--text); }
+.toast.toast-info   { border-color: var(--accent);color: var(--text); }
 .toast.toast-loading{ border-color: var(--accent);color: var(--text); }
 .toast.hiding { opacity: 0; transform: translateY(8px); }
 @keyframes toast-in { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 .toast-spinner {
   width: 13px; height: 13px;
   border: 2px solid var(--border);
-  border-top-color: var(--accent);
+  border-top-color: var(--text);
   border-radius: 50%;
   animation: spin .7s linear infinite;
   flex-shrink: 0;
@@ -902,7 +903,7 @@ header {
 #status-bar.error{border-color:var(--warn);color:var(--warn)}
 #status-bar.success{border-color:var(--green);color:var(--green)}
 #status-bar.info{border-color:var(--accent);color:var(--accent)}
-.spinner{width:15px;height:15px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.spinner{width:15px;height:15px;border:2px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
 .profile-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
 .pi{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px}
 .pi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
@@ -913,7 +914,7 @@ header {
 .ct-tab:last-child{border-right:none}
 .ct-tab.active{background:var(--surface2);color:var(--text)}
 .ct-tab .ct-badge{font-size:10px;background:var(--border);padding:1px 5px;border-radius:8px;font-family:var(--mono)}
-.ct-tab.active .ct-badge{background:var(--accent);color:#0d1117}
+.ct-tab.active .ct-badge{background:var(--accent);color:var(--text)}
 #cat-picker{display:none}
 #cat-picker.visible{display:flex;flex-direction:column;flex:1;overflow:hidden}
 .cat-toolbar{display:flex;gap:9px;align-items:center;margin-bottom:10px;flex-wrap:wrap;flex-shrink:0}
@@ -929,12 +930,12 @@ header {
 #cat-scroll::-webkit-scrollbar-track{background:var(--bg)}
 #cat-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 .cat-row{display:grid;grid-template-columns:30px 1fr 70px 50px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
-.cat-fetch-btn{background:none;border:1px solid var(--border);border-radius:4px;color:var(--accent);cursor:pointer;font-size:12px;padding:2px 6px;transition:all .15s;line-height:1.4}
+.cat-fetch-btn{background:none;border:1px solid var(--border);border-radius:4px;color:var(--text);cursor:pointer;font-size:12px;padding:2px 6px;transition:all .15s;line-height:1.4}
 .cat-fetch-btn:hover:not(.disabled){background:rgba(88,166,255,.12)}
-.cat-fetch-btn.disabled{opacity:.35;cursor:default;color:var(--muted)}
+.cat-fetch-btn.disabled{opacity:.35;cursor:default;color:var(--text)}
 .cat-row:last-child{border-bottom:none}
 .cat-row:hover{background:var(--surface)}
-.cat-row.selected{background:rgba(88,166,255,.07)}
+.cat-row.selected{background:rgba(25,60,150,0.12)}
 .cat-row.selected .cat-name{color:var(--accent)}
 .cat-check input{width:13px;height:13px;accent-color:var(--accent);cursor:pointer}
 .cat-name{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px}
@@ -957,7 +958,7 @@ header {
 .stream-url-input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:12px;font-family:var(--mono);outline:none;word-break:break-all}
 .stream-close{position:absolute;top:14px;right:14px;background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1}
 .stream-close:hover{color:var(--text)}
-.stream-spinner{display:none;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+.stream-spinner{display:none;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin .7s linear infinite}
 #fetch-progress{display:none;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:16px}
 #fetch-progress.visible{display:block}
 .fp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -1005,10 +1006,10 @@ header {
 #portal-select{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px 11px;border-radius:6px;font-size:13px;font-family:var(--mono);outline:none;cursor:pointer;transition:border-color .15s}
 #portal-select:focus{border-color:var(--accent)}
 #portal-select option{background:var(--surface)}
-.btn-save-portal{padding:6px 12px;font-size:12px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;cursor:pointer;transition:all .15s;white-space:nowrap}
-.btn-save-portal:hover{border-color:var(--accent);color:var(--accent)}
+.btn-save-portal{padding:6px 12px;font-size:12px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:6px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-save-portal:hover{border-color:var(--accent);color:var(--text)}
 .btn-del-portal{padding:6px 10px;font-size:12px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;cursor:pointer;transition:all .15s}
-.btn-del-portal:hover{border-color:var(--warn);color:var(--warn)}
+.btn-del-portal:hover{border-color:var(--warn);color:var(--text)}
 #convert-footer{display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;flex-shrink:0}
 #convert-footer.visible{display:flex}
 .convert-info{font-size:12px;color:var(--muted)}
@@ -1110,6 +1111,7 @@ header {
             <span class="ct-tab"        data-ct="series" onclick="switchCatTab('series')">📦 Series <span class="ct-badge" id="ctb-series">0</span></span>
           </span>
         </div>
+        <div class="card-body" style="padding:0;display:flex;flex-direction:column;overflow:hidden">
         <div id="cat-picker" style="display:none;flex:1;flex-direction:column;overflow:hidden;padding:0 20px 10px;min-height:0">
           <div class="cat-toolbar">
             <div class="cat-search-wrap">
@@ -1117,7 +1119,7 @@ header {
               <input type="text" id="cat-search" placeholder="Search categories…">
             </div>
             <span style="font-size:12px;color:var(--muted);white-space:nowrap">
-              <span id="cat-sel-count" style="color:var(--accent);font-weight:600">0</span> selected
+              <span id="cat-sel-count" style="color:var(--text);font-weight:600">0</span> selected
             </span>
             <button class="btn btn-ghost btn-sm" onclick="clearCatSelection()">Clear</button>
             <button class="btn btn-ghost btn-sm" id="fetch-counts-btn" onclick="fetchAllCategoryCounts()">Fetch Counts</button>
@@ -1126,7 +1128,7 @@ header {
           <div class="cat-select-bar">
             <label>
               <input type="checkbox" id="cat-select-all" onchange="toggleCatSelectAll(this.checked)">
-              Select all visible &nbsp;<span id="cat-visible-count" style="color:var(--accent);font-weight:600">0</span>
+              Select all visible &nbsp;<span id="cat-visible-count" style="color:var(--text);font-weight:600">0</span>
             </label>
             <span style="margin-left:auto-removed;font-size:11px;color:var(--muted)" id="cat-filter-info"></span>
           </div>
@@ -1138,6 +1140,7 @@ header {
               <div id="cat-list-body"></div>
             </div>
           </div>
+        </div>
         </div>
         <div class="card-footer" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
           <button class="btn btn-primary" id="dl-catlist-btn" onclick="downloadCategoryList()" disabled>
@@ -1414,7 +1417,7 @@ function renderCatList(){
   body.innerHTML = catFiltered.map((c,idx)=>{
     const key = c.type+'_'+c.id;
     const sel = catSel.has(key);
-    var countStr = (c.count!==undefined) ? '<span style="color:var(--muted);font-size:11px">'+c.count.toLocaleString()+'</span>' : '';
+    var countStr = (c.count!==undefined) ? '<span style="color:var(--text);font-size:11px">'+c.count.toLocaleString()+'</span>' : '';
     var hasCount = c.count !== undefined && c.count > 0;
     var fetchBtnHtml = '<button class="cat-fetch-btn'+(hasCount?' disabled':'')+'" '+(hasCount?'disabled':'')+' onclick="event.stopPropagation();fetchSingleCategoryCount(\''+c.type+'\',\''+c.id+'\',this)">'+(hasCount?'✓':'⟳')+'</button>';
     return '<div class="cat-row'+(sel?' selected':'')+'" data-key="'+key+'" data-idx="'+idx+'" style="grid-template-columns:30px 1fr 70px 50px">'
