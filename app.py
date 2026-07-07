@@ -655,6 +655,32 @@ def check():
     status   = main_info.get("status") or (profile.get("status","active") if profile else "active") or "active"
     max_conn = main_info.get("max_connections") or (profile.get("max_connections","") if profile else "")
 
+    # Create / update playlist file — preserve existing categories
+    os.makedirs(PLAYLIST_DIR, exist_ok=True)
+    fn = _playlist_filename(portal_url, mac)
+    pl_path = os.path.join(PLAYLIST_DIR, fn)
+    existing_cats = {"live": [], "vod": [], "series": []}
+    if os.path.exists(pl_path):
+        with open(pl_path) as f:
+            try:
+                existing = json.load(f)
+                existing_cats = existing.get("categories", existing_cats)
+            except:
+                pass
+    with open(pl_path, "w") as f:
+        json.dump({
+            "name": urlparse(portal_url).hostname or "unknown",
+            "source": "portal",
+            "portal_url": portal_url,
+            "mac": mac,
+            "updated": time.time(),
+            "profile": {"sn": ctx["sn"], "device_id": ctx["device_id"],
+                        "device_id2": ctx["device_id2"],
+                        "expiry": expiry, "status": status,
+                        "max_connections": max_conn},
+            "categories": existing_cats,
+        }, f, indent=2)
+
     return jsonify({
         "ok": True,
         "sn": ctx["sn"], "device_id": ctx["device_id"],
@@ -1447,6 +1473,12 @@ def add_m3u_file():
 
 PLAYLIST_DIR = os.path.join(os.path.dirname(__file__), "PlayLists")
 
+def _playlist_filename(portal_url, mac):
+    hostname = urlparse(portal_url).hostname or "unknown"
+    safe_host = re.sub(r'[^\w.-]', '', hostname)
+    safe_mac = mac.replace(':', '')[:12]
+    return f"{safe_host}_{safe_mac}.json"
+
 def _scan_json_playlists():
     """Scan PlayLists/ for .json playlist files."""
     pls = []
@@ -1473,6 +1505,7 @@ def _scan_json_playlists():
                 "updated": data.get("updated", 0),
                 "portal_url": data.get("portal_url", ""),
                 "mac": data.get("mac", ""),
+                "profile": data.get("profile", {}),
             })
         except Exception:
             pass
@@ -1616,6 +1649,7 @@ def api_get_playlist_channels(pl_id):
             "mac": data.get("mac", ""),
             "source": data.get("source", ""),
             "categories": cats,
+            "profile": data.get("profile", {}),
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -1713,11 +1747,20 @@ def save_categories():
     if not portal_url or not mac:
         return jsonify({"ok":False,"error":"Missing portal_url or mac"}),400
 
-    hostname = urlparse(portal_url).hostname or "unknown"
-    safe_host = re.sub(r'[^\w.-]', '', hostname)
-    safe_mac = mac.replace(':', '')[:12]
-    filename = f"{safe_host}_{safe_mac}.json"
+    filename = _playlist_filename(portal_url, mac)
     filepath = os.path.join(PLAYLIST_DIR, filename)
+
+    # Read existing file (created by /api/check) or create fresh
+    if os.path.isfile(filepath):
+        with open(filepath, "r") as f:
+            pl_data = json.load(f)
+    else:
+        pl_data = {
+            "name": urlparse(portal_url).hostname or "unknown",
+            "source": "portal",
+            "portal_url": portal_url,
+            "mac": mac,
+        }
 
     # Build category skeleton with empty nested arrays
     cat_data = {}
@@ -1733,16 +1776,12 @@ def save_categories():
                 entry["series"] = []
             cat_data[ct].append(entry)
 
+    pl_data["categories"] = cat_data
+    pl_data["updated"] = time.time()
+
     os.makedirs(PLAYLIST_DIR, exist_ok=True)
     with open(filepath, "w") as f:
-        json.dump({
-            "name": safe_host,
-            "source": "portal",
-            "portal_url": portal_url,
-            "mac": mac,
-            "updated": time.time(),
-            "categories": cat_data,
-        }, f, indent=2)
+        json.dump(pl_data, f, indent=2)
 
     return jsonify({"ok":True, "filename": filename})
 
