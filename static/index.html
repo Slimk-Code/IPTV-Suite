@@ -619,6 +619,7 @@ th.srt:hover .sort-arrow { color:var(--accent-active); }
       <div class="nav" id="nav-home" onclick="switchPage('home')"><i class="ti ti-home"></i> Home</div>
       <div class="sb-nav-top">
         <div class="nav" id="nav-portal" onclick="switchPage('portal')"><i class="ti ti-file-text"></i> Import</div>
+        <div class="nav" id="nav-favorites" onclick="openFavorites()"><i class="ti ti-star"></i> Favorites</div>
         <div class="divider"></div>
         <div class="segmented-control">
           <div class="seg-segment active" onclick="switchSegment('live')">Live</div>
@@ -1812,6 +1813,15 @@ updateStats();
 </script>
     </div>
 
+    <!-- ── FAVORITES ── -->
+    <div id="section-favorites" class="page-section">
+      <div class="topbar"><span style="color:#FFFFFF;font-weight:500;font-size:14px"><i class="ti ti-star" style="font-size:15px;margin-right:6px"></i>Favorites</span></div>
+      <div style="padding:60px;text-align:center;color:var(--muted);font-size:13px">
+        <i id="fav-icon" class="ti ti-star-off" style="font-size:3rem;display:block;margin-bottom:12px;color:var(--border)"></i>
+        <div id="fav-placeholder-msg">No favorites yet</div>
+      </div>
+    </div>
+
     <!-- ── CHANGELOG ── -->
     <div id="section-changelog" class="page-section">
       <div class="topbar"><span style="color:#FFFFFF;font-weight:500;font-size:14px"><i class="ti ti-history" style="font-size:15px;margin-right:6px"></i>Changelog</span></div>
@@ -2276,9 +2286,8 @@ function togglePlaylistMenu(e){
   var menu = document.getElementById('plListMenu');
   if (menu.classList.contains('visible')) { menu.classList.remove('visible'); return; }
   var lists = _allPlaylists || [];
-  var fav = null, others = [];
+  var others = [];
   lists.forEach(function(p){
-    if (p.id === 'Favorites' && p.name === 'Favorites') { fav = p; return; }
     if (p.source === 'portal') {
       var hostname = '';
       try { hostname = new URL(p.portal_url || '').hostname; } catch(e) {}
@@ -2291,12 +2300,6 @@ function togglePlaylistMenu(e){
     if ((p.list_name || p.name) === p.id) others.push(p);
   });
   var html = '';
-  if (fav) {
-    html += '<div class="dd-item" onclick="openPlaylist(\'Favorites\');document.getElementById(\'plListMenu\').classList.remove(\'visible\')"><i class="ti ti-star" style="color:#F5C518"></i> Favorites</div>';
-  } else {
-    html += '<div class="dd-item" style="color:#555555;cursor:default"><i class="ti ti-star-off"></i> No favorites</div>';
-  }
-  html += '<div class="dd-divider"></div>';
   if (!others.length) {
     html += '<div class="dd-item" style="color:#555555;cursor:default"><i class="ti ti-playlist-off"></i> No playlists</div>';
   } else {
@@ -3083,6 +3086,21 @@ function renderPlaylists(pls){
 var loadedChannels = {}; // e.g. {live:{groupName:[ch,...]}, vod:{...}, series:{...}}
 var loadedSeries = [];
 var loadedSeriesNav = [];
+function openFavorites(){
+  var favEntry = _allPlaylists ? _allPlaylists.find(function(p){ return p.id === 'Favorites'; }) : null;
+  var hasFavs = favEntry && favEntry.channels > 0;
+  var msgEl = document.getElementById('fav-placeholder-msg');
+  var icoEl = document.getElementById('fav-icon');
+  switchPage('favorites');
+  if(hasFavs){
+    openPlaylist('Favorites');
+    if(msgEl) msgEl.textContent = 'Select a category from the sidebar to view your favorites';
+    if(icoEl){ icoEl.className = 'ti ti-star'; icoEl.style.color = 'var(--accent)'; }
+  } else {
+    if(msgEl) msgEl.textContent = 'No favorites yet';
+    if(icoEl){ icoEl.className = 'ti ti-star-off'; icoEl.style.color = 'var(--border)'; }
+  }
+}
 function openPlaylist(id){
   if(!id) return;
   var _pn = '';
