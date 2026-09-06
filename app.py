@@ -1623,6 +1623,9 @@ def _scan_json_playlists():
                 ch_count = len(data.get("channels", []))
             else:
                 ch_count = _count_channels(data)
+            cts = _count_by_type(data)
+            if cts["live"] + cts["vod"] + cts["series"] == 0 and ch_count:
+                cts["live"] = ch_count
             pls.append({
                 "id": fn[:-5],
                 "name": data.get("name", fn[:-5]),
@@ -1630,6 +1633,7 @@ def _scan_json_playlists():
                 "source": data.get("source", "portal"),
                 "channels": ch_count,
                 "channel_count": ch_count,
+                "counts": cts,
                 "updated": data.get("updated", 0),
                 "portal_url": data.get("portal_url", ""),
                 "mac": data.get("mac", ""),
@@ -1656,6 +1660,26 @@ def _count_channels(data):
         for s_entry in cat.get("series", []):
             count += len(s_entry.get("episode", []))
     return count
+
+def _count_by_type(data):
+    """Count playable items per content type (live/vod/series)."""
+    counts = {"live": 0, "vod": 0, "series": 0}
+    channels = data.get("channels")
+    if isinstance(channels, list):
+        for ch in channels:
+            ct = str(ch.get("content_type", "") or "").lower()
+            if not isinstance(ct, str) or ct not in counts:
+                ct = "live"
+            counts[ct] += 1
+        return counts
+    for cat in data.get("categories", {}).get("live", []):
+        counts["live"] += len(cat.get("Channel", []))
+    for cat in data.get("categories", {}).get("vod", []):
+        counts["vod"] += len(cat.get("Movie", []))
+    for cat in data.get("categories", {}).get("series", []):
+        for s_entry in cat.get("series", []):
+            counts["series"] += len(s_entry.get("episode", []))
+    return counts
 
 def _reconstruct_channels(data):
     """Reconstruct flat channels array from nested category structure."""

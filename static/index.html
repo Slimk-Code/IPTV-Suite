@@ -247,20 +247,28 @@
   .import-tab i { font-size:14px; }
   .home-inner { padding:20px 24px; }
   .section-title { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:#555555; margin-bottom:12px; display:flex; align-items:center; gap:6px; }
-  .recent-row { display:flex; gap:10px; overflow-x:auto; padding-bottom:4px; margin-bottom:20px; }
-  .rc-card { flex-shrink:0; width:120px; background:var(--bg); border:1px solid var(--border); border-radius:9px; padding:10px; cursor:pointer; text-align:center; }
-  .rc-logo { width:40px; height:40px; border-radius:8px; background:var(--bg); margin:0 auto 7px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; overflow:hidden; }
-  .rc-name { font-size:11px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .rc-group { font-size:10px; color:#666666; margin-top:1px; }
-  .pl-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; margin-bottom:24px; }
-  .pl-card { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:16px; cursor:pointer; transition:border-color .15s,transform .15s; position:relative; }
-  .pl-card:hover { border-color:#404040; transform:translateY(-2px); }
-  .pl-badge { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:600; padding:2px 8px; border-radius:10px; margin-bottom:10px; text-transform:uppercase; letter-spacing:.04em; }
-  .b-m3u { background:rgba(70,211,105,.12); color:var(--green); }
-  .b-xtream { background:rgba(229,9,20,.12); color:var(--accent-active); }
-  .b-stalker { background:rgba(232,124,3,.12); color:#E87C03; }
-  .pl-name { font-size:13px; font-weight:600; color:var(--text); margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .pl-meta { font-size:11px; color:#666666; }
+  .recent-row { display:flex; gap:16px; overflow-x:auto; padding-bottom:8px; margin-bottom:12px; scroll-snap-type:x mandatory; scroll-behavior:smooth; }
+  .recent-row::-webkit-scrollbar { display:none; }
+  .poster { flex-shrink:0; width:150px; cursor:pointer; scroll-snap-align:start; }
+  .poster .art { width:150px; height:210px; border-radius:12px; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:34px; font-weight:700; color:var(--muted); position:relative; overflow:hidden; text-transform:uppercase; letter-spacing:3px; transition:border-color .16s,transform .16s; }
+  .poster:hover .art { border-color:var(--accent); transform:translateY(-4px); }
+  .poster .pt { font-size:12px; font-weight:600; color:var(--text); margin-top:8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:29px; line-height:1.25; }
+  .poster .ps { font-size:10px; font-weight:700; margin-top:2px; text-transform:uppercase; }
+  .recent-dots { display:flex; gap:8px; justify-content:center; margin-bottom:20px; }
+  .recent-dots .nav-dot { width:8px; height:8px; border-radius:50%; background:var(--border); cursor:pointer; transition:background .2s, transform .2s; border:none; padding:0; }
+  .recent-dots .nav-dot.active { background:var(--accent); transform:scale(1.4); }
+  .recent-dots .nav-dot:hover:not(.active) { background:var(--muted); }
+  .pl-card { position:relative; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; cursor:pointer; transition:border-color .16s; flex-shrink:0; width:230px; scroll-snap-align:start; }
+  .pl-card:hover { border-color:#505050; }
+  .pl-card .pl-top { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .pl-ico { width:40px; height:40px; border-radius:6px; background:var(--bg); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--accent); font-size:20px; flex-shrink:0; }
+  .pl-name { font-size:13px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:0; }
+  .pl-type { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:1px; }
+  .pl-stats { display:flex; justify-content:space-between; border-top:1px solid var(--border); padding-top:12px; }
+  .pl-stat .n { font-size:15px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
+  .pl-stat .l { font-size:10px; color:var(--muted); margin-top:1px; }
+  .pl-card.add { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; color:var(--muted); border-style:dashed; min-height:140px; }
+  .pl-card.add:hover { color:var(--text); border-color:var(--accent); }
   .pl-actions { position:absolute; top:10px; right:10px; display:flex; gap:3px; opacity:0; transition:opacity .15s; }
   .pl-card:hover .pl-actions { opacity:1; }
   .pl-act-btn { background:var(--bg); border:1px solid var(--border); color:var(--muted); width:24px; height:24px; border-radius:5px; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; }
@@ -740,15 +748,14 @@ th.srt:hover .sort-arrow { color:var(--accent-active); }
     <!-- ── TANK MANAGEMENT ── -->
     <!-- ── STATS ── -->
     <div id="section-home" class="page-section">
-      <div class="topbar"><span style="color:#FFFFFF;font-weight:500;font-size:14px"><i class="ti ti-playlist" style="font-size:15px;margin-right:6px"></i>My Home</span></div>
+      <div class="topbar"><span style="color:#FFFFFF;font-weight:500;font-size:14px"><i class="ti ti-playlist" style="font-size:15px;margin-right:6px"></i>My Home</span><button class="add-pl-btn" style="margin-left:auto" onclick="switchPage('workspace')"><i class="ti ti-plus"></i> Add New Playlist</button></div>
       <div class="home-inner">
         <div class="section-title"><i class="ti ti-clock"></i> Recently Watched</div>
         <div class="recent-row" id="recentRow"></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div class="section-title" style="margin-bottom:0;"><i class="ti ti-library"></i> All Playlists</div>
-          <button class="add-pl-btn" onclick="switchPage('workspace')"><i class="ti ti-plus"></i> Add New Playlist</button>
-        </div>
-        <div class="pl-grid" id="plGrid"></div>
+        <div class="recent-dots" id="recent-dots"></div>
+        <div class="section-title"><i class="ti ti-library"></i> All Playlists</div>
+        <div class="recent-row" id="plRow"></div>
+        <div class="recent-dots" id="pl-dots"></div>
       </div>
     </div>
 
@@ -2736,6 +2743,7 @@ function switchPage(page) {
   if (navEl)  navEl.classList.add('active');
   closeDropdown();
   if (page === 'workspace') { /* workspace page — no special init needed */ }
+  if (page === 'home'){ setTimeout(function(){ setupRowDots(document.getElementById('recentRow'),document.getElementById('recent-dots'),(JSON.parse(localStorage.getItem('mud_recent_channels')||'[]')).length,166); setupRowDots(document.getElementById('plRow'),document.getElementById('pl-dots'),window._allPlaylists?window._allPlaylists.length:0,246); },60); }
   if (page === 'settings'){ renderVariablePage(); setTimeout(loadVlcSettings,100); }
   localStorage.setItem('mudeng_active_tab', page);
   // Sync segment + sub-cat-items for sub-pages
@@ -3659,6 +3667,14 @@ async function playChannel(idx){
   var state=subPageStates['sub'];if(!state)return;
   var ch=state.filtered[idx];if(!ch)return;
   state.activeChannel=ch;
+  // Record recently watched channel (cap 12)
+  try{
+    var _rec=JSON.parse(localStorage.getItem('mud_recent_channels')||'[]');
+    _rec=_rec.filter(function(r){ return !(r.name===ch.name && r.source_playlist_id===_activeFilename); });
+    _rec.unshift({name:ch.name||'Channel', type:ch.content_type||'live', group:ch.group||'', source_playlist_id:_activeFilename, logo:ch.logo||''});
+    if(_rec.length>12) _rec.length=12;
+    localStorage.setItem('mud_recent_channels',JSON.stringify(_rec));
+  }catch(e){}
   // Resolve portal channels before playing
    if(ch.needsResolve&&ch.portal_url&&ch.mac){
     try{
@@ -3760,7 +3776,7 @@ function escH(s){ return String(s||'').replace(/[&<>"']/g,function(m){return {'&
 var _allPlaylists = [];
 var _currentProfile = null;
 function loadPlaylists(){
-  var grid=document.getElementById('plGrid'); if(!grid) return;
+  var grid=document.getElementById('plRow'); if(!grid) return;
   grid.innerHTML='<div style="padding:40px 0;text-align:center;color:#555555"><i class="ti ti-loader" style="font-size:1.5rem;display:block;margin-bottom:8px"></i><div style="font-size:12px">Loading playlists…</div></div>';
   fetch('/api/playlists').then(function(r){ return r.json(); }).then(function(data){
     if(data.error){ grid.innerHTML='<div style="padding:40px;text-align:center;color:#E50914;font-size:13px">'+escH(data.error)+'</div>'; return; }
@@ -3789,28 +3805,70 @@ function loadPlaylists(){
   });
 }
 function renderPlaylists(pls){
-  var grid=document.getElementById('plGrid'); if(!grid) return;
-  if(!pls||!pls.length){
-    grid.innerHTML='<div style="grid-column:1/-1;padding:60px 0;text-align:center;color:#555555"><i class="ti ti-playlist-off" style="font-size:2.5rem;display:block;margin-bottom:10px"></i><div style="font-size:13px;margin-bottom:4px">No playlists yet</div><div style="font-size:11px;color:#666666">Add one to start watching</div></div>';
-    return;
-  }
-  grid.innerHTML=pls.map(function(p){
-    var badge=p.source==='xtream'?'<span class="pl-badge b-xtream">Xtream</span>':p.source==='stalker'?'<span class="pl-badge b-stalker">Stalker</span>':'<span class="pl-badge b-m3u">M3U</span>';
-    var ch=p.channels||p.channel_count||0;
-    var listName=p.list_name||p.name||'Untitled';
-    return '<div class="pl-card" onclick="openPlaylist(\''+escA(p.id||'')+'\')"><div class="pl-actions"><button class="pl-act-btn del" onclick="event.stopPropagation();deletePl(\''+escA(p.id||'')+'\')" title="Delete"><i class="ti ti-trash"></i></button></div>'+badge+'<div class="pl-name">'+escH(listName)+'</div><div class="pl-meta">'+ch+' channels</div></div>';
-  }).join('');
-  // populate recently watched from localStorage
-  var recent=JSON.parse(localStorage.getItem('mud_recent_playlists')||'[]');
+  var plRow=document.getElementById('plRow');
   var rRow=document.getElementById('recentRow');
+  var plDots=document.getElementById('pl-dots');
+  var rDots=document.getElementById('recent-dots');
+  var addCard='<div class="pl-card add" onclick="switchPage(\'workspace\')"><i class="ti ti-plus" style="font-size:22px"></i><span style="font-size:12px;font-weight:600">Add New Playlist</span></div>';
+  if(plRow){
+    if(!pls||!pls.length){
+      plRow.innerHTML='<div style="flex-shrink:0;padding:40px 0;text-align:center;color:#555555"><i class="ti ti-playlist-off" style="font-size:2.5rem;display:block;margin-bottom:10px"></i><div style="font-size:13px;margin-bottom:4px">No playlists yet</div><div style="font-size:11px;color:#666666">Add one to start watching</div></div>'+addCard;
+    } else {
+      plRow.innerHTML=pls.map(function(p){
+        var src=p.source||'m3u';
+        var ico=({m3u:'ti ti-file-text',xtream:'ti ti-satellite-dish',stalker:'ti ti-server',portal:'ti ti-server'})[src]||'ti ti-file-text';
+        var srcLbl=({m3u:'M3U',xtream:'Xtream',stalker:'Stalker',portal:'Stalker'})[src]||src.toUpperCase();
+        var cts=p.counts||{};
+        var live=cts.live||0, vod=cts.vod||0, series=cts.series||0;
+        if(!(live+vod+series)) live=p.channels||p.channel_count||0;
+        var listName=p.list_name||p.name||'Untitled';
+        return '<div class="pl-card" onclick="openPlaylist(\''+escA(p.id||'')+'\')"><div class="pl-actions"><button class="pl-act-btn del" onclick="event.stopPropagation();deletePl(\''+escA(p.id||'')+'\')" title="Delete"><i class="ti ti-trash"></i></button></div><div class="pl-top"><div class="pl-ico"><i class="'+ico+'"></i></div><div style="min-width:0"><div class="pl-name">'+escH(listName)+'</div><div class="pl-type">'+srcLbl+'</div></div></div><div class="pl-stats"><div class="pl-stat"><div class="n">'+live.toLocaleString()+'</div><div class="l">Live</div></div><div class="pl-stat"><div class="n">'+vod.toLocaleString()+'</div><div class="l">VOD</div></div><div class="pl-stat"><div class="n">'+series.toLocaleString()+'</div><div class="l">Series</div></div></div></div>';
+      }).join('')+addCard;
+    }
+  }
+  var recent=JSON.parse(localStorage.getItem('mud_recent_channels')||'[]');
   if(rRow){
-    if(!recent.length){ rRow.innerHTML='<div style="color:#555555;font-size:12px;padding:8px 0">No recently watched playlists.</div>'; }
+    if(!recent.length){ rRow.innerHTML='<div style="color:#555555;font-size:12px;padding:8px 0">No recently watched channels.</div>'; if(rDots) rDots.innerHTML=''; }
     else {
+      var initials=function(nm){
+        var parts=String(nm||'').split(/\s+/).filter(Boolean);
+        if(parts.length>=2){ return parts.slice(0,3).map(function(w){return w.charAt(0);}).join('').toUpperCase()||'CHN'; }
+        return (nm||'CHN').replace(/[^A-Za-z0-9]/g,'').slice(0,3).toUpperCase()||'CHN';
+      };
       rRow.innerHTML=recent.map(function(r){
-        return '<div class="rc-card" onclick="openPlaylist(\''+escA(r.id)+'\')"><div class="rc-logo"><i class="ti ti-'+(r.icon||'playlist')+'" style="color:#666666"></i></div><div class="rc-name">'+escH(r.name)+'</div><div class="rc-group">'+escH(r.group||'')+'</div></div>';
+        var nm=r.name||'Channel';
+        var tp=String(r.type||'live').toLowerCase();
+        var lbl=tp==='vod'?'VOD':tp==='series'?'SERIES':'LIVE';
+        return '<div class="poster" onclick="openPlaylist(\''+escA(r.source_playlist_id)+'\')"><div class="art">'+escH(initials(nm))+'</div><div class="pl-name">'+escH(nm)+'</div><div class="pl-type">'+lbl+'</div></div>';
       }).join('');
     }
   }
+  setupRowDots(rRow,rDots,recent.length,166);
+  setupRowDots(plRow,plDots,pls?pls.length:0,246);
+  if(!window._homeDotsBound){
+    window._homeDotsBound=true;
+    window.addEventListener('resize',function(){
+      setupRowDots(document.getElementById('recentRow'),document.getElementById('recent-dots'),(JSON.parse(localStorage.getItem('mud_recent_channels')||'[]')).length,166);
+      setupRowDots(document.getElementById('plRow'),document.getElementById('pl-dots'),window._allPlaylists?window._allPlaylists.length:0,246);
+    });
+  }
+}
+function setupRowDots(rowEl,dotsEl,count,slot){
+  if(!rowEl||!dotsEl) return;
+  dotsEl.innerHTML='';
+  if(count<=0) return;
+  var perPage=Math.max(1,Math.floor(rowEl.clientWidth/slot));
+  var pages=Math.ceil(count/perPage);
+  if(pages<=1) return;
+  for(var pi=0;pi<pages;pi++){
+    (function(i){ var b=document.createElement('button'); b.className='nav-dot'+(i===0?' active':''); b.title='Page '+(i+1); b.onclick=function(){ rowEl.scrollTo({left:i*perPage*slot,behavior:'smooth'}); }; dotsEl.appendChild(b); })(pi);
+  }
+  rowEl.addEventListener('scroll',function(){
+    var card=Math.round(rowEl.scrollLeft/slot);
+    var idx=Math.max(0,Math.min(pages-1,Math.floor(card/perPage)));
+    var dots=dotsEl.querySelectorAll('.nav-dot');
+    for(var j=0;j<dots.length;j++) dots[j].classList.toggle('active',j===idx);
+  },{passive:true});
 }
 var loadedChannels = {}; // e.g. {live:{groupName:[ch,...]}, vod:{...}, series:{...}}
 var loadedSeries = [];
