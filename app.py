@@ -1377,7 +1377,8 @@ def write_portals(data):
 
 @app.route("/api/portals", methods=["GET"])
 def portals_get():
-    return jsonify({"ok": True, "portals": read_portals()})
+    typ = request.args.get("type", "portal")
+    return jsonify({"ok": True, "portals": [p for p in read_portals() if p.get("type", "portal") == typ]})
 
 
 @app.route("/api/portals", methods=["POST"])
@@ -1401,11 +1402,17 @@ def portals_save():
 
 @app.route("/api/portals/<int:idx>", methods=["DELETE"])
 def portals_delete(idx):
+    typ = request.args.get("type", "portal")
     portals = read_portals()
-    if 0 <= idx < len(portals):
-        portals.pop(idx)
-        write_portals(portals)
-    return jsonify({"ok":True,"portals":portals})
+    seen = 0
+    for i, p in enumerate(portals):
+        if p.get("type", "portal") == typ:
+            if seen == idx:
+                portals.pop(i)
+                write_portals(portals)
+                break
+            seen += 1
+    return jsonify({"ok": True, "portals": portals})
 
 
 @app.route("/api/proxy_stream")
@@ -1470,6 +1477,127 @@ def add_m3u_file():
             if line.strip() and not line.startswith("#"):
                 count += 1
     return jsonify({"ok": True, "count": count, "name": safe})
+
+@app.route("/api/m3u/parse", methods=["POST"])
+def m3u_parse():
+    content = None
+    name = ""
+    if request.files:
+        f = request.files.get("file")
+        if not f:
+            return jsonify({"ok": False, "error": "No file provided"}), 400
+        name = (request.form.get("name", "") or "").strip()
+        content = f.read().decode("utf-8", errors="replace")
+    else:
+        data = request.get_json(silent=True) or {}
+        name = (data.get("name", "") or "").strip()
+        url = (data.get("url", "") or "").strip()
+        if not url:
+            return jsonify({"ok": False, "error": "No URL provided"}), 400
+        try:
+            r = requests.get(url, timeout=25, headers={"User-Agent": "Mozilla/5.0"})
+            r.raise_for_status()
+            content = r.text
+        except Exception as e:
+            return jsonify({"ok": False, "error": "Download failed: " + str(e)}), 400
+    if not content or not content.strip():
+        return jsonify({"ok": False, "error": "Empty playlist"}), 400
+
+    groups = {}
+    order = []
+    cur = None
+    pending_group = ""
+    channels_all = []
+    for raw in content.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if line.startswith("#EXTINF"):
+            attrs = {}
+            for m in re.finditer(r'([\w-]+)="([^"]*)"', line):
+                attrs[m.group(1)] = m.group(2)
+            title = (line.split(",", 1)[1] if "," in line else "").strip()
+            cur = {"name": attrs.get("tvg-name") or title or "Unknown",
+                   "url": "", "group": attrs.get("group-title") or pending_group,
+                   "logo": attrs.get("tvg-logo") or ""}
+            pending_group = ""
+        elif line.startswith("#EXTGRP:"):
+            pending_group = line.split(":", 1)[1].strip()
+            if cur is None:
+                cur = {"name": "Unknown", "url": "", "group": "", "logo": ""}
+        elif line.startswith("#"):
+            continue
+        else:
+            if len(line) > 4:
+                if cur is None:
+                    cur = {"name": line, "url": line, "group": "", "logo": ""}
+                cur["url"] = line
+                gname = cur.get("group") or "Ungrouped"
+                ch = {"name": cur["name"], "url": cur["url"], "group": gname,
+                      "logo": cur.get("logo", ""), "content_type": "live"}
+                channels_all.append(ch)
+                if gname not in groups:
+                    groups[gname] = []
+                    order.append(gname)
+                groups[gname].append(ch)
+                cur = None
+    if not channels_all:
+        return jsonify({"ok": False, "error": "No channels found in playlist"}), 400
+
+    safe = re.sub(r'[^\w\s-]', "", name).strip() or "unnamed"
+    safe = re.sub(r'\s+', '_', safe)
+    filename = "m3u_" + safe + ".json"
+    filepath = os.path.join(PLAYLIST_DIR, filename)
+
+    cats_live = []
+    for i, g in enumerate(order):
+        chs = groups[g]
+        cats_live.append({
+            "id": "g" + str(i),
+            "name": g,
+            "count": len(chs),
+            "cached": True,
+            "Channel": [
+                {"name": c["name"], "url": c["url"], "group": g,
+                 "logo": c.get("logo", ""), "content_type": "live"}
+                for c in chs
+            ],
+        })
+
+    pl_data = {
+        "name": safe,
+        "source": "m3u",
+        "portal_url": "",
+        "mac": "",
+        "updated": time.time(),
+        "channels": [
+            {"name": c["name"], "url": c["url"], "group": c["group"],
+             "logo": c.get("logo", ""), "content_type": "live"}
+            for c in channels_all
+        ],
+        "categories": {"live": cats_live, "vod": [], "series": []},
+    }
+    os.makedirs(PLAYLIST_DIR, exist_ok=True)
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(pl_data, f, indent=2)
+
+    portals = read_portals()
+    entry = {"type": "m3u", "url": filename, "mac": "", "label": safe}
+    if not any(p.get("type") == "m3u" and p.get("url") == filename for p in portals):
+        portals.append(entry)
+        write_portals(portals)
+
+    return jsonify({
+        "ok": True,
+        "filename": filename,
+        "name": safe,
+        "total": len(channels_all),
+        "categories": {
+            "live": [{"id": c["id"], "name": c["name"], "count": c["count"]} for c in cats_live],
+            "vod": [],
+            "series": [],
+        },
+    })
 
 PLAYLIST_DIR = os.path.join(os.path.dirname(__file__), "PlayLists")
 
@@ -1653,6 +1781,42 @@ def api_get_playlist_channels(pl_id):
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/api/playlists/<pl_id>/rename-category", methods=["POST"])
+def api_rename_playlist_category(pl_id):
+    data = request.get_json(silent=True) or {}
+    ct = data.get("type", "live")
+    old_name = (data.get("old_name") or "").strip()
+    new_name = (data.get("new_name") or "").strip()
+    if not old_name or not new_name:
+        return jsonify({"ok": False, "error": "old_name and new_name required"}), 400
+    fp = _find_playlist_file(pl_id)
+    if not fp:
+        return jsonify({"ok": False, "error": "Playlist not found"}), 404
+    try:
+        with open(fp, "r", encoding="utf-8") as f:
+            pl = json.load(f)
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+    changed = 0
+    container_key = {"live": "Channel", "vod": "Movie", "series": "series"}.get(ct)
+    for cat in pl.get("categories", {}).get(ct, []):
+        if cat.get("name") == old_name:
+            cat["name"] = new_name
+            changed += 1
+        if container_key:
+            for ch in cat.get(container_key, []):
+                if ch.get("group") == old_name:
+                    ch["group"] = new_name
+    for ch in pl.get("channels", []):
+        if ch.get("group") == old_name:
+            ch["group"] = new_name
+    try:
+        with open(fp, "w", encoding="utf-8") as f:
+            json.dump(pl, f, indent=2)
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+    return jsonify({"ok": True, "changed": changed})
 
 SETTINGS_PATH = os.path.join(os.path.dirname(__file__), "settings.json")
 
