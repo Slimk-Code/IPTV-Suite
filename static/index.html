@@ -593,7 +593,7 @@ th.srt:hover .sort-arrow { color:var(--accent-active); }
         <div class="dd-name" style="letter-spacing:0.1px;font-size:15px">IPTV<span style="color:#E50914;font-weight:800">player</span></div>
         <div class="dd-email">v1.0.0 &mdash; IPTV Suite</div>
       </div>
-      <div class="dd-item" style="cursor:default;color:#555555"><i class="ti ti-code"></i>M3U Editor</div>
+      <div class="dd-item" onclick="switchPage('editor')"><i class="ti ti-code"></i>M3U Editor</div>
       <div class="dd-item" onmouseenter="showThemePicker(this)" onmouseleave="hideThemePickerDelayed()" style="cursor:pointer"><i class="ti ti-sun"></i>Change theme<span class="dd-right"><i class="ti ti-chevron-right"></i></span></div>
       <div class="dd-divider"></div>
       <div class="dd-item" onclick="switchPage('changelog');closeDropdown()"><i class="ti ti-history"></i>Changelog</div>
@@ -619,6 +619,7 @@ th.srt:hover .sort-arrow { color:var(--accent-active); }
       <div class="nav" id="nav-home" onclick="switchPage('home')"><i class="ti ti-home"></i> Home</div>
       <div class="sb-nav-top">
         <div class="nav" id="nav-portal" onclick="switchPage('portal')"><i class="ti ti-file-text"></i> Import</div>
+        <div class="nav" id="nav-favorites" onclick="openFavorites()"><i class="ti ti-star"></i> Favorites</div>
         <div class="divider"></div>
         <div class="segmented-control">
           <div class="seg-segment active" onclick="switchSegment('live')">Live</div>
@@ -1812,6 +1813,744 @@ updateStats();
 </script>
     </div>
 
+    <!-- ── M3U EDITOR ── -->
+    <div id="section-editor" class="page-section">
+<style>
+#ed-snap-wrapper {
+  flex: 1;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+#ed-snap-wrapper::-webkit-scrollbar { width: 5px; }
+#ed-snap-wrapper::-webkit-scrollbar-track { background: var(--bg); }
+#ed-snap-wrapper::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+#ed-cat-picker,#ed-chan-picker{display:none}
+#ed-cat-picker.visible,#ed-chan-picker.visible{display:flex;flex-direction:column;flex:1;overflow:hidden}
+#ed-cat-search,#ed-chan-search{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 12px 8px 32px;border-radius:6px;font-size:13px;outline:none;transition:border-color .15s}
+#ed-cat-search:focus,#ed-chan-search:focus{border-color:var(--accent)}
+#ed-cat-search::placeholder,#ed-chan-search::placeholder{color:var(--muted);opacity:.5}
+#ed-cat-list-wrap,#ed-chan-list-wrap{border:1px solid var(--border);border-radius:6px;overflow:hidden;background:var(--bg);margin-bottom:12px;display:flex;flex-direction:column;flex:1;min-height:0}
+#ed-cat-list-header,#ed-chan-list-header{display:grid;grid-template-columns:30px 1fr 80px;background:var(--surface2);border-bottom:1px solid var(--border);padding:7px 12px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;flex-shrink:0}
+#ed-cat-scroll,#ed-chan-scroll{flex:1;overflow-y:auto}
+#ed-cat-scroll::-webkit-scrollbar,#ed-chan-scroll::-webkit-scrollbar{width:5px}
+#ed-cat-scroll::-webkit-scrollbar-track,#ed-chan-scroll::-webkit-scrollbar-track{background:var(--bg)}
+#ed-cat-scroll::-webkit-scrollbar-thumb,#ed-chan-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+#ed-move-select{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px 11px;border-radius:6px;font-size:13px;font-family:var(--mono);outline:none;cursor:pointer;transition:border-color .15s}
+#ed-move-select:focus{border-color:var(--accent)}
+#ed-move-select option{background:var(--surface)}
+#ed-move-select{flex:0 0 auto;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;font-family:inherit;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;transition:all .15s;text-align:center}
+#ed-move-select:hover{border-color:var(--text);color:var(--text)}
+#ed-scroll-nav {
+  position: fixed;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 100;
+}
+.nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  cursor: pointer;
+  transition: background .2s, transform .2s;
+  border: none;
+}
+.nav-dot.active {
+  background: var(--accent);
+  transform: scale(1.4);
+}
+.nav-dot:hover:not(.active) {
+  background: var(--muted);
+}
+</style>
+
+
+<div class="topbar"><span style="color:#FFFFFF;font-weight:500;font-size:14px"><i class="ti ti-code" style="font-size:15px;margin-right:6px"></i>M3U Editor</span></div>
+
+<div id="ed-scroll-nav">
+  <button class="nav-dot active" data-slide="0" onclick="edScrollToSlide(0)" title="1 Category"></button>
+  <button class="nav-dot" data-slide="1" onclick="edScrollToSlide(1)" title="2 Channel"></button>
+</div>
+
+<div id="ed-snap-wrapper">
+
+  <div class="snap-slide" id="ed-slide-0">
+    <div class="snap-section">
+      <div class="card-full" id="ed-card-step2" style="display:flex">
+        <div class="card-title" style="padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center">
+          <span style="display:flex;align-items:center;gap:6px">
+            <span class="step-label" id="ed-sl2">1</span> Category
+          </span>
+          <span class="ct-tabs" id="ed-ct-tabs" style="display:inline-flex;margin:0 0 0 auto">
+            <span class="ct-tab active" data-ct="live"   onclick="edSwitchCatTab('live')">📺 Live <span class="ct-badge" id="ed-ctb-live">0</span></span>
+            <span class="ct-tab"        data-ct="vod"    onclick="edSwitchCatTab('vod')">🎬 VOD <span class="ct-badge" id="ed-ctb-vod">0</span></span>
+            <span class="ct-tab"        data-ct="series" onclick="edSwitchCatTab('series')">📦 Series <span class="ct-badge" id="ed-ctb-series">0</span></span>
+          </span>
+        </div>
+        <div class="card-body" style="padding:0;display:flex;flex-direction:column;overflow:hidden">
+        <div id="ed-cat-picker" style="display:flex;flex:1;flex-direction:column;overflow:hidden;padding:0 20px 10px;min-height:0">
+          <div class="cat-toolbar">
+            <div class="cat-search-wrap">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="ed-cat-search" placeholder="Search categories…">
+            </div>
+            <span style="font-size:12px;color:var(--muted);white-space:nowrap">
+              <span id="ed-cat-sel-count" style="color:var(--text);font-weight:600">0</span> selected
+            </span>
+            <button class="btn btn-ghost btn-sm" onclick="edClearCatSelection()">Clear</button>
+            <select id="ed-move-select" onchange="edMoveSelCats(this)">
+              <option value="" selected disabled>Move</option>
+              <option value="live">Live</option>
+              <option value="vod">VOD</option>
+              <option value="series">Series</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" id="ed-merge-btn" onclick="edMergeSelCats()">Merge</button>
+            <button class="btn btn-ghost btn-sm" onclick="edDeleteSelCats()">Delete</button>
+            <button class="btn btn-primary btn-sm" id="ed-import-btn" onclick="edImportPick()">Import</button>
+            <input type="file" id="ed-import-inp" accept=".m3u,.m3u8" style="display:none" onchange="edImportChosen(this)">
+          </div>
+          <div class="cat-select-bar">
+            <label>
+              <input type="checkbox" id="ed-cat-select-all" onchange="edToggleCatSelectAll(this.checked)">
+              Select all visible &nbsp;<span id="ed-cat-visible-count" style="color:var(--text);font-weight:600">0</span>
+            </label>
+            <span style="margin-left:auto-removed;font-size:11px;color:var(--muted)" id="ed-cat-filter-info"></span>
+          </div>
+          <div id="ed-cat-list-wrap" style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:var(--bg);margin-bottom:0">
+            <div id="ed-cat-list-header" style="grid-template-columns:30px 1fr 70px 50px;flex-shrink:0">
+              <div></div><div>Category Name</div><div style="text-align:center">Items</div><div style="text-align:center">Action</div>
+            </div>
+            <div id="ed-cat-scroll" style="flex:1;overflow-y:auto">
+              <div id="ed-cat-list-body"></div>
+            </div>
+          </div>
+        </div>
+        </div>
+        <div class="cat-context" id="edCatCtxMenu">
+          <div class="dd-item" id="ed-ctx-add-fav"><i class="ti ti-star"></i> Add to Favorites</div>
+          <div class="dd-divider"></div>
+          <div class="dd-item" id="ed-ctx-rename" onclick="edCatRename()"><i class="ti ti-letter-case"></i> Rename</div>
+          <div class="dd-item" id="ed-ctx-export"><i class="ti ti-file-export"></i> Export to M3U</div>
+        </div>
+        <div class="card-footer" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-primary" id="ed-next-btn" onclick="edScrollToSlide(1)">
+            Next
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="snap-slide" id="ed-slide-1">
+    <div class="snap-section">
+      <div class="card-full" id="ed-chan-card" style="display:flex">
+        <div class="card-title" style="padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center">
+          <span style="display:flex;align-items:center;gap:6px">
+            <span class="step-label">2</span> Channel
+          </span>
+          <span class="ct-tabs" id="ed-chan-tabs" style="display:inline-flex;margin:0 0 0 auto">
+            <span class="ct-tab active" data-ct="live"   onclick="edSwitchCatTab('live')">📺 Live <span class="ct-badge" id="ed-chan-ctb-live">0</span></span>
+            <span class="ct-tab"        data-ct="vod"    onclick="edSwitchCatTab('vod')">🎬 VOD <span class="ct-badge" id="ed-chan-ctb-vod">0</span></span>
+            <span class="ct-tab"        data-ct="series" onclick="edSwitchCatTab('series')">📦 Series <span class="ct-badge" id="ed-chan-ctb-series">0</span></span>
+          </span>
+        </div>
+        <div class="card-body" style="padding:0;display:flex;flex-direction:column;overflow:hidden">
+        <div id="ed-chan-picker" style="display:flex;flex:1;flex-direction:column;overflow:hidden;padding:0 20px 10px;min-height:0">
+          <div class="cat-toolbar">
+            <div class="cat-search-wrap">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="ed-chan-search" placeholder="Search channels…">
+            </div>
+            <span style="font-size:12px;color:var(--muted);white-space:nowrap">
+              <span id="ed-chan-sel-count" style="color:var(--text);font-weight:600">0</span> selected
+            </span>
+            <button class="btn btn-ghost btn-sm" onclick="edClearChanSelection()">Clear</button>
+            <button class="btn btn-ghost btn-sm" id="ed-chan-del-btn" onclick="edDeleteSelChannels()">Delete</button>
+          </div>
+          <div class="cat-select-bar">
+            <label>
+              <input type="checkbox" id="ed-chan-select-all" onchange="edToggleChanSelectAll(this.checked)">
+              Select all visible &nbsp;<span id="ed-chan-visible-count" style="color:var(--text);font-weight:600">0</span>
+            </label>
+            <span style="margin-left:auto-removed;font-size:11px;color:var(--muted)" id="ed-chan-filter-info"></span>
+          </div>
+          <div id="ed-chan-list-wrap" style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:var(--bg);margin-bottom:0">
+            <div id="ed-chan-list-header" style="grid-template-columns:30px 1fr 70px 50px;flex-shrink:0">
+              <div></div><div>Channel Name</div><div style="text-align:center">Items</div><div style="text-align:center">Action</div>
+            </div>
+            <div id="ed-chan-scroll" style="flex:1;overflow-y:auto">
+              <div id="ed-chan-list-body"></div>
+            </div>
+          </div>
+        </div>
+        </div>
+        <div class="card-footer" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-primary" id="ed-chan-export-btn" onclick="edExportChannelsM3U()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let edPortalUrl = '', edMac = '';
+const edCats      = { live:[], vod:[], series:[] };
+let edCatTab      = 'live';
+let edCatFiltered = [];
+const edCatSel    = new Set();
+const edChSel     = new Set();
+const edOpenCats  = new Set();
+let edChanQuery = '';
+let edChanSearchTimer = null;
+let edGroupChannels = {};
+let edActiveM3uId = '';
+function showToast(type, msg, autoDismissMs = 0, customButtons = '') {
+  const container = document.getElementById('toast-container');
+  if (activeToast) { activeToast.remove(); activeToast = null; }
+  clearTimeout(toastTimer);
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  let inner = '';
+  if (type === 'loading') { inner = '<div class="toast-spinner"></div>'; }
+  inner += '<span>'+msg+'</span>';
+  if (customButtons) { inner += customButtons; }
+  toast.innerHTML = inner;
+  container.appendChild(toast);
+  activeToast = toast;
+  if (autoDismissMs > 0) { toastTimer = setTimeout(() => dismissToast(), autoDismissMs); }
+  return toast;
+}
+function dismissToast() {
+  if (!activeToast) return;
+  activeToast.classList.add('hiding');
+  const t = activeToast;
+  setTimeout(() => { t.remove(); if(activeToast===t) activeToast=null; }, 320);
+}
+function updateActiveToast(msg) {
+  if (activeToast) {
+    const span = activeToast.querySelector('span');
+    if (span) span.textContent = msg;
+  }
+}
+function edScrollToSlide(idx) {
+  const slide = document.getElementById('ed-slide-'+idx);
+  if (slide) slide.scrollIntoView({ behavior: 'smooth' });
+}
+const edSnapWrapper = document.getElementById('ed-snap-wrapper');
+const edSlideH = () => edSnapWrapper.clientHeight;
+edSnapWrapper.addEventListener('scroll', () => {
+  const idx = Math.round(edSnapWrapper.scrollTop / edSlideH());
+  document.querySelectorAll('#ed-scroll-nav .nav-dot').forEach((d, i) => { d.classList.toggle('active', i === idx); });
+}, { passive: true });
+document.addEventListener('click', function(e){
+  var menu = document.getElementById('edCatCtxMenu');
+  if(menu && menu.classList.contains('visible') && !menu.contains(e.target)) edHideCatMenu();
+});
+edAttachCatSearchListeners();
+function edImportPick(){
+  document.getElementById('ed-import-inp').click();
+}
+async function edImportChosen(inp){
+  var file = inp.files && inp.files[0];
+  if(!file) return;
+  var fd = new FormData();
+  var nameEl = document.getElementById('ed-m3u-file-name');
+  var name = nameEl ? nameEl.value.trim() : '';
+  if(!name) name = 'My Playlist';
+  fd.append('file', file);
+  fd.append('name', name);
+  var r, d;
+  try{
+    r = await fetch('/api/m3u/parse', {method:'POST', body: fd});
+    d = await r.json();
+  }catch(e){ showToast('error','✗ Import failed: '+e.message, 4000); inp.value=''; return; }
+  if(!d.ok){ showToast('error','✗ '+(d.error||'Failed to parse playlist'), 4000); inp.value=''; return; }
+  var pid = (d.filename||'').replace(/\.json$/,'');
+  var cd;
+  try{
+    cd = await (await fetch('/api/playlists/'+encodeURIComponent(pid)+'/channels')).json();
+  }catch(e){ showToast('error','✗ Import failed: '+e.message, 4000); inp.value=''; return; }
+  var added=0, replaced=0;
+  (cd.channels||[]).forEach(function(ch){
+    var g = ch.group || 'All';
+    var arr = edGroupChannels[g] = edGroupChannels[g] || [];
+    var idx = -1;
+    arr.forEach(function(x,i){ if(x.url && x.url===ch.url) idx=i; });
+    if(idx>=0){ arr[idx] = {name:ch.name, url:ch.url, group:g, logo:ch.logo||'', genre:ch.genre||'', content_type:'live'}; replaced++; }
+    else { arr.push({name:ch.name, url:ch.url, group:g, logo:ch.logo||'', genre:ch.genre||'', content_type:'live'}); added++; }
+  });
+  edCats.live = Object.keys(edGroupChannels).map(function(g,i){
+    return {id:'g'+i, name:g, count:edGroupChannels[g].length, cached:true, type:'live'};
+  });
+  edSetCatBadge('live', edCats.live.length);
+  document.getElementById('ed-card-step2').style.display='flex';
+  document.getElementById('ed-cat-picker').style.display='flex';
+  edSwitchCatTab('live');
+  edUpdateCatSelCount();
+  edUpdateChSelCount();
+  edUpdateChanSelectAll();
+  showToast('success','✓ Imported '+added.toLocaleString()+' channels · '+replaced.toLocaleString()+' replaced · '+edCats.live.length+' live groups', 5000);
+  inp.value='';
+}
+function edSwitchCatTab(tab){
+  edCatTab = tab;
+  edChanQuery = '';
+  document.querySelectorAll('.ct-tab').forEach(t=>t.classList.toggle('active',t.dataset.ct===tab));
+  document.getElementById('ed-cat-search').value = '';
+  const cs = document.getElementById('ed-chan-search'); if(cs) cs.value = '';
+  edApplyCatFilter();
+}
+let edCatSearchTimer = null;
+let edCatSavedPos = 0;
+let edCatIsSearching = false;
+function edOnCatSearch(){
+  const q = document.getElementById('ed-cat-search').value;
+  clearTimeout(edCatSearchTimer);
+  const catScroll = document.getElementById('ed-cat-scroll');
+  if(q.trim() && !edCatIsSearching){ edCatSavedPos = catScroll.scrollTop; edCatIsSearching = true; }
+  if(!q.trim() && edCatIsSearching){ edCatIsSearching = false; }
+  edCatSearchTimer = setTimeout(()=>{
+    edApplyCatFilter();
+    if(!q.trim() && edCatSavedPos > 0){ const pos = edCatSavedPos; edCatSavedPos = 0; catScroll.scrollTop = pos; }
+    else if(q.trim()){ catScroll.scrollTop = 0; }
+  }, 120);
+}
+function edOnChanSearch(){
+  const q = document.getElementById('ed-chan-search').value;
+  clearTimeout(edChanSearchTimer);
+  edChanSearchTimer = setTimeout(()=>{
+    edChanQuery = q.trim().toLowerCase();
+    edRenderChanList();
+    edUpdateChSelCount();
+  }, 120);
+}
+function edAttachCatSearchListeners(){
+  ['ed-cat-search','ed-chan-search'].forEach(function(id){
+    const el = document.getElementById(id);
+    if(!el) return;
+    ['input','cut','paste'].forEach(evt=>{
+      el.addEventListener(evt, ()=>{ if(id==='ed-cat-search') edOnCatSearch(); else edOnChanSearch(); });
+    });
+  });
+}
+function edApplyCatFilter(){
+  const raw = document.getElementById('ed-cat-search').value.toLowerCase().trim();
+  const words = raw.split(/\s+/).filter(Boolean);
+  const src = edCats[edCatTab] || [];
+  edCatFiltered = src.filter(c=>{
+    const h = c.name.toLowerCase();
+    return !words.length || words.every(w=>h.includes(w));
+  });
+  edCatFiltered.sort(function(a,b){
+    var aEmpty = (a.count!==undefined && a.count>0) ? 1 : 0;
+    var bEmpty = (b.count!==undefined && b.count>0) ? 1 : 0;
+    return aEmpty - bEmpty;
+  });
+  document.getElementById('ed-cat-visible-count').textContent = edCatFiltered.length;
+  document.getElementById('ed-cat-filter-info').textContent = (raw) ? edCatFiltered.length+' of '+src.length : '';
+  edRenderCatFlat();
+  edRenderChanList();
+  edUpdateCatSelectAll();
+}
+function edRenderCatFlat(){
+  const body = document.getElementById('ed-cat-list-body');
+  if(!body) return;
+  if(!edCatFiltered.length){ body.innerHTML='<div class="cat-empty">No categories found</div>'; return; }
+  body.innerHTML = edCatFiltered.map((c,idx)=>{
+    const key = c.type+'_'+c.id;
+    const sel = edCatSel.has(key);
+    var countStr = (c.count!==undefined) ? '<span style="color:#555555;font-size:11px">'+c.count.toLocaleString()+'</span>' : '';
+    var fetchBtnHtml = '<i class="ti ti-dots-vertical ed-cat-dots" title="Action" data-cat-name="'+escA(c.name)+'" data-cat-type="'+c.type+'" style="font-size:14px;color:#555555;cursor:pointer"></i>';
+    return '<div class="cat-row'+(sel?' selected':'')+'" data-key="'+key+'" data-idx="'+idx+'" style="grid-template-columns:30px 1fr 70px 50px;border-bottom:'+(idx<edCatFiltered.length-1?'1px solid var(--border)':'')+'">'
+      +'<div class="cat-check"><input type="checkbox"'+(sel?' checked':'')+' data-key="'+key+'" class="cat-cb"></div>'
+      +'<div class="cat-name">'+esc(c.name)+(c.censored?' 🔞':'')+'</div>'
+      +'<div style="text-align:center">'+countStr+'</div>'
+      +'<div style="text-align:center">'+fetchBtnHtml+'</div></div>';
+  }).join('');
+  body.querySelectorAll('.cat-row[data-idx]').forEach(row=>{
+    const key = row.dataset.key;
+    const idx = +row.dataset.idx;
+    row.addEventListener('click', e=>{
+      if(e.target.classList.contains('cat-cb')||e.target.closest('.ed-cat-dots')) return;
+      const cb = row.querySelector('.cat-cb');
+      cb.checked = !cb.checked;
+      edToggleCat(key, cb.checked);
+    });
+    row.querySelector('.cat-cb').addEventListener('change', e=>{ edToggleCat(key, e.target.checked); });
+  });
+  body.querySelectorAll('.ed-cat-dots').forEach(dot=>{
+    dot.addEventListener('click', e=>{
+      e.stopPropagation();
+      edOpenCatMenu(dot, e, dot.dataset.catName, dot.dataset.catType);
+    });
+  });
+}
+function edVisibleChanRows(){
+  const q = edChanQuery;
+  const out = [];
+  edCatFiltered.forEach(function(c){
+    const chs = edGroupChannels[c.name] || [];
+    chs.forEach(function(ch,ci){
+      if(!q || ch.name.toLowerCase().includes(q)) out.push({c:c, ci:ci, ch:ch});
+    });
+  });
+  return out;
+}
+function edRenderChanList(){
+  const body = document.getElementById('ed-chan-list-body');
+  if(!body) return;
+  if(!edCatFiltered.length){ body.innerHTML='<div class="cat-empty">No channels found</div>'; edUpdateChanStats(0,0); return; }
+  const q = edChanQuery;
+  let visible = 0;
+  let grandTotal = 0;
+  edCatFiltered.forEach(function(c){ grandTotal += (edGroupChannels[c.name]||[]).length; });
+  body.innerHTML = edCatFiltered.map((c,idx)=>{
+    const chs = edGroupChannels[c.name] || [];
+    const matches = q ? chs.filter(function(ch){ return ch.name.toLowerCase().includes(q); }) : chs;
+    if(q && !matches.length) return '';
+    visible += matches.length;
+    const open = q ? true : edOpenCats.has(c.name);
+    var countStr = (c.count!==undefined) ? '<span style="color:#555555;font-size:11px">'+c.count.toLocaleString()+'</span>' : '';
+    var chRows = '';
+    if(open){
+      if(matches.length){
+        chRows = matches.map(function(ch){
+          const ci = chs.indexOf(ch);
+          const chKey = c.name+'|'+ci;
+          const chRow = edChSel.has(chKey) ? ' selected':'';
+          return '<div class="cat-row ed-ch-row'+chRow+'" data-chkey="'+chKey+'" style="grid-template-columns:24px 30px 1fr 70px;padding-left:34px">'
+            +'<div style="text-align:center"><input type="checkbox" class="ed-ch-cb"'+(edChSel.has(chKey)?' checked':'')+'></div>'
+            +'<div style="text-align:center;color:var(--muted);font-size:11px">'+(ci+1)+'</div>'
+            +'<div class="cat-name">'+esc(ch.name)+'</div>'
+            +'<div style="text-align:center;color:var(--muted);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(ch.genre||'')+'</div>'
+            +'</div>';
+        }).join('');
+      } else {
+        chRows = '<div style="padding:10px 24px;color:var(--muted);font-size:12px">No channels</div>';
+      }
+    }
+    return '<div class="ed-cat-acc">'
+      +'<div class="cat-row chan-group" data-idx="'+idx+'" style="grid-template-columns:30px 1fr 70px;border-bottom:'+(idx<edCatFiltered.length-1?'1px solid var(--border)':'')+'">'
+      +'<div class="cat-name" style="grid-column:1 / span 2;display:flex;align-items:center;gap:6px;min-width:0">'
+      +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.name)+(c.censored?' 🔞':'')+'</span></div>'
+      +'<div style="text-align:center">'+countStr+'</div>'
+      +'</div>'
+      +chRows
+      +'</div>';
+  }).join('');
+  if(!visible){ body.innerHTML = '<div class="cat-empty">No channels match</div>'; }
+  body.querySelectorAll('.chan-group').forEach(row=>{
+    const idx = +row.dataset.idx;
+    const cat = edCatFiltered[idx];
+    row.addEventListener('click', e=>{
+      if(q) return;
+      if(edOpenCats.has(cat.name)) edOpenCats.delete(cat.name); else edOpenCats.add(cat.name);
+      edRenderChanList();
+    });
+  });
+  body.querySelectorAll('.ed-ch-row').forEach(row=>{
+    row.addEventListener('click', e=>{
+      if(e.target.classList.contains('ed-ch-cb')) return;
+      const k = row.dataset.chkey;
+      const on = !edChSel.has(k);
+      if(on) edChSel.add(k); else edChSel.delete(k);
+      const cb = row.querySelector('.ed-ch-cb');
+      if(cb) cb.checked = on;
+      row.classList.toggle('selected', edChSel.has(k));
+      edUpdateChSelCount();
+    });
+    const cb = row.querySelector('.ed-ch-cb');
+    if(cb) cb.addEventListener('change', e=>{
+      const k = row.dataset.chkey;
+      if(e.target.checked) edChSel.add(k); else edChSel.delete(k);
+      row.classList.toggle('selected', edChSel.has(k));
+      edUpdateChSelCount();
+    });
+  });
+  edUpdateChanStats(visible, grandTotal);
+}
+function edUpdateChanStats(visible, grandTotal){
+  const v = document.getElementById('ed-chan-visible-count');
+  if(v) v.textContent = (visible||0).toLocaleString();
+  const fi = document.getElementById('ed-chan-filter-info');
+  if(fi && !edChSel.size && edChanQuery) fi.textContent = (visible||0)+' of '+(grandTotal||0).toLocaleString();
+  edUpdateChanSelectAll();
+}
+function edRenderBoth(){ edRenderCatFlat(); edRenderChanList(); }
+function edToggleChanSelectAll(checked){
+  edVisibleChanRows().forEach(function(r){
+    const k = r.c.name+'|'+r.ci;
+    if(checked) edChSel.add(k); else edChSel.delete(k);
+  });
+  edRenderChanList();
+  edUpdateChSelCount();
+}
+function edClearChanSelection(){ edChSel.clear(); edRenderChanList(); edUpdateChSelCount(); }
+function edUpdateChanSelectAll(){
+  const rows = edVisibleChanRows();
+  const total = rows.length;
+  let sel = 0;
+  rows.forEach(function(r){ if(edChSel.has(r.c.name+'|'+r.ci)) sel++; });
+  const cb = document.getElementById('ed-chan-select-all');
+  if(cb){ cb.indeterminate = sel>0 && sel<total; cb.checked = total>0 && sel===total; }
+}
+function edDeleteSelChannels(){
+  const keys = Array.from(edChSel);
+  if(!keys.length){ showToast('info','Select channels to delete', 3000); return; }
+  if(!confirm('Delete '+keys.length+' selected channel'+(keys.length===1?'':'s')+'?')) return;
+  const byGroup = {};
+  keys.forEach(function(k){
+    const i = k.lastIndexOf('|');
+    const g = k.slice(0,i);
+    const idx = +k.slice(i+1);
+    (byGroup[g]=byGroup[g]||[]).push(idx);
+  });
+  Object.keys(byGroup).forEach(function(g){
+    const arr = edGroupChannels[g];
+    if(!arr) return;
+    const idxs = byGroup[g].sort(function(a,b){ return b-a; });
+    idxs.forEach(function(i){ if(arr[i]) arr.splice(i,1); });
+  });
+  edCats[edCatTab] = edCats[edCatTab].filter(function(c){
+    const chs = edGroupChannels[c.name];
+    return chs && chs.length > 0;
+  });
+  edCats[edCatTab].forEach(function(c){ const chs = edGroupChannels[c.name]; if(chs) c.count = chs.length; });
+  edFinishCatMutation(edCatTab, '✓ Deleted '+keys.length+' channel'+(keys.length===1?'':'s'));
+}
+function edExportChannelsM3U(){
+  const type = edCatTab;
+  const typeNames = {live:'Live',vod:'VOD',series:'Series'};
+  const lines = ['#EXTM3U'];
+  let cnt = 0;
+  (edCats[type]||[]).forEach(function(c){
+    const gname = c.name;
+    const chs = edGroupChannels[gname] || [];
+    chs.forEach(function(ch){
+      let url = ch.url || ch.cmd || ch.series_cmd || '';
+      if(!url) return;
+      if(url.startsWith('ffmpeg ')) url = url.slice(7);
+      lines.push('#EXTINF:-1 tvg-id="" tvg-name="'+escH(ch.name||'')+'" tvg-logo="'+escH(ch.logo||'')+'" group-title="'+escH(gname)+'",'+escH(ch.name||''));
+      lines.push(url);
+      cnt++;
+    });
+  });
+  if(!cnt){ showToast('info','No channels to export', 3000); return; }
+  const base = edActiveM3uId || 'playlist';
+  const blob = new Blob([lines.join('\n')], {type:'application/x-mpegurl;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = base+'_'+type+'.m3u';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+  showToast('success','Exporting '+cnt.toLocaleString()+' '+typeNames[type]+' channels', 3000);
+}
+function edOpenCatMenu(el, e, name, type){
+  e.stopPropagation();
+  edHideCatMenu();
+  var menu = document.getElementById('edCatCtxMenu');
+  if(!menu) return;
+  menu.dataset.name = name||'';
+  menu.dataset.type = type||'';
+  var rect = el.getBoundingClientRect();
+  menu.style.left = 'auto';
+  menu.style.right = (window.innerWidth - rect.left + 4) + 'px';
+  menu.style.top = rect.top + 'px';
+  menu.classList.add('visible');
+}
+function edHideCatMenu(){
+  var menu = document.getElementById('edCatCtxMenu');
+  if(menu) menu.classList.remove('visible');
+}
+function edCatRename(){
+  var menu = document.getElementById('edCatCtxMenu');
+  var name = menu.dataset.name || '';
+  var type = menu.dataset.type || 'live';
+  if(!name) return;
+  edHideCatMenu();
+  var list = document.getElementById('ed-cat-list-body');
+  if(!list) return;
+  var dot = null;
+  list.querySelectorAll('.ed-cat-dots').forEach(function(d){
+    if(d.dataset.catName===name && d.dataset.catType===type) dot = d;
+  });
+  if(!dot) return;
+  var row = dot.closest('.cat-row');
+  var cell = row ? row.querySelector('.cat-name') : null;
+  if(!cell) return;
+  cell.textContent = '';
+  var inp = document.createElement('input');
+  inp.className = 'ed-cat-rename-inp';
+  inp.dataset.done = '0';
+  inp.value = name;
+  inp.style.cssText = 'flex:1;min-width:0;font-size:13px;font-weight:400;background:var(--bg);color:var(--text);border:1px solid var(--accent);border-radius:4px;padding:1px 4px;outline:none';
+  cell.appendChild(inp);
+  inp.addEventListener('click', function(e){ e.stopPropagation(); });
+  inp.focus();
+  inp.select();
+  inp.addEventListener('keydown', function(e){
+    if(e.key==='Enter'){ if(inp.dataset.done==='1') return; inp.dataset.done='1'; edCommitCatRename(inp, name, type); }
+    else if(e.key==='Escape'){ if(inp.dataset.done==='1') return; inp.dataset.done='1'; edRenderBoth(); }
+  });
+  inp.addEventListener('blur', function(){
+    if(inp.dataset.done==='1') return; inp.dataset.done='1'; edCommitCatRename(inp, name, type);
+  });
+}
+async function edCommitCatRename(inp, oldName, type){
+  var nn = inp.value.trim();
+  edRenderBoth();
+  if(!nn || nn===oldName) return;
+  var arr = edCats[type] || [];
+  var cat = null;
+  arr.forEach(function(x){ if(x.name===oldName) cat = x; });
+  if(!cat) return;
+  cat.name = nn;
+  if(edGroupChannels[oldName] !== undefined){
+    edGroupChannels[nn] = edGroupChannels[oldName];
+    delete edGroupChannels[oldName];
+  }
+  if(edOpenCats.has(oldName)){ edOpenCats.delete(oldName); edOpenCats.add(nn); }
+  edChSel.clear();
+  edRenderBoth();
+  edUpdateChSelCount();
+  showToast('success','✓ Renamed to "'+nn+'"', 2500);
+  if(edActiveM3uId){
+    try{
+      var r = await fetch('/api/playlists/'+encodeURIComponent(edActiveM3uId)+'/rename-category',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:type,old_name:oldName,new_name:nn})});
+      var d = await r.json();
+      if(d.ok && typeof loadPlaylists==='function') loadPlaylists();
+      else showToast('error','✗ '+(d.error||'Save failed — rename is session-only'), 4000);
+    }catch(e){ showToast('error','✗ Save failed — rename is session-only', 4000); }
+  }
+}
+function edUpdateChSelCount(){
+  const fi = document.getElementById('ed-chan-filter-info');
+  if(fi && edChSel.size) fi.textContent = edChSel.size.toLocaleString()+' channels selected';
+  const sc = document.getElementById('ed-chan-sel-count');
+  if(sc) sc.textContent = edChSel.size;
+}
+function edToggleCat(key, checked){
+  if(checked) edCatSel.add(key); else edCatSel.delete(key);
+  const row = document.querySelector('.cat-row[data-key="'+key+'"]');
+  if(row){ row.classList.toggle('selected',checked); row.querySelector('input').checked=checked; }
+  edUpdateCatSelectAll(); edUpdateCatSelCount();
+}
+function edToggleCatSelectAll(checked){
+  edCatFiltered.forEach(c=>{ const key=c.type+'_'+c.id; if(checked) edCatSel.add(key); else edCatSel.delete(key); });
+  edRenderBoth(); edUpdateCatSelectAll(); edUpdateCatSelCount();
+}
+function edClearCatSelection(){ edCatSel.clear(); edRenderBoth(); edUpdateCatSelectAll(); edUpdateCatSelCount(); }
+function edUpdateCatSelectAll(){
+  const sel = edCatFiltered.filter(c=>edCatSel.has(c.type+'_'+c.id)).length;
+  const cb = document.getElementById('ed-cat-select-all');
+  cb.indeterminate = sel>0 && sel<edCatFiltered.length;
+  cb.checked = edCatFiltered.length>0 && sel===edCatFiltered.length;
+}
+function edUpdateCatSelCount(){ document.getElementById('ed-cat-sel-count').textContent = edCatSel.size; }
+function edSelCatsNow(){
+  const out = [];
+  (edCats[edCatTab]||[]).forEach(function(c){ const k=c.type+'_'+c.id; if(edCatSel.has(k)) out.push(c); });
+  return out;
+}
+function edFinishCatMutation(type, msg){
+  edCatSel.clear();
+  edChSel.clear();
+  const names = (edCats[type]||[]).map(function(c){ return c.name; });
+  edOpenCats.forEach(function(n){ if(names.indexOf(n)<0) edOpenCats.delete(n); });
+  edSetCatBadge(type, (edCats[type]||[]).length);
+  edApplyCatFilter();
+  edUpdateCatSelCount();
+  edUpdateChSelCount();
+  edUpdateChanSelectAll();
+  if(msg) showToast('success', msg, 3000);
+}
+function edDeleteSelCats(){
+  const sel = edSelCatsNow();
+  if(!sel.length){ showToast('info','Select categories to delete', 3000); return; }
+  if(!confirm('Delete '+sel.length+' selected categor'+(sel.length===1?'y':'ies')+'?')) return;
+  const names = {}; sel.forEach(function(c){ names[c.name]=1; });
+  edCats[edCatTab] = edCats[edCatTab].filter(function(c){ return sel.indexOf(c)<0; });
+  Object.keys(edGroupChannels).forEach(function(g){ if(names[g]) delete edGroupChannels[g]; });
+  edFinishCatMutation(edCatTab, '✓ Deleted '+sel.length+' categor'+(sel.length===1?'y':'ies'));
+}
+function edMergeSelCats(){
+  const sel = edSelCatsNow();
+  if(sel.length < 2){ showToast('info','Select at least 2 categories to merge', 3000); return; }
+  const target = sel[0];
+  const rest = sel.slice(1);
+  const seen = new Set();
+  const merged = [];
+  sel.forEach(function(cat){
+    const chs = edGroupChannels[cat.name] || [];
+    chs.forEach(function(ch){
+      const u = ch.url;
+      if(u && seen.has(u)) return;
+      if(u) seen.add(u);
+      merged.push(ch);
+    });
+  });
+  edGroupChannels[target.name] = merged;
+  rest.forEach(function(cat){ delete edGroupChannels[cat.name]; });
+  edCats[edCatTab] = edCats[edCatTab].filter(function(c){
+    if(c===target) return true;
+    if(rest.indexOf(c)>=0) return false;
+    const chs = edGroupChannels[c.name] || [];
+    return chs.length > 0;
+  });
+  edCats[edCatTab].forEach(function(c){ const chs = edGroupChannels[c.name]; if(chs) c.count = chs.length; });
+  edFinishCatMutation(edCatTab, '✓ Merged into "'+target.name+'"');
+}
+function edMoveSelCats(sel){
+  const to = sel.value;
+  sel.value = '';
+  if(!to) return;
+  const from = edCatTab;
+  if(to===from){ showToast('info','Categories are already '+(to==='live'?'Live':to.toUpperCase()), 3000); return; }
+  const picked = edSelCatsNow();
+  if(!picked.length){ showToast('info','Select categories to move', 3000); return; }
+  picked.forEach(function(c){
+    c.type = to;
+    const chs = edGroupChannels[c.name];
+    if(chs) chs.forEach(function(ch){ ch.content_type = to; });
+  });
+  edCats[from] = edCats[from].filter(function(c){ return picked.indexOf(c)<0; });
+  edCats[to]   = edCats[to].concat(picked);
+  edSetCatBadge(from, edCats[from].length);
+  edSetCatBadge(to, edCats[to].length);
+  edCatSel.clear();
+  edApplyCatFilter();
+  edUpdateCatSelCount();
+  edUpdateChSelCount();
+  edUpdateChanSelectAll();
+  showToast('success','✓ Moved '+picked.length+' categor'+(picked.length===1?'y':'ies')+' to '+(to==='live'?'Live':to.toUpperCase()), 3000);
+}
+function edSetCatBadge(kind, val){
+  const el1 = document.getElementById('ed-ctb-'+kind); if(el1) el1.textContent = val;
+  const el2 = document.getElementById('ed-chan-ctb-'+kind); if(el2) el2.textContent = val;
+}
+
+</script>
+    </div>
+    <!-- ── FAVORITES ── -->
+    <div id="section-favorites" class="page-section">
+      <div class="topbar"><span style="color:#FFFFFF;font-weight:500;font-size:14px"><i class="ti ti-star" style="font-size:15px;margin-right:6px"></i>Favorites</span></div>
+      <div style="padding:60px;text-align:center;color:var(--muted);font-size:13px">
+        <i id="fav-icon" class="ti ti-star-off" style="font-size:3rem;display:block;margin-bottom:12px;color:var(--border)"></i>
+        <div id="fav-placeholder-msg">No favorites yet</div>
+      </div>
+    </div>
+
     <!-- ── CHANGELOG ── -->
     <div id="section-changelog" class="page-section">
       <div class="topbar"><span style="color:#FFFFFF;font-weight:500;font-size:14px"><i class="ti ti-history" style="font-size:15px;margin-right:6px"></i>Changelog</span></div>
@@ -2276,9 +3015,8 @@ function togglePlaylistMenu(e){
   var menu = document.getElementById('plListMenu');
   if (menu.classList.contains('visible')) { menu.classList.remove('visible'); return; }
   var lists = _allPlaylists || [];
-  var fav = null, others = [];
+  var others = [];
   lists.forEach(function(p){
-    if (p.id === 'Favorites' && p.name === 'Favorites') { fav = p; return; }
     if (p.source === 'portal') {
       var hostname = '';
       try { hostname = new URL(p.portal_url || '').hostname; } catch(e) {}
@@ -2291,12 +3029,6 @@ function togglePlaylistMenu(e){
     if ((p.list_name || p.name) === p.id) others.push(p);
   });
   var html = '';
-  if (fav) {
-    html += '<div class="dd-item" onclick="openPlaylist(\'Favorites\');document.getElementById(\'plListMenu\').classList.remove(\'visible\')"><i class="ti ti-star" style="color:#F5C518"></i> Favorites</div>';
-  } else {
-    html += '<div class="dd-item" style="color:#555555;cursor:default"><i class="ti ti-star-off"></i> No favorites</div>';
-  }
-  html += '<div class="dd-divider"></div>';
   if (!others.length) {
     html += '<div class="dd-item" style="color:#555555;cursor:default"><i class="ti ti-playlist-off"></i> No playlists</div>';
   } else {
@@ -3083,6 +3815,21 @@ function renderPlaylists(pls){
 var loadedChannels = {}; // e.g. {live:{groupName:[ch,...]}, vod:{...}, series:{...}}
 var loadedSeries = [];
 var loadedSeriesNav = [];
+function openFavorites(){
+  var favEntry = _allPlaylists ? _allPlaylists.find(function(p){ return p.id === 'Favorites'; }) : null;
+  var hasFavs = favEntry && favEntry.channels > 0;
+  var msgEl = document.getElementById('fav-placeholder-msg');
+  var icoEl = document.getElementById('fav-icon');
+  switchPage('favorites');
+  if(hasFavs){
+    openPlaylist('Favorites');
+    if(msgEl) msgEl.textContent = 'Select a category from the sidebar to view your favorites';
+    if(icoEl){ icoEl.className = 'ti ti-star'; icoEl.style.color = 'var(--accent)'; }
+  } else {
+    if(msgEl) msgEl.textContent = 'No favorites yet';
+    if(icoEl){ icoEl.className = 'ti ti-star-off'; icoEl.style.color = 'var(--border)'; }
+  }
+}
 function openPlaylist(id){
   if(!id) return;
   var _pn = '';
