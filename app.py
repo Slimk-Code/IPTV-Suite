@@ -213,90 +213,7 @@ def fetch_vod_categories(ctx, content_type="vod"):
     except: return []
 
 
-# ─── NEW: Fast live fetch (fairy-root maclist.py) ─────────────────────────────
-
-def fetch_all_live_channels(ctx):
-    """Try to get ALL live channels in a single API call.
-    Returns list of channel dicts, or None if portal doesn't support it."""
-    for path in [f"{ctx['base_url']}{ctx['portal_type']}?type=itv&action=get_all_channels&JsHttpRequest=1-xml",
-                 f"{ctx['base_url']}/portal.php?type=itv&action=get_all_channels&JsHttpRequest=1-xml"]:
-        try:
-            r = ctx["session"].get(path, timeout=30)
-            r.raise_for_status()
-            data = r.json().get("js", {}).get("data", [])
-            if not data:
-                continue
-
-            genres = fetch_live_genres(ctx)
-            genre_map = {g["id"]: g["name"] for g in genres}
-            if not genre_map:
-                try:
-                    url_g = f"{ctx['base_url']}/server/load.php?type=itv&action=get_genres&JsHttpRequest=1-xml"
-                    r_g = ctx["session"].get(url_g, timeout=15)
-                    gs = r_g.json().get("js", [])
-                    genre_map = {str(g.get("id","")): g.get("title","") for g in gs if str(g.get("id","")) not in ("*","pvr","dvb","")}
-                except: pass
-
-            out = []
-            for ch in data:
-                gid = str(ch.get("tv_genre_id", "0"))
-                cmd_raw = ch.get("cmds", [{}])[0].get("url", "")
-                cmd = cmd_raw[7:] if cmd_raw.startswith("ffmpeg ") else cmd_raw
-
-                if "localhost" in cmd and "/ch/" in cmd:
-                    m = re.search(r"/ch/(\d+)", cmd)
-                    if m:
-                        ch_id = m.group(1)
-                        cmd = f"{ctx['base_url']}/play/live.php?mac={ctx['mac']}&stream={ch_id}&extension=ts"
-
-                if not cmd:
-                    continue
-
-                out.append({
-                    "id": str(ch.get("id","")),
-                    "name": ch.get("name","Unknown"),
-                    "number": ch.get("number",""),
-                    "logo": ch.get("logo",""),
-                    "cmd": cmd,
-                    "genre": genre_map.get(gid, "General"),
-                    "genre_id": gid,
-                    "content_type": "live",
-                })
-            return out
-        except Exception:
-            continue
-    return None
-
-
 # ─── Channel fetchers (per selected category, streamed) ───────────────────────
-
-def iter_live_genre(ctx, genre_id, genre_name, is_adult=False):
-    """Yield channels or metadata for one live genre, paginated."""
-    page           = 1
-    censored_param = "&censored=1" if is_adult else ""
-    while True:
-        url = (f"{ctx['base_url']}{ctx['portal_type']}?type=itv&action=get_ordered_list"
-               f"&genre={genre_id}&force_ch_link_check=&fav=0&sortby=number&hd=0"
-               f"&p={page}{censored_param}&JsHttpRequest=1-xml")
-        try:
-            r        = ctx["session"].get(url, timeout=20)
-            js       = r.json().get("js", {})
-            data     = js.get("data", [])
-            total    = int(js.get("total_items", 0))
-            if page == 1:
-                yield {"_cat_total_channels": total}
-            for ch in data:
-                yield {
-                    "id": str(ch.get("id","")), "name": ch.get("name","Unknown"),
-                    "number": ch.get("number",""), "logo": ch.get("logo",""),
-                    "cmd": ch.get("cmd",""), "genre": genre_name,
-                    "genre_id": genre_id, "content_type": "live",
-                }
-            per_page = int(js.get("max_page_items", len(data) or 1))
-            pages    = math.ceil(total / per_page) if per_page else 1
-            if page >= pages or not data: break
-            page += 1
-        except: break
 
 
 # ─── Streaming live fetcher (VOD-style parallel pages) ────────────────────────
@@ -361,78 +278,11 @@ def iter_live_category(ctx, genre_id, genre_name, is_adult=False):
                     yield ch
 
 
-# ─── NEW: Parallel VOD page fetcher (fairy-root style) ─────────────────────────
-
-def fetch_vod_category_parallel(ctx, cat_id, cat_name, content_type="vod"):
-    """Fetch all pages for a VOD/series category using ThreadPool (up to 10 workers).
-    Returns (total_items, list of item dicts)."""
-    ctype = "series" if content_type == "series" else "vod"
-    url = (f"{ctx['base_url']}{ctx['portal_type']}?type={ctype}&action=get_ordered_list"
-           f"&category={cat_id}&fav=0&sortby=added&hd=0&p=1&JsHttpRequest=1-xml")
-    try:
-        r = ctx["session"].get(url, timeout=30)
-        js = r.json().get("js", {})
-        data = js.get("data", [])
-        total = int(js.get("total_items", 0))
-        per_page = int(js.get("max_page_items", len(data) or 1))
-        pages = math.ceil(total / per_page) if per_page else 1
-    except Exception:
-        return 0, []
-
-    all_items = []
-    def parse_items(page_data):
-        items = []
-        for item in page_data:
-            iid = str(item.get("id",""))
-            cmd = (item.get("cmd","")
-                or item.get("series_cmd","")
-                or item.get("url","")
-                or item.get("link",""))
-            items.append({
-                "id":           iid,
-                "name":         item.get("name", item.get("title","Unknown")),
-                "number":       item.get("number",""),
-                "logo":         item.get("screenshot_url", item.get("screenshot_uri", item.get("logo",""))),
-                "cmd":          cmd,
-                "series_id":    iid,
-                "genre":        cat_name,
-                "genre_id":     cat_id,
-                "content_type": content_type,
-            })
-        return items
-
-    all_items.extend(parse_items(data))
-
-    if pages > 1:
-        def fetch_page(p):
-            purl = (f"{ctx['base_url']}{ctx['portal_type']}?type={ctype}&action=get_ordered_list"
-                    f"&category={cat_id}&fav=0&sortby=added&hd=0&p={p}&JsHttpRequest=1-xml")
-            for attempt in range(3):
-                try:
-                    pr = ctx["session"].get(purl, timeout=30)
-                    data = pr.json().get("js", {}).get("data", [])
-                    if data or attempt == 2:
-                        return data
-                except:
-                    pass
-                if attempt < 2:
-                    time.sleep(1)
-            return []
-
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = [executor.submit(fetch_page, p) for p in range(2, pages + 1)]
-            for future in as_completed(futures):
-                all_items.extend(parse_items(future.result()))
-
-    return total, all_items
-
-
 # ─── NEW: Streaming VOD/series fetcher — yields items as pages complete ───────
-# Mirrors fetch_vod_category_parallel's parsing & parallelism, but yields each
-# page's items the moment its future resolves (as_completed) instead of
-# buffering the whole category and flushing at the end. This spreads item
+# Yields each page's items the moment its future resolves (as_completed) instead
+# of buffering the whole category and flushing at the end. This spreads item
 # events across the real fetch duration so progress advances smoothly instead
-# of one big jump — same behaviour iter_live_genre gives for live TV.
+# of one big jump — same behaviour as the live-TV category fetcher.
 
 def iter_vod_category(ctx, cat_id, cat_name, content_type="vod"):
     """Generator: yields items of a VOD/series category as each page completes.
@@ -541,65 +391,207 @@ def build_series_cmd(series_id, season_num):
 
 # ─── Stream URL resolver ──────────────────────────────────────────────────────
 
-def resolve_stream_url(ctx, cmd, content_type="live", series_id="", season_num=0, episode_num=0):
+def _extract_link_from_result(result):
+    """Parse create_link 'js' result and produce a clean play URL.
+    - ffmpeg prefix trimmed (as in mac2list_portal.py)
+    - returns '' on any unusable shape"""
+    if not result:
+        return ""
+    if isinstance(result, dict):
+        v = result.get("cmd")
+    elif isinstance(result, str):
+        v = result
+    else:
+        v = ""
+    if not v:
+        return ""
+    v = v[7:] if v.startswith("ffmpeg ") else v
+    return v.strip()
+
+
+def _inject_stream_id(link, channel_id):
+    """If ?stream= is empty/missing in a resolved link, inject the channel id
+    (mirrors mac2list_portal.py stream= re-injection)."""
+    if not link or not channel_id:
+        return link
+    m = re.search(r"[?&]stream=([^&]*)", link)
+    if m and m.group(1) == "":
+        return re.sub(r"stream=[^&]*", "stream=" + str(channel_id), link, count=1)
+    if re.search(r"[?&]stream=[^&]+", link):
+        return link
+    if "?" in link:
+        return f"{link}&stream={channel_id}"
+    return link
+
+
+def _chan_id_from_cmd(cmd):
+    m = re.search(r"/ch/(\d+)", cmd or "")
+    if m:
+        return m.group(1)
+    m = re.search(r"stream=(\d+)", cmd or "")
+    if m:
+        return m.group(1)
+    return ""
+
+
+def _create_link(ctx, cmd, content_type="live", series="", timeout=12):
+    """Issue one create_link request. Returns raw 'js' result (dict, str, or '')."""
+    action_type = "itv" if content_type == "live" else "vod"
+    params = {
+        "type": action_type,
+        "action": "create_link",
+        "cmd": cmd,
+        "series": series,
+        "forced_storage": "undefined",
+        "disable_ad": "0",
+        "download": "0",
+        "JsHttpRequest": "1-xml",
+    }
+    r = ctx["session"].get(ctx["base_url"] + ctx["portal_type"], params=params, timeout=timeout)
+    try:
+        js = r.json().get("js", "")
+        if isinstance(js, (dict, str)):
+            return js
+        return ""
+    except Exception:
+        return ""
+
+
+def resolve_stream_url(ctx, cmd, content_type="live", series_id="", season_num=0, episode_num=0, channel_id=""):
     """
     Resolve a cmd to a real playable stream URL.
-    Merged with fairy-root logic:
-    - live:  localhost fix, create_link for /ch/ proxy
-    - vod:   create_link, split on space for ffmpeg prefix
-    - series: base64 cmd + create_link with episode number
+    Approach mirrors mac2list_portal.py:
+      - inject raw cmd into create_link
+      - read js (str or dict.cmd), trim 'ffmpeg ' prefix
+      - if stream= is empty, inject the channel id
+      - never return a faux localhost URL; '' on genuine failure
+    cmd is never mutated.
     """
     try:
         raw = cmd[7:] if cmd.startswith("ffmpeg ") else cmd
 
         if content_type == "live":
-            if "/ch/" in raw and raw.endswith("_"):
-                enc    = quote(cmd)
-                url    = (f"{ctx['base_url']}{ctx['portal_type']}?type=itv&action=create_link"
-                          f"&cmd={enc}&series=&forced_storage=undefined&disable_ad=0&download=0&JsHttpRequest=1-xml")
-                r      = ctx["session"].get(url, timeout=10)
-                result = r.json().get("js",{}).get("cmd","")
-                if result:
-                    return result[7:] if result.startswith("ffmpeg ") else result
-            if "localhost" in raw and "/ch/" in raw:
-                m = re.search(r"/ch/(\d+)", raw)
-                if m:
-                    ch_id = m.group(1)
-                    return f"{ctx['base_url']}/play/live.php?mac={ctx['mac']}&stream={ch_id}&extension=ts"
-            return raw
+            if not raw:
+                return ""
+            result = _create_link(ctx, cmd, "live")
+            link   = _extract_link_from_result(result)
+            if not link:
+                return ""
+            cid = channel_id or _chan_id_from_cmd(cmd)
+            return _inject_stream_id(link, cid)
 
         elif content_type == "series":
             if not raw and series_id:
                 raw = build_series_cmd(series_id, season_num or 1)
             if not raw:
                 return ""
-            enc    = quote(raw)
-            url    = (f"{ctx['base_url']}{ctx['portal_type']}?type=vod&action=create_link"
-                      f"&cmd={enc}&series={episode_num or 1}&forced_storage=undefined&disable_ad=0&download=0&JsHttpRequest=1-xml")
-            r      = ctx["session"].get(url, timeout=10)
-            result = r.json().get("js",{}).get("cmd","")
-            if result:
-                if ' ' in result:
-                    return result.split(' ')[1]
-                return result[7:] if result.startswith("ffmpeg ") else result
-            return raw
+            result = _create_link(ctx, raw, "series", series=str(episode_num or 1))
+            link   = _extract_link_from_result(result)
+            if not link:
+                return ""
+            if channel_id:
+                link = _inject_stream_id(link, channel_id)
+            if " " in link:            # "ffmpeg http://..." style already trimmed by extract
+                return link.split(" ")[-1]
+            return link
 
         else:  # vod
             if not raw:
                 return ""
-            enc    = quote(cmd)
-            url    = (f"{ctx['base_url']}{ctx['portal_type']}?type=vod&action=create_link"
-                      f"&cmd={enc}&series=&forced_storage=undefined&disable_ad=0&download=0&JsHttpRequest=1-xml")
-            r      = ctx["session"].get(url, timeout=10)
-            result = r.json().get("js",{}).get("cmd","")
-            if result:
-                if ' ' in result:
-                    return result.split(' ')[1]
-                return result[7:] if result.startswith("ffmpeg ") else result
-            return raw
+            result = _create_link(ctx, cmd, "vod")
+            link   = _extract_link_from_result(result)
+            if not link:
+                return ""
+            if channel_id:
+                link = _inject_stream_id(link, channel_id)
+            if " " in link:
+                return link.split(" ")[-1]
+            return link
 
-    except:
-        return cmd[7:] if cmd.startswith("ffmpeg ") else cmd
+    except Exception:
+        return ""
+
+
+# ─── Resolve-on-fetch: batch resolver + progress store ────────────────────────
+
+_BATCH_PROGRESS = {}
+_PROGRESS_LOCK = threading.Lock()
+
+
+def _set_progress(key, **fields):
+    with _PROGRESS_LOCK:
+        _BATCH_PROGRESS.setdefault(key, {}).update(fields)
+        _BATCH_PROGRESS[key]["ts"] = time.time()
+
+
+def _get_progress(key):
+    with _PROGRESS_LOCK:
+        return dict(_BATCH_PROGRESS.get(key, {}))
+
+
+def _clear_progress(key):
+    with _PROGRESS_LOCK:
+        _BATCH_PROGRESS.pop(key, None)
+
+
+def _resolve_item_once(ctx, item):
+    """Single attempt to resolve one item's stream url.
+    Returns the resolved url ('' on failure). Keeps cmd untouched."""
+    cmd    = item.get("cmd", "")
+    ctype  = item.get("content_type", "live")
+    if not cmd:
+        return ""
+    return resolve_stream_url(
+        ctx, cmd,
+        content_type=ctype,
+        series_id=item.get("series_id", ""),
+        season_num=item.get("season_num", 0),
+        episode_num=item.get("episode_num", 0),
+        channel_id=item.get("id", ""),
+    )
+
+
+def _resolve_items_batch(ctx, items, progress_key=None, max_workers=8, attempt_limit=3):
+    """
+    Resolve every item's stream url in parallel, reusing the one authenticated
+    session. Each item is retried up to `attempt_limit` times on failure.
+    Sets item['url'] on success (drops needsResolve); on final failure keeps
+    needsResolve=True so a later on-click can re-lease.
+    Returns (resolved_count, failed_count).
+    """
+    done = [0]
+    ok = [0]
+    fail = [0]
+    lock = threading.Lock()
+
+    def work(item):
+        url = ""
+        for attempt in range(attempt_limit):
+            url = _resolve_item_once(ctx, item)
+            if url:
+                break
+            if attempt < attempt_limit - 1:
+                time.sleep(0.5 * (attempt + 1))
+        with lock:
+            done[0] += 1
+            item["url"] = url
+            if url:
+                ok[0] += 1
+                item.pop("needsResolve", None)
+            else:
+                fail[0] += 1
+            if progress_key and (done[0] % 5 == 0 or done[0] == len(items)):
+                _set_progress(progress_key, done=done[0], total=len(items),
+                              resolved=ok[0], failed=fail[0], running=True)
+
+    if not items:
+        return 0, 0
+    with ThreadPoolExecutor(max_workers=max_workers) as ex:
+        list(ex.map(work, items))
+    if progress_key:
+        _set_progress(progress_key, done=len(items), total=len(items),
+                      resolved=ok[0], failed=fail[0], running=False)
+    return ok[0], fail[0]
 
 
 def extract_expiry(profile, main_info):
@@ -816,13 +808,27 @@ def fetch_category():
             item["mac"] = mac
             items.append(item)
 
-    # Strip unnecessary fields before saving
+    # Resolve every channel's stream url now (reusing the authenticated session)
+    resolve_count = 0
+    failed_count = 0
+    progress_key = f"fetch:{filename}:{cat_id}"
+    _set_progress(progress_key, done=0, total=len(items), resolved=0, failed=0, running=True)
+    try:
+        resolve_count, failed_count = _resolve_items_batch(ctx, items, progress_key=progress_key)
+    except Exception:
+        resolve_count, failed_count = 0, len(items)
+    finally:
+        if failed_count == 0:
+            _clear_progress(progress_key)
+
+    # Strip unnecessary fields before saving (cmd + resolved url are kept)
     for item in items:
         item.pop("number", None)
         item.pop("logo", None)
         item.pop("genre", None)
         item.pop("group", None)
-        item.pop("url", None)
+        item.pop("portal_url", None)
+        item.pop("mac", None)
 
     fp = os.path.join(PLAYLIST_DIR, filename + ".json")
     if os.path.isfile(fp):
@@ -865,7 +871,17 @@ def fetch_category():
     with open(fp, "w") as f:
         json.dump(jdata, f, indent=2)
 
-    return jsonify({"ok":True,"total":len(items),"portal_total":portal_total,"added":added,"items":items})
+    return jsonify({"ok":True,"total":len(items),"portal_total":portal_total,"added":added,
+                    "resolved":resolve_count,"failed":failed_count,"items":items})
+
+
+@app.route("/api/fetch-progress")
+def fetch_progress():
+    key = request.args.get("key", "")
+    p = _get_progress(key)
+    if not p:
+        return jsonify({"ok":True,"running":False,"done":0,"total":0,"resolved":0,"failed":0})
+    return jsonify({"ok":True, **p})
 
 
 @app.route("/api/fetch-series-episodes", methods=["POST"])
@@ -896,16 +912,24 @@ def fetch_series_episodes():
             "season_num": sn,
             "episode_num": en,
             "cmd": cmd,
-            "url": cmd,
+            "id": series_id,
             "group": category_name,
             "content_type": "series",
             "needsResolve": True,
-            "portal_url": portal_url,
-            "mac": mac,
         })
 
-    for item in items:
-        item.pop("url", None)
+    # Resolve every episode's stream url now (reusing the authenticated session)
+    resolve_count = 0
+    failed_count = 0
+    progress_key = f"fetch:{filename}:{series_id}"
+    _set_progress(progress_key, done=0, total=len(items), resolved=0, failed=0, running=True)
+    try:
+        resolve_count, failed_count = _resolve_items_batch(ctx, items, progress_key=progress_key)
+    except Exception:
+        resolve_count, failed_count = 0, len(items)
+    finally:
+        if failed_count == 0:
+            _clear_progress(progress_key)
 
     fp = os.path.join(PLAYLIST_DIR, filename + ".json")
     if os.path.isfile(fp):
@@ -918,8 +942,8 @@ def fetch_series_episodes():
     jdata.setdefault("categories", {})
     jdata["categories"].setdefault("series", [])
 
-    # Build minimal episodes for storage
-    new_eps = [{"season_num": e["season_num"], "episode_num": e["episode_num"], "cmd": e["cmd"]} for e in items]
+    # Build minimal episodes for storage (keep both cmd and resolved url)
+    new_eps = [{k: e.get(k) for k in ("season_num", "episode_num", "cmd", "url", "needsResolve") if k in e} for e in items]
 
     channels_added = []
     if category_name:
@@ -944,7 +968,8 @@ def fetch_series_episodes():
     with open(fp, "w") as f:
         json.dump(jdata, f, indent=2)
 
-    return jsonify({"ok":True,"total":len(items),"added":len(channels_added),"items":items})
+    return jsonify({"ok":True,"total":len(items),"added":len(channels_added),
+                    "resolved":resolve_count,"failed":failed_count,"items":items})
 
 
 @app.route("/api/recover-categories", methods=["POST"])
@@ -1006,18 +1031,19 @@ def recover_categories():
 
         expected_total = max(portal_total, actual_total)
         pages = math.ceil(expected_total / max_page_items) if max_page_items else 1
-        if pages <= 1:
-            results.append({"category_name":cat_name,"ok":True,"had_items":len(p1_data),"portal_total":expected_total,"recovered":0,"missing":0,"complete":True})
-            continue
 
         # Build page 1 items
         def parse_item(raw):
-            iid = str(raw.get("id",""))
+            iid = str(raw.get("id", ""))
             if cat_type == "live":
-                return {"id":iid,"name":raw.get("name","Unknown"),"cmd":raw.get("cmd","")}
+                item = {"id": iid, "name": raw.get("name", "Unknown"), "cmd": raw.get("cmd", "")}
             else:
-                cmd = raw.get("cmd","") or raw.get("series_cmd","") or raw.get("url","") or raw.get("link","")
-                return {"id":iid,"name":raw.get("name",raw.get("title","Unknown")),"cmd":cmd}
+                cmd = raw.get("cmd", "") or raw.get("series_cmd", "") or raw.get("url", "") or raw.get("link", "")
+                item = {"id": iid, "name": raw.get("name", raw.get("title", "Unknown")), "cmd": cmd}
+            item["content_type"] = content_type_label
+            if item.get("cmd"):
+                item["needsResolve"] = True
+            return item
 
         all_items = [parse_item(x) for x in p1_data]
         recovered_count = 0
@@ -1048,6 +1074,20 @@ def recover_categories():
                         recovered_count += 1
             else:
                 failed_recovery.append(p)
+
+        # Resolve every channel's stream url now (reusing the authenticated session)
+        resolve_count = 0
+        failed_count = 0
+        if cat_type != "series" and all_items:
+            progress_key = f"fetch:{filename}:{cat_id}"
+            _set_progress(progress_key, done=0, total=len(all_items), resolved=0, failed=0, running=True)
+            try:
+                resolve_count, failed_count = _resolve_items_batch(ctx, all_items, progress_key=progress_key)
+            except Exception:
+                resolve_count, failed_count = 0, len(all_items)
+            finally:
+                if failed_count == 0:
+                    _clear_progress(progress_key)
 
         # Save to JSON
         fp = os.path.join(PLAYLIST_DIR, filename + ".json")
@@ -1099,7 +1139,9 @@ def recover_categories():
             "recovered":recovered_count,
             "missing":max(0, missing),
             "failed_pages":failed_recovery,
-            "complete": missing <= 0 and not failed_recovery
+            "complete": missing <= 0 and not failed_recovery,
+            "resolved":resolve_count,
+            "failed":failed_count,
         })
 
     return jsonify({"ok":True,"results":results})
@@ -1718,7 +1760,7 @@ def _reconstruct_channels(data):
                     "season_num": sn,
                     "episode_num": en,
                     "cmd": ep.get("cmd", ""),
-                    "url": ep.get("cmd", ""),
+                    "url": ep.get("url", "") or ep.get("cmd", ""),
                     "group": cat["name"],
                     "content_type": "series",
                     "needsResolve": True,
@@ -2072,11 +2114,12 @@ def add_category_to_favorites():
             if key in existing_keys:
                 continue
             existing_eps.append({
+                "portal_url": ch.get("portal_url", ""),
+                "mac": ch.get("mac", ""),
                 "season_num": sn,
                 "episode_num": en,
                 "cmd": ch.get("cmd", ""),
-                "portal_url": ch.get("portal_url", ""),
-                "mac": ch.get("mac", ""),
+                "url": ch.get("url", ""),
             })
             if key != (None, None):
                 existing_keys.add(key)
@@ -2098,11 +2141,12 @@ def add_category_to_favorites():
                         sname = re.sub(r'\s+S\d{2,4}\s+E\d{2,4}(?:\s|$)', '', ch.get("name", "")).strip()
                     groups[sid] = {"id": sid if sid != "__unknown__" else "", "name": sname or ch.get("name", ""), "episode": []}
                 groups[sid]["episode"].append({
+                    "portal_url": ch.get("portal_url", ""),
+                    "mac": ch.get("mac", ""),
                     "season_num": ch.get("season_num", 0),
                     "episode_num": ch.get("episode_num", 0),
                     "cmd": ch.get("cmd", ""),
-                    "portal_url": ch.get("portal_url", ""),
-                    "mac": ch.get("mac", ""),
+                    "url": ch.get("url", ""),
                 })
             series_entries = cat_entry.get("series", [])
             existing_map = {s.get("id", ""): s for s in series_entries}
@@ -2129,23 +2173,35 @@ def add_category_to_favorites():
             container_key = {"live": "Channel", "vod": "Movie", "series": "series"}.get(pl_type, "Channel")
             existing = cat_entry.get(container_key, [])
             existing_ids = {ch.get("id", "") for ch in existing if ch.get("id")}
+            existing_cmds = set()
+            for e in existing:
+                c = (e.get("cmd", "") or "").strip()
+                if c.startswith("ffmpeg "):
+                    c = c[7:].strip()
+                if c:
+                    existing_cmds.add(c)
             for ch in channels:
                 ch_id = ch.get("id", "")
                 if ch_id and ch_id in existing_ids:
                     continue
+                ch_cmd = (ch.get("cmd", "") or "").strip()
+                if ch_cmd.startswith("ffmpeg "):
+                    ch_cmd = ch_cmd[7:].strip()
+                if ch_cmd and ch_cmd in existing_cmds:
+                    continue
                 entry = {
                     "id": ch_id,
-                    "name": ch.get("name", ""),
-                    "cmd": ch.get("cmd", ""),
                     "portal_url": ch.get("portal_url", ""),
                     "mac": ch.get("mac", ""),
+                    "name": ch.get("name", ""),
+                    "cmd": ch.get("cmd", ""),
+                    "url": ch.get("url", ""),
                 }
-                if pl_type in ("live", "vod"):
-                    entry["group"] = cat_name
-                    entry["content_type"] = pl_type
                 existing.append(entry)
                 if ch_id:
                     existing_ids.add(ch_id)
+                if ch_cmd:
+                    existing_cmds.add(ch_cmd)
                 added += 1
             cat_entry[container_key] = existing
             cat_entry["count"] = len(existing)
@@ -2155,6 +2211,34 @@ def add_category_to_favorites():
         json.dump(fav, f, indent=2)
 
     return jsonify({"ok": True, "added": added})
+
+@app.route("/api/playlists/favorites/save", methods=["POST"])
+def save_favorites():
+    categories = request.json.get("categories")
+    if not categories or not isinstance(categories, dict):
+        return jsonify({"ok": False, "error": "Missing categories"}), 400
+
+    fp = os.path.join(PLAYLIST_DIR, "Favorites.json")
+    os.makedirs(PLAYLIST_DIR, exist_ok=True)
+
+    fav = {}
+    if os.path.isfile(fp):
+        with open(fp, "r") as f:
+            fav = json.load(f)
+
+    fav["name"] = fav.get("name", "Favorites")
+    fav["source"] = fav.get("source", "portal")
+    fav["updated"] = time.time()
+    fav["categories"] = {
+        "live": categories.get("live", []),
+        "vod": categories.get("vod", []),
+        "series": categories.get("series", []),
+    }
+
+    with open(fp, "w") as f:
+        json.dump(fav, f, indent=2)
+
+    return jsonify({"ok": True})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)

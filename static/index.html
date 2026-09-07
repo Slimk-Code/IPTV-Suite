@@ -29,7 +29,8 @@
 
   /* ── SIDEBAR ── */
   .sidebar { width:228px; min-width:228px; background:var(--bg); display:flex; flex-direction:column; border-right:1px solid var(--border); height:100%; position:relative; z-index:10; }
-  .sb-footer{padding:8px 14px;border-top:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;gap:2px}
+  .sb-footer{padding:8px 14px;border-top:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;gap:2px;cursor:pointer;transition:background .15s}
+  .sb-footer:hover{background:var(--surface)}
   .sb-top { padding:12px 14px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); flex-shrink:0; }
   .user-trigger { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; }
   .avatar { width:26px; height:26px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:#fff; flex-shrink:0; }
@@ -668,10 +669,10 @@ th.srt:hover .sort-arrow { color:var(--accent-active); }
     </div>
     <div class="cat-context" id="plListMenu"></div>
 
-    <div class="sb-footer" id="sb-footer">
+    <div class="sb-footer" id="sb-footer" onclick="openEditorWithPlaylist()" title="Open in M3U Editor">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
         <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">PLAYLIST</span>
-        <i class="ti ti-plus" style="font-size:13px;color:var(--muted);cursor:pointer" onclick="togglePlaylistMenu(event)"></i>
+        <i class="ti ti-plus" style="font-size:13px;color:var(--muted);cursor:pointer" onclick="event.stopPropagation();togglePlaylistMenu(event)"></i>
       </div>
       <div id="sb-footer-name" style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%"></div>
       <span id="sb-expiry-label" style="color:var(--muted);font-size:10px">Expires: —</span>
@@ -1136,8 +1137,7 @@ header {
               <span id="cat-sel-count" style="color:var(--text);font-weight:600">0</span> selected
             </span>
             <button class="btn btn-ghost btn-sm" onclick="clearCatSelection()">Clear</button>
-            <button class="btn btn-ghost btn-sm" id="fetch-counts-btn" onclick="fetchAllCategoryCounts()">Fetch Counts</button>
-            <button class="btn btn-ghost btn-sm" id="recover-cats-btn" onclick="recoverIncompleteCategories()" disabled>Recover Incomplete</button>
+            <button class="btn btn-primary btn-sm" id="fetch-counts-btn" onclick="fetchAllCategoryCounts()">Fetch Counts</button>
           </div>
           <div class="cat-select-bar">
             <label>
@@ -1372,7 +1372,6 @@ async function loadCategories(){
     document.getElementById('cat-picker').style.display='flex';
     updateSaveBtnState();
     switchCatTab('live');
-    updateRecoverBtnState();
     return true;
   } catch(err){ showToast('error','✗ '+err.message, 5000); return false; }
 }
@@ -1448,12 +1447,6 @@ function renderCatList(){
     row.querySelector('.cat-cb').addEventListener('change', e=>{ toggleCat(key, e.target.checked); });
   });
 }
-function toggleCatRow(key, el){
-  const cb = el.querySelector('input');
-  if(event.target===cb) return;
-  cb.checked = !cb.checked;
-  toggleCat(key, cb.checked);
-}
 function toggleCat(key, checked){
   if(checked) catSel.add(key); else catSel.delete(key);
   const row = document.querySelector('.cat-row[data-key="'+key+'"]');
@@ -1493,7 +1486,6 @@ async function fetchAllCategoryCounts(){
     });
     applyCatFilter();
     updateCatBadges();
-    updateRecoverBtnState();
     updateSaveBtnState();
     dismissToast();
     showToast('success','✓ Fetched: '+succeeded+' succeeded'+(failed?', '+failed+' failed':''),4000);
@@ -1523,21 +1515,10 @@ async function fetchSingleCategoryCount(type, catId, btnEl){
     arr.forEach(function(c){if(String(c.id)===String(catId))c.count=d.count;});
     applyCatFilter();
     updateCatBadges();
-    updateRecoverBtnState();
     updateSaveBtnState();
     if(d.count>0){showToast('success','✓ Found '+d.count.toLocaleString()+' items',3000);}
     else{showToast('info','0 items — retry available',3000);}
   }catch(e){dismissToast();showToast('error','✗ '+e.message,5000);btnEl.disabled=false;btnEl.textContent='⟳';}
-}
-
-function hasIncompleteCategories(){
-  var all=cats.live.concat(cats.vod,cats.series);
-  return all.some(function(c){ return c.count>0 && c.saved!==null && c.saved!==undefined && c.saved<c.count; });
-}
-
-function updateRecoverBtnState(){
-  var btn=document.getElementById('recover-cats-btn');
-  if(btn) btn.disabled=!hasIncompleteCategories();
 }
 
 function allCategoriesFetched(){
@@ -1549,37 +1530,6 @@ function updateSaveBtnState(){
   var btn=document.getElementById('dl-catlist-btn');
   if(!btn) return;
   btn.disabled=!allCategoriesFetched();
-}
-
-async function recoverIncompleteCategories(){
-  if(!portalUrl||!mac||!_activeFilename) return;
-  var todo=[];
-  function pushIncomplete(arr,type){
-    arr.forEach(function(c){
-      if(c.count>0 && c.saved!==null && c.saved!==undefined && c.saved<c.count)
-        todo.push({type:type,category_id:c.id,category_name:c.name,filename:_activeFilename,portal_total:c.count});
-    });
-  }
-  pushIncomplete(cats.live,'live');
-  pushIncomplete(cats.vod,'vod');
-  pushIncomplete(cats.series,'series');
-  if(!todo.length){ showToast('info','No incomplete categories',3000); return; }
-  var btn=document.getElementById('recover-cats-btn');
-  if(btn) btn.disabled=true;
-  showToast('loading','Recovering '+todo.length+' categories…',0);
-  try{
-    var r=await fetch('/api/recover-categories',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:portalUrl,mac,categories:todo})});
-    var d=await r.json();
-    dismissToast();
-    if(!d.ok){ showToast('error','✗ '+(d.error||'Failed'),5000); if(btn)btn.disabled=false; return; }
-    var reports=[];
-    d.results.forEach(function(res){
-      if(res.ok && res.complete) reports.push(res.category_name+' ✓');
-      else if(res.ok && res.recovered>0) reports.push(res.category_name+' (+'+res.recovered+')');
-    });
-    showToast('success','Recovery: '+(reports.length?reports.join(', '):'nothing to recover'),6000);
-  }catch(e){dismissToast();showToast('error','✗ '+e.message,5000);}
-  if(btn) btn.disabled=!hasIncompleteCategories();
 }
 
 async function downloadCategoryList(){
@@ -1599,18 +1549,6 @@ async function downloadCategoryList(){
 }
 
 const TAB_LABELS = {live:'Live TV',vod:'VOD',series:'Series'};
-function switchTab(tab){
-  activeTab=tab;
-  document.querySelectorAll('#tabs-bar .ct-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  allItems=store[tab]||[];
-  document.getElementById('convert-btn').innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Save '+TAB_LABELS[tab]+' as Playlist';
-  document.getElementById('search-input').value='';
-  tabScrollPos[tab] = tabScrollPos[tab] || 0;
-  applyFilter();
-  document.getElementById('virtual-scroll').scrollTop = 0;
-  clearRows();
-  renderVirtualList();
-}
 const tabScrollPos = {live:0, vod:0, series:0};
 let searchSavedPos = 0;
 let isSearching = false;
@@ -1644,13 +1582,7 @@ function doFilter(rawQ){
   else { renderVirtualList(); }
 }
 function applyFilter(){ doFilter(); }
-function resetScroll(){ searchSavedPos = 0; isSearching = false; tabScrollPos[activeTab] = 0; document.getElementById('virtual-scroll').scrollTop = 0; clearRows(); renderVirtualList(); }
 function clearRows(){ document.getElementById('virtual-spacer').querySelectorAll('.ch-row').forEach(e=>e.remove()); }
-function onVirtualScroll(){
-  const pos = document.getElementById('virtual-scroll').scrollTop;
-  if(!isSearching) tabScrollPos[activeTab] = pos;
-  renderVirtualList();
-}
 function renderVirtualList(){
   const scroll = document.getElementById('virtual-scroll');
   const spacer = document.getElementById('virtual-spacer');
@@ -1688,8 +1620,6 @@ function toggleItem(id,checked){
   if(row){ row.classList.toggle('selected',checked); row.querySelector('input').checked=checked; }
   updateStats(); updateSelectAllCb();
 }
-function toggleSelectAll(checked){ filtered.forEach(c=>{if(checked)selIds.add(c.id);else selIds.delete(c.id);}); clearRows(); renderVirtualList(); }
-function clearSelection(){ selIds.clear(); clearRows(); renderVirtualList(); }
 function updateSelectAllCb(){
   const sel = filtered.filter(c=>selIds.has(c.id)).length;
   const cb = document.getElementById('select-all-cb');
@@ -1763,15 +1693,6 @@ async function streamConvertSSE(body, filename, doneMsg, partialDoneMsg){
     convertCtrl.abortController = null;
   }
 }
-async function startConvert(){
-  if(!selIds.size) return;
-  const selected = store[activeTab].filter(c=>selIds.has(c.id));
-  document.getElementById('convert-btn').disabled=true;
-  try{
-    await streamConvertSSE({portal_url:portalUrl, mac, channels:selected, format:'json'}, null, '✓ Playlist saved!');
-  }catch(_){}
-  finally{ document.getElementById('convert-btn').disabled=selIds.size===0; }
-}
 
 function openStreamModal(ch){
   var el=document.getElementById('stream-modal');if(el)el.classList.add('visible');
@@ -1814,7 +1735,6 @@ function closeStreamModal(){ document.getElementById('stream-modal').classList.r
 function copyStreamUrl(){ const input=document.getElementById('stream-url-input'); if(!input.value) return; navigator.clipboard.writeText(input.value).then(()=>{ const btn=input.nextElementSibling; btn.textContent='✓ Copied'; setTimeout(()=>{btn.textContent='Copy';},1500); }); }
 function copyProxyUrl(){ const input=document.getElementById('proxy-url-input'); if(!input.value) return; navigator.clipboard.writeText(input.value).then(()=>{ const btn=input.nextElementSibling; btn.textContent='✓ Copied'; setTimeout(()=>{btn.textContent='Copy';},1500); }); }
 document.addEventListener('keydown',e=>{if(e.key==='Escape') closeStreamModal();});
-function setStatus(type,msg){ showToast(type==='loading'?'loading':type, msg, type==='loading'?0:4000); }
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 updateStats();
 </script>
@@ -2003,6 +1923,10 @@ updateStats();
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Export
           </button>
+          <button class="btn" id="ed-chan-fav-btn" style="background:var(--accent);color:#fff" onclick="edMoveToFavorites()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Favorite
+          </button>
         </div>
       </div>
     </div>
@@ -2094,8 +2018,8 @@ async function edImportChosen(inp){
     var arr = edGroupChannels[g] = edGroupChannels[g] || [];
     var idx = -1;
     arr.forEach(function(x,i){ if(x.url && x.url===ch.url) idx=i; });
-    if(idx>=0){ arr[idx] = {name:ch.name, url:ch.url, group:g, logo:ch.logo||'', genre:ch.genre||'', content_type:'live'}; replaced++; }
-    else { arr.push({name:ch.name, url:ch.url, group:g, logo:ch.logo||'', genre:ch.genre||'', content_type:'live'}); added++; }
+    if(idx>=0){ arr[idx] = {id:ch.id||'', name:ch.name, url:ch.url||ch.cmd||'', cmd:ch.cmd||ch.url, group:g, logo:ch.logo||'', genre:ch.genre||'', portal_url:ch.portal_url||'', mac:ch.mac||'', content_type:'live'}; replaced++; }
+    else { arr.push({id:ch.id||'', name:ch.name, url:ch.url||ch.cmd||'', cmd:ch.cmd||ch.url, group:g, logo:ch.logo||'', genre:ch.genre||'', portal_url:ch.portal_url||'', mac:ch.mac||'', content_type:'live'}); added++; }
   });
   edCats.live = Object.keys(edGroupChannels).map(function(g,i){
     return {id:'g'+i, name:g, count:edGroupChannels[g].length, cached:true, type:'live'};
@@ -2362,6 +2286,84 @@ function edExportChannelsM3U(){
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(a.href);
   showToast('success','Exporting '+cnt.toLocaleString()+' '+typeNames[type]+' channels', 3000);
+}
+function edBuildFavCategories(){
+  const cats = {live:[], vod:[], series:[]};
+  ['live','vod'].forEach(function(ct){
+    (edCats[ct]||[]).forEach(function(c){
+      const chs = edGroupChannels[c.name]||[];
+      if(!chs.length) return;
+      const containerKey = ct==='live'?'Channel':'Movie';
+      cats[ct].push({id:c.id||'', name:c.name, cached:true, count:chs.length, [containerKey]: chs.map(ch=>({id:ch.id||'', portal_url:ch.portal_url||'', mac:ch.mac||'', name:ch.name, cmd:ch.cmd||ch.url||'', url:ch.url||''}))});
+    });
+  });
+  (edCats.series||[]).forEach(function(c){
+    const chs = edGroupChannels[c.name]||[];
+    if(!chs.length) return;
+    const bySid = {};
+    chs.forEach(function(ch){
+      const sid = ch.series_id||'__unknown__';
+      if(!bySid[sid]) bySid[sid] = {id: sid==='__unknown__'?'':sid, name: ch.series_name || String(ch.name).replace(/\s+S\d{2,4}\s+E\d{2,4}(?:\s|$)/,'').trim() || ch.name, episode: []};
+      bySid[sid].episode.push({portal_url: ch.portal_url||'', mac: ch.mac||'', season_num: ch.season_num||0, episode_num: ch.episode_num||0, cmd: ch.cmd||ch.url||'', url: ch.url||''});
+    });
+    cats.series.push({id:c.id||'', name:c.name, cached:true, count:Object.keys(bySid).length, series:Object.keys(bySid).map(function(k){return bySid[k];})});
+  });
+  return cats;
+}
+async function edMoveToFavorites(){
+  if(edActiveM3uId === 'Favorites'){
+    const cats = edBuildFavCategories();
+    if(!cats.live.length && !cats.vod.length && !cats.series.length){ showToast('info','Nothing to save to favorites', 3000); return; }
+    showToast('loading','Updating Favorites file…',0,false);
+    try{
+      const r = await fetch('/api/playlists/favorites/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({categories:cats})});
+      const d = await r.json();
+      if(d.ok){ showToast('success','✓ Favorites updated',4000); }
+      else { showToast('error','Update failed: '+(d.error||''),4000); return; }
+    }catch(e){ showToast('error','Update failed: '+e.message,4000); return; }
+    loadPlaylists();
+    return;
+  }
+  const type = edCatTab;
+  const typeNames = {live:'Live',vod:'VOD',series:'Series'};
+  const cats = edCats[type] || [];
+  const groups = cats.filter(c=>(edGroupChannels[c.name]||[]).length);
+  if(!groups.length){ showToast('info','No channels to add to favorites', 3000); return; }
+  showToast('loading','Adding '+typeNames[type]+' groups to favorites…',0,false);
+  let addedTotal = 0, errCount = 0;
+  for(let i=0;i<groups.length;i++){
+    const gname = groups[i].name;
+    const chs = edGroupChannels[gname] || [];
+    const sample = chs[0] || {};
+    const body = {
+      type: type,
+      cat_name: gname,
+      cat_id: sample._catId || '',
+      channels: chs.map(ch=>({
+        id: ch.id||'',
+        name: ch.name,
+        cmd: ch.cmd||ch.url||'',
+        url: ch.url||'',
+        group: gname,
+        content_type: ch.content_type||type,
+        portal_url: ch.portal_url||sample.portal_url||'',
+        mac: ch.mac||sample.mac||'',
+        series_id: ch.series_id||'',
+        season_num: ch.season_num||0,
+        episode_num: ch.episode_num||0,
+        series_name: ch.series_name||''
+      })),
+      source_playlist_id: edActiveM3uId
+    };
+    try{
+      const r = await fetch('/api/playlists/favorites/add-category',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const d = await r.json();
+      if(d.ok){ addedTotal += (d.added||0); } else { errCount++; console.warn('fav add failed', gname, d); }
+    }catch(e){ errCount++; console.warn('fav add error', gname, e); }
+  }
+  if(errCount) showToast('error','Added '+addedTotal.toLocaleString()+' · '+errCount+' group(s) failed',4000);
+  else showToast('success','✓ Added '+addedTotal.toLocaleString()+' '+typeNames[type]+' channels to favorites',4000);
+  loadPlaylists();
 }
 function edOpenCatMenu(el, e, name, type){
   e.stopPropagation();
@@ -2662,17 +2664,9 @@ function edSetCatBadge(kind, val){
               <button class="sst-close" onclick="closeShareToast()">✕</button>
               <div class="sst-name" id="sst-name"></div>
               <div class="sst-label" style="color:var(--success)">PROXY URL</div>
-              <div class="sst-row"><input id="sst-proxy" readonly><button onclick="copyEl('sst-proxy')">Copy</button></div>
+              <div class="sst-row"><input id="sst-proxy" readonly><button onclick="copyEl('sst-proxy')">Copy</button><button onclick="openVlcUrl('sst-proxy')">Open in VLC</button></div>
               <div class="sst-label" style="color:#808080">DIRECT URL</div>
-              <div class="sst-row"><input id="sst-direct" readonly><button onclick="copyEl('sst-direct')">Copy</button></div>
-            </div>
-            <div class="sub-share-toast" id="sub-vlc-toast">
-              <button class="sst-close" onclick="closeVlcToast()">✕</button>
-              <div class="sst-name" id="vlc-name"></div>
-              <div class="sst-label" style="color:var(--success)">PROXY URL</div>
-              <div class="sst-row"><input id="vlc-proxy" readonly><button onclick="openVlcUrl('vlc-proxy')">Open in VLC</button></div>
-              <div class="sst-label" style="color:#808080">DIRECT URL</div>
-              <div class="sst-row"><input id="vlc-direct" readonly><button onclick="openVlcUrl('vlc-direct')">Open in VLC</button></div>
+              <div class="sst-row"><input id="sst-direct" readonly><button onclick="copyEl('sst-direct')">Copy</button><button onclick="openVlcUrl('sst-direct')">Open in VLC</button></div>
             </div>
             <input type="file" id="sub-srt-input" accept=".srt,.vtt" style="display:none">
           </div>
@@ -2690,7 +2684,6 @@ function edSetCatBadge(kind, val){
             <div class="player-ctrls">
               <div class="np-actions" style="display:flex;gap:4px;margin-right:8px">
                 <button class="np-btn" title="Share" onclick="shareCurrent()"><i class="ti ti-share"></i></button>
-                <button class="np-btn" title="Open in VLC" onclick="openInVLC()"><i class="ti ti-brand-vlc"></i></button>
                 <button class="np-btn" title="Download" onclick="downloadCurrent()"><i class="ti ti-download"></i></button>
               </div>
               <button class="ctrl-btn" id="sub-srt-btn-bar" onclick="toggleSRT()" title="Subtitles"><i class="ti ti-subtitles"></i></button>
@@ -2860,24 +2853,6 @@ function hideCatContext() {
   menu.classList.remove('visible');
   _activeCatCtx = null;
 }
-function showSeriesContext(el,e,groupName,seriesName,seriesId){
-  e.stopPropagation();
-  hideCatContext();
-  var menu=document.getElementById('catContextMenu');
-  menu.dataset.type='series';menu.dataset.name=groupName;menu.dataset.seriesName=seriesName;menu.dataset.seriesId=seriesId;
-  var rect=el.getBoundingClientRect();
-  menu.style.left=(rect.right+4)+'px';menu.style.top=rect.top+'px';
-  menu.classList.add('visible');_activeCatCtx=menu;
-  ['ctx-rename','ctx-edit'].forEach(function(id){
-    var el2=document.getElementById(id);if(!el2)return;
-    el2.style.opacity='0.4';el2.style.pointerEvents='none';el2.style.cursor='default';
-  });
-  var favEl=document.getElementById('ctx-add-fav');if(!favEl)return;
-  var favDisabled=_activeFilename==='Favorites';
-  favEl.style.opacity=favDisabled?'0.4':'1';
-  favEl.style.pointerEvents=favDisabled?'none':'auto';
-  favEl.style.cursor=favDisabled?'default':'pointer';
-}
 function addCategoryToFavorites(){
   var menu=document.getElementById('catContextMenu');
   var type=menu.dataset.type, name=menu.dataset.name, seriesName=menu.dataset.seriesName, seriesId=menu.dataset.seriesId;
@@ -2889,7 +2864,7 @@ function addCategoryToFavorites(){
   if(seriesName&&seriesId) realChs=realChs.filter(function(ch){return String(ch.series_id)===String(seriesId);});
   if(!realChs.length)return showToast('error','No channels in this category',2500);
   var sample=realChs[0]||{};
-  var body={type:type,cat_name:seriesName||name,cat_id:sample._catId||'',channels:realChs.map(function(ch){return{id:ch.id,name:ch.name,cmd:ch.cmd,group:ch.group||name,content_type:ch.content_type||type,portal_url:ch.portal_url||sample.portal_url||'',mac:ch.mac||sample.mac||'',series_id:ch.series_id||'',season_num:ch.season_num||0,episode_num:ch.episode_num||0};}),source_playlist_id:_activeFilename};
+  var body={type:type,cat_name:seriesName||name,cat_id:sample._catId||'',channels:realChs.map(function(ch){return{id:ch.id,name:ch.name,cmd:ch.cmd,url:ch.url||'',group:ch.group||name,content_type:ch.content_type||type,portal_url:ch.portal_url||sample.portal_url||'',mac:ch.mac||sample.mac||'',series_id:ch.series_id||'',season_num:ch.season_num||0,episode_num:ch.episode_num||0};}),source_playlist_id:_activeFilename};
   if(seriesName) body.series_name=seriesName;
   if(seriesId) body.series_id=seriesId;
   fetch('/api/playlists/favorites/add-category',{
@@ -2995,8 +2970,19 @@ function syncSidebarCategory(){
   var a = loadedChannels[type] && loadedChannels[type][name];
   var pUrl = (a && a[0] && a[0].portal_url) || portalUrl;
   var pMac = (a && a[0] && a[0].mac) || mac;
+  var progressKey = 'fetch:'+_activeFilename+':'+catId;
   showToast('loading','Syncing '+name+'…',0,false);
+  var syncPollTimer = setInterval(function(){
+    fetch('/api/fetch-progress?key='+encodeURIComponent(progressKey)).then(function(r){return r.json();}).then(function(p){
+      if(!p.running) return;
+      if(p.total>0 && p.done>0){
+        var msg = 'Resolving '+p.done+'/'+p.total+(p.failed?' ('+p.failed+' failed)':'');
+        showToast('loading',name+': '+msg+'…',0,false);
+      }
+    }).catch(function(){});
+  },600);
   fetch('/api/recover-categories',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:pUrl,mac:pMac,categories:[{type:type,category_id:catId,category_name:name,filename:_activeFilename,portal_total:portalTotal}]})}).then(function(r){return r.json();}).then(function(d){
+    clearInterval(syncPollTimer);
     dismissToast();
     if(!d.ok){showToast('error',(d.error||'Sync failed'),5000);return;}
     var res = d.results && d.results[0];
@@ -3006,17 +2992,17 @@ function syncSidebarCategory(){
       _catFetchState[type][name].saved = res.total;
       _catFetchState[type][name].portal_total = res.portal_total;
       if(res.complete){
-        showToast('success','✓ '+res.total+' channels synced',3000);
+        showToast('success','✓ '+res.total+' channels synced'+(res.failed&&res.failed!==res.total?(' ('+res.failed+' unresolved)'):''),4000);
         var container = document.querySelector('.sub-cat-items[data-parent="'+type+'"]');
         if(container){
           var nav = container.querySelector('.nav[title="'+escA(name)+'"]');
           if(nav){ var ic = nav.querySelector('.ti-cloud-download,.ti-folder'); if(ic) ic.className = 'ti ti-folder'; }
         }
-      }else showToast('warning','⚠ Recovered '+res.recovered+', still missing '+res.missing,6000);
+      }else showToast('warning','⚠ Recovered '+res.recovered+', still missing '+res.missing+(res.failed?(' ('+res.failed+' unresolved)'):''),6000);
     }else{
       showToast('error','Sync failed for '+name,5000);
     }
-  }).catch(function(e){dismissToast();showToast('error','Sync request failed',5000);});
+  }).catch(function(e){clearInterval(syncPollTimer);dismissToast();showToast('error','Sync request failed',5000);});
 }
 function togglePlaylistMenu(e){
   e.stopPropagation();
@@ -3074,12 +3060,6 @@ function applyHideUncached(){
 }
 
 /* ── Settings tabs ── */
-function showSettingsTab(el, key) {
-  el.parentElement.querySelectorAll('.trash-tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  document.querySelectorAll('.settings-subcontent').forEach(s => s.classList.remove('active'));
-  document.getElementById('settings-' + key).classList.add('active');
-}
 function loadVlcSettings(){
   fetch('/api/settings').then(function(r){return r.json();}).then(function(d){
     if(d.vlc_path) document.getElementById('vlc-path-input').value=d.vlc_path;
@@ -3168,14 +3148,6 @@ function sortTable(col, tbodyId) {
   rows.forEach(function(r) { tbody.appendChild(r); });
 }
 
-function applySavedSorts() {
-  var state = JSON.parse(localStorage.getItem('mudeng_sort_state') || '{}');
-  for (var tbodyId in state) {
-    if (document.getElementById(tbodyId)) {
-      sortTable(state[tbodyId].col, tbodyId);
-    }
-  }
-}
 
 /* ══════════════════════════════════════════════
    CALC LOGIC
@@ -3197,46 +3169,10 @@ function buildSearchIndex() {
    return idx;
 }
 
-function filterTable(table, q) {
-  var tbody = table.querySelector('tbody');
-  var rows = tbody.querySelectorAll('tr');
-  var visibleCount = 0;
-  var wrap = table.parentNode;
-  var existingMsg = wrap.querySelector('.td-empty-msg');
-  if (existingMsg) existingMsg.remove();
-  rows.forEach(function(row) {
-    if (!q) { row.style.display = ''; visibleCount++; return; }
-    var match = false;
-    row.querySelectorAll('td').forEach(function(td) {
-      if (td.textContent.toLowerCase().indexOf(q) !== -1) match = true;
-    });
-    row.style.display = match ? '' : 'none';
-    if (match) visibleCount++;
-  });
-  if (visibleCount === 0 && q) {
-    var msg = document.createElement('div');
-    msg.className = 'td-empty-msg';
-    msg.textContent = 'No results found for "' + q + '"';
-    wrap.appendChild(msg);
-  }
-}
 
 /* ── Detail card ── */
 var detailCard = document.getElementById('searchDetail');
 var currentDetailKey = null;
-function showDetail(entry, el) {
-  if (currentDetailKey === entry.key) { hideDetail(); return; }
-  currentDetailKey = entry.key;
-  document.getElementById('sdTitle').textContent    = entry.label;
-  document.getElementById('sdCategory').textContent = entry.category;
-  document.getElementById('sdValueNum').textContent = entry.getValue();
-  document.getElementById('sdUnit').textContent     = entry.unit;
-  document.getElementById('sdDesc').textContent     = entry.description;
-  var rect = el.getBoundingClientRect();
-  detailCard.style.top  = Math.max(8, rect.top) + 'px';
-  detailCard.style.left = (228 + 16) + 'px';
-  detailCard.classList.add('visible');
-}
 function hideDetail() { detailCard.classList.remove('visible'); currentDetailKey = null; }
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') { hideDetail(); }
@@ -3283,39 +3219,6 @@ var TANK_SURFACE = [];
 var TANK_SURFACE_XFER = [];
 var TANK_SURFACE_ALERTS = [];
 
-function loadTankSurface(){
-  try{
-    var d=localStorage.getItem('mudeng_tank_surface');
-    if(d)TANK_SURFACE=JSON.parse(d);
-    var t=localStorage.getItem('mudeng_tank_surface_xfer');
-    if(t)TANK_SURFACE_XFER=JSON.parse(t);
-    var a=localStorage.getItem('mudeng_tank_surface_alerts');
-    if(a)TANK_SURFACE_ALERTS=JSON.parse(a);
-  }catch(e){}
-  if(!TANK_SURFACE||!TANK_SURFACE.length){
-    TANK_SURFACE=[
-      {name:'Tank 1',product:'Crude',capacity:10000,current:7500,status:'Active'},
-      {name:'Tank 2',product:'Water',capacity:8000,current:3200,status:'Active'},
-      {name:'Tank 3',product:'Oil',capacity:12000,current:10200,status:'Active'}
-    ];
-  }
-  if(!TANK_SURFACE_XFER||!TANK_SURFACE_XFER.length){
-    TANK_SURFACE_XFER=[
-      {date:'2024-06-01',from:'Tank 1',to:'Tank 3',vol:500,status:'Complete'},
-      {date:'2024-06-02',from:'Tank 2',to:'Tank 1',vol:300,status:'Pending'}
-    ];
-  }
-  if(!TANK_SURFACE_ALERTS||!TANK_SURFACE_ALERTS.length){
-    TANK_SURFACE_ALERTS=[
-      {date:'2024-06-01',tank:'Tank 1',type:'High Level',msg:'Level above 90%',sev:'Warning'},
-      {date:'2024-06-02',tank:'Tank 2',type:'Low Level',msg:'Level below 20%',sev:'Critical'}
-    ];
-  }
-}
-function saveTankSurface(){
-  try{localStorage.setItem('mudeng_tank_surface',JSON.stringify(TANK_SURFACE));localStorage.setItem('mudeng_tank_surface_xfer',JSON.stringify(TANK_SURFACE_XFER));localStorage.setItem('mudeng_tank_surface_alerts',JSON.stringify(TANK_SURFACE_ALERTS))}catch(e){}
-  showToast('success','Tank data saved',3000);
-}
 function updateTankSurfaceCards(){
   var c=TANK_SURFACE.length;
   var tv=0;
@@ -3339,11 +3242,6 @@ function renderTankSurfaceTable(){
   tbody.innerHTML=h;
 }
 function tdFillClass(fill){return fill>85?'td-badge-red':(fill<20?'td-badge-amber':'td-badge-green')}
-function addTankSurfaceRow(){
-  var n='Tank '+(TANK_SURFACE.length+1);
-  TANK_SURFACE.push({name:n,product:'Crude',capacity:5000,current:0,status:'Active'});
-  renderTankSurfaceTable();updateTankSurfaceCards();showToast('success','Added '+n,3000);
-}
 function editTankSurface(idx){
   var d=TANK_SURFACE[idx];
   var name=prompt('Tank name:',d.name);if(name&&name.trim())d.name=name.trim();
@@ -3356,15 +3254,6 @@ function deleteTankSurface(idx){
   if(!confirm('Delete '+TANK_SURFACE[idx].name+'?'))return;
   TANK_SURFACE.splice(idx,1);
   renderTankSurfaceTable();updateTankSurfaceCards();showToast('success','Tank deleted',3000);
-}
-function resetTankSurface(){
-  TANK_SURFACE=[
-    {name:'Tank 1',product:'Crude',capacity:10000,current:7500,status:'Active'},
-    {name:'Tank 2',product:'Water',capacity:8000,current:3200,status:'Active'},
-    {name:'Tank 3',product:'Oil',capacity:12000,current:10200,status:'Active'}
-  ];
-  TANK_SURFACE_XFER=[];TANK_SURFACE_ALERTS=[];
-  renderTankSurfaceTable();updateTankSurfaceCards();showToast('success','All tank data reset',3000);
 }
 
 /* ── Tank Mgmt ── */
@@ -3393,15 +3282,6 @@ function renderMgmtTankTable(){
   }
   tbody.innerHTML=h;
 }
-function switchMgmtTab(tab,btn){
-  document.querySelectorAll('#mgmtTabs .mgmt-pill').forEach(function(b){b.classList.remove('active')});
-  if(btn)btn.classList.add('active');
-  document.getElementById('mgmtOverview').style.display=tab==='overview'?'block':'none';
-  document.getElementById('mgmtTransfers').style.display=tab==='transfers'?'block':'none';
-  document.getElementById('mgmtAlerts').style.display=tab==='alerts'?'block':'none';
-  if(tab==='transfers')renderMgmtTransfers();
-  if(tab==='alerts')renderMgmtAlerts();
-}
 function renderMgmtTransfers(){
   var tbody=document.getElementById('transferTableBody');
   if(!tbody)return;
@@ -3422,57 +3302,11 @@ function renderMgmtAlerts(){
   }
   tbody.innerHTML=h;
 }
-function addMgmtTransfer(){
-  var from=prompt('From tank:','Tank 1');
-  var to=prompt('To tank:','Tank 2');
-  var vol=prompt('Volume (bbl):','100');
-  if(from&&to&&vol){
-    TANK_SURFACE_XFER.push({date:new Date().toISOString().slice(0,10),from:from,to:to,vol:parseFloat(vol),status:'Pending'});
-    renderMgmtTransfers();showToast('success','Transfer added',3000);
-  }
-}
-function loadMgmtData(){
-  renderMgmtTankTable();updateMgmtStatCards();
-}
 
 /* ── Toast ── */
 
 
 /* ── Analytics chart ── */
-function drawVolumeChart() {
-  var canvas = document.getElementById('volumeChart');
-  if (!canvas) return;
-  var ctx = canvas.getContext('2d');
-  var dpr = window.devicePixelRatio || 1;
-  var rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
-  ctx.scale(dpr, dpr);
-  var data   = [65,78,90,81,96,85,102,88,95,110,105,120];
-  var labels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var pad = 40, cW = rect.width - pad*2, cH = rect.height - pad*2;
-  var mx = Math.max.apply(null,data) * 1.1;
-  ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1;
-  for (var i=0;i<=4;i++) { var y = pad + cH/4*i; ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(pad+cW,y); ctx.stroke(); }
-  ctx.strokeStyle = '#F40612'; ctx.lineWidth = 2.5; ctx.beginPath();
-  for (var i=0;i<data.length;i++) { var x=pad+cW/(data.length-1)*i, y=pad+cH-(data[i]/mx)*cH; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }
-  ctx.stroke();
-  // gradient fill
-  ctx.beginPath();
-  for (var i=0;i<data.length;i++) { var x=pad+cW/(data.length-1)*i, y=pad+cH-(data[i]/mx)*cH; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }
-  ctx.lineTo(pad+cW,pad+cH); ctx.lineTo(pad,pad+cH); ctx.closePath();
-  var grd = ctx.createLinearGradient(0,pad,0,pad+cH);
-  grd.addColorStop(0,'rgba(244,6,18,0.25)'); grd.addColorStop(1,'rgba(244,6,18,0)');
-  ctx.fillStyle = grd; ctx.fill();
-  // dots + labels
-  for (var i=0;i<data.length;i++) {
-    var x=pad+cW/(data.length-1)*i, y=pad+cH-(data[i]/mx)*cH;
-    ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2);
-    ctx.fillStyle = '#141414'; ctx.fill();
-    ctx.strokeStyle = '#F40612'; ctx.lineWidth = 2; ctx.stroke();
-  }
-  ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.font = '11px Inter,sans-serif'; ctx.textAlign = 'center';
-  labels.forEach(function(l,i) { ctx.fillText(l, pad+cW/(labels.length-1)*i, pad+cH+18); });
-}
 
 
 
@@ -3538,7 +3372,7 @@ function ilClearMAlert(){document.getElementById('il-modal-err').classList.remov
 function ilSwitchTab(tab,btn){
   S.currentTab=tab;
   var p=btn.closest('.modal');
-  p.querySelectorAll('.mtab').forEach((t,i)=>t.classList.toggle('active',['m3u-url','m3u-file','xtream','stalker'][i]===tab));
+  p.querySelectorAll('.mtab').forEach((t,i)=>t.classList.toggle('active',['m3u-url','m3u-file'][i]===tab));
   p.querySelectorAll('.tc').forEach(tc=>tc.classList.toggle('active',tc.id==='tc-'+tab));
   ilClearMAlert();
 }
@@ -3568,18 +3402,6 @@ async function ilSubmitPlaylist(){
       if(!S.selectedFile){showErr('Please select an M3U file.');btn.disabled=false;sp.style.display='none';txt.textContent='Add Playlist';return;}
       var fd=new FormData();fd.append('file',S.selectedFile);fd.append('name',document.getElementById('il-m3u-file-name').value||'My Playlist');
       r=await fetch('/api/add/m3u-file',{method:'POST',body:fd});d=await r.json();
-    }else if(S.currentTab==='xtream'){
-      var ct=[].slice.call(document.querySelectorAll('.il-xc-ct:checked')).map(function(c){return c.value;});
-      r=await fetch('/api/add/xtream',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({name:document.getElementById('il-xc-name').value,url:document.getElementById('il-xc-url').value,
-          username:document.getElementById('il-xc-user').value,password:document.getElementById('il-xc-pass').value,content_types:ct})});
-      d=await r.json();
-    }else if(S.currentTab==='stalker'){
-      var ct=[].slice.call(document.querySelectorAll('.il-stk-ct:checked')).map(function(c){return c.value;});
-      r=await fetch('/api/add/stalker',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({name:document.getElementById('il-stk-name').value,portal_url:document.getElementById('il-stk-url').value,
-          mac:document.getElementById('il-stk-mac').value,content_types:ct})});
-      d=await r.json();
     }
     if(!d.ok)showErr(d.error||'Failed to add playlist.');
     else{showOk('\u2713 Added '+d.count+' channels!');setTimeout(function(){if(typeof loadPlaylists==='function')loadPlaylists();if(typeof loadHomeRecent==='function')loadHomeRecent();},1500);}
@@ -3603,15 +3425,6 @@ async function xlSubmitPlaylist(){
     else{showOk('\u2713 Added '+d.count+' channels!');setTimeout(function(){if(typeof loadPlaylists==='function')loadPlaylists();if(typeof loadHomeRecent==='function')loadHomeRecent();},1500);}
   }catch(e){showErr('Error: '+e.message);}
   btn.disabled=false;sp.style.display='none';txt.textContent='Add Playlist';
-}
-function openPlSettings(id){
-  var pl=null;for(var i=0;i<S.playlists.length;i++){if(S.playlists[i].id===id){pl=S.playlists[i];break;}}
-  if(!pl)return;
-  S.editingPlId=id;
-  document.getElementById('ps-name').value=pl.name||'';
-  document.getElementById('ps-ua').value=pl.user_agent||'';
-  document.getElementById('ps-auto').checked=!!pl.auto_refresh;
-  document.getElementById('pl-modal').classList.add('show');
 }
 async function savePlSettings(){
   if(!S.editingPlId)return;
@@ -3708,12 +3521,6 @@ function subToast(msg){
   m.textContent=msg;t.classList.add('visible');clearTimeout(window._subToastTimer);
   window._subToastTimer=setTimeout(function(){t.classList.remove('visible');},2200);
 }
-function shareChannel(){
-  var state=subPageStates['sub'];if(!state||!state.activeChannel)return;
-  var url=state.activeChannel.url;
-  if(navigator.clipboard){navigator.clipboard.writeText(url).then(function(){subToast('Link copied');}).catch(function(){subToast('Failed to copy');});}
-  else subToast('Clipboard not available');
-}
 function downloadCurrent(){
   var st=subPageStates['sub'];if(!st||!st.activeChannel)return;
   var url=st.activeChannel.url;if(!url)return;
@@ -3721,28 +3528,11 @@ function downloadCurrent(){
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   subToast('Download started');
 }
-function openInVLC(){
-  try{
-    var st=subPageStates['sub'],ch=null,url='';
-    if(st&&st.activeChannel) ch=st.activeChannel;
-    else if(st&&st.filtered[0]) ch=st.filtered[0];
-    else{var v=document.getElementById('sub-player');if(v&&v.src)url=v.src;}
-    if(ch) url=ch.url||url;
-    if(!url) return;
-    document.getElementById('vlc-name').textContent=ch?ch.name:'Channel';
-    var proxy='',pUrl=ch&&ch.portal_url,mMac=ch&&ch.mac;
-    if(pUrl&&mMac){proxy=location.origin+'/api/proxy_stream?portal_url='+encodeURIComponent(pUrl)+'&mac='+encodeURIComponent(mMac)+'&cmd='+encodeURIComponent(ch.cmd||ch.series_cmd||'')+'&type='+(ch.content_type||'live');}
-    document.getElementById('vlc-proxy').value=proxy||url;
-    document.getElementById('vlc-direct').value=url;
-    document.getElementById('sub-vlc-toast').classList.add('visible');
-  }catch(e){console.error('vlc error',e);}
-}
-function closeVlcToast(){var t=document.getElementById('sub-vlc-toast');if(t)t.classList.remove('visible');}
 function openVlcUrl(id){
   var inp=document.getElementById(id);if(!inp||!inp.value)return;
   fetch('/api/open-vlc?url='+encodeURIComponent(inp.value))
     .then(function(r){return r.json();})
-    .then(function(d){subToast(d.ok?'Opening in VLC...':'Failed: '+d.error);closeVlcToast();})
+    .then(function(d){subToast(d.ok?'Opening in VLC...':'Failed: '+d.error);})
     .catch(function(e){subToast('Failed to open VLC');});
 }
 function toggleSRT(){
@@ -3886,6 +3676,64 @@ function openFavorites(){
   } else {
     if(msgEl) msgEl.textContent = 'No favorites yet';
     if(icoEl){ icoEl.className = 'ti ti-star-off'; icoEl.style.color = 'var(--border)'; }
+  }
+}
+async function openEditorWithPlaylist(){
+  var id = _activeFilename;
+  if(!id){ showToast('error','No playlist loaded',2500); return; }
+  showToast('loading','Loading playlist in editor…',0,false);
+  try{
+    var r = await fetch('/api/playlists/'+encodeURIComponent(id)+'/channels');
+    var data = await r.json();
+    if(data.error){ showToast('error',data.error,4000); return; }
+    var chs = data.channels||[];
+    var categories = data.categories||null;
+    edGroupChannels = {};
+    edCats.live = []; edCats.vod = []; edCats.series = [];
+    edCatSel.clear(); edChSel.clear(); edOpenCats.clear(); edChanQuery='';
+    if(categories){
+      ['live','vod','series'].forEach(function(ct){
+        (categories[ct]||[]).forEach(function(cat){
+          var gname = cat.name;
+          var arr = [];
+          chs.forEach(function(ch){
+            if(!ch._isCategory && ch.content_type===ct && ch.group===gname){
+              arr.push({id:ch.id||'', name:ch.name, url:ch.url||ch.cmd||'', cmd:ch.cmd||ch.url||'', group:gname, logo:ch.logo||'', genre:ch.genre||gname, portal_url:ch.portal_url||'', mac:ch.mac||'', series_id:ch.series_id||'', season_num:ch.season_num||0, episode_num:ch.episode_num||0, series_name:ch.series_name||'', content_type:ct});
+            }
+          });
+          if(!arr.length) return;
+          edGroupChannels[gname] = arr;
+          edCats[ct].push({id:'g'+gname, name:gname, count:arr.length, cached:true, type:ct});
+        });
+      });
+    } else {
+      var byGroup = {};
+      chs.forEach(function(ch){
+        if(ch._isCategory) return;
+        var g = ch.group||'All';
+        (byGroup[g] = byGroup[g]||[]).push({id:ch.id||'', name:ch.name, url:ch.url||ch.cmd||'', cmd:ch.cmd||ch.url||'', group:g, logo:ch.logo||'', genre:ch.genre||g, portal_url:ch.portal_url||'', mac:ch.mac||'', series_id:ch.series_id||'', season_num:ch.season_num||0, episode_num:ch.episode_num||0, series_name:ch.series_name||'', content_type:ch.content_type||'live'});
+      });
+      Object.keys(byGroup).forEach(function(g){
+        edGroupChannels[g] = byGroup[g];
+        edCats.live.push({id:'g'+g, name:g, count:byGroup[g].length, cached:true, type:'live'});
+      });
+    }
+    edActiveM3uId = id;
+    edSetCatBadge('live', edCats.live.length);
+    if(edCats.vod.length) edSetCatBadge('vod', edCats.vod.length);
+    if(edCats.series.length) edSetCatBadge('series', edCats.series.length);
+    document.getElementById('ed-card-step2').style.display='flex';
+    document.getElementById('ed-cat-picker').style.display='flex';
+    document.getElementById('ed-chan-picker').style.display='flex';
+    edSwitchCatTab('live');
+    edUpdateCatSelCount();
+    edUpdateChSelCount();
+    edUpdateChanSelectAll();
+    edScrollToSlide(0);
+    switchPage('editor');
+    showToast('success','✓ Playlist loaded in editor',4000);
+  }catch(e){
+    showToast('error','Load failed: '+e.message,4000);
   }
 }
 function openPlaylist(id){
@@ -4061,35 +3909,6 @@ var _savedCategories = null;
 var _catFetchState = {};
 var _expandedSeriesCats = {};
 
-function fetchAndOpenCategory(type, groupName){
-  var catArr = loadedChannels[type] && loadedChannels[type][groupName];
-  var cat = catArr && catArr[0];
-  if(!cat||!cat._isCategory) return;
-  showToast('loading','Fetching '+groupName+'…',0,false);
-  fetch('/api/fetch-category',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:cat.portal_url,mac:cat.mac,type:type,category_id:cat._catId,category_name:groupName,filename:_activeFilename})}).then(function(r){return r.json();}).then(function(d){
-    dismissToast();
-    if(!d.ok){ showToast('error',d.error||'Failed',5000); return; }
-    if(!_catFetchState[type]) _catFetchState[type]={};
-    if(!_catFetchState[type][groupName]) _catFetchState[type][groupName]={};
-    _catFetchState[type][groupName].saved = d.total;
-    _catFetchState[type][groupName].portal_total = d.portal_total || _catFetchState[type][groupName].portal_total || d.total;
-    var fullFetch = d.portal_total===undefined || d.portal_total<=d.total;
-    cat._cached = fullFetch;
-    loadedChannels[type][groupName] = d.items || [];
-    var container=document.querySelector('.sub-cat-items[data-parent="'+type+'"]');
-    if(container){
-      var pn=container.querySelector('.nav[title="'+escA(groupName)+'"]');
-      if(pn){ var ic=pn.querySelector('.ti-cloud-download,.ti-folder'); if(ic && fullFetch) ic.className='ti ti-folder'; }
-    }
-    var groupKeys=Object.keys(loadedChannels[type]||{});
-    var idx=groupKeys.indexOf(groupName);
-    currentChannels=d.items||[];
-    switchPage('sub-'+type+'-'+idx);
-    try{ initSubPage(); }catch(e){}
-    if(fullFetch){ showToast('success','✓ '+d.total+' channels',3000); }
-    else{ showToast('warning','⚠ Fetched '+d.total+' of '+d.portal_total+' channels — click to retry',6000); }
-  }).catch(function(e){ dismissToast(); showToast('error','Fetch failed',5000); });
-}
 
 function openSeriesCategory(groupName){
   var scont=document.querySelector('.sub-cat-items[data-parent="series"]');
