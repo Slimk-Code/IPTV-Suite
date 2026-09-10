@@ -621,7 +621,7 @@ button{font:inherit}
       </div>
       <div id="sb-footer-name" style="font-size:13px;font-weight:700;color:var(--white);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">My Home</div>
       <span id="sb-expiry-label" style="color:var(--faint);font-size:10px">Expires: —</span>
-      <button class="btn-red" style="margin-top:6px"><i data-lucide="sparkles" width="14" height="14"></i>Upgrade</button>
+      <button class="btn-red" style="margin-top:6px" onclick="showView('import')"><i data-lucide="download" width="14" height="14"></i>Import playlist</button>
     </div>
   </aside>
 
@@ -956,6 +956,8 @@ button{font:inherit}
 
 <div id="scroll-nav">
   <button class="nav-dot active" data-slide="0" onclick="scrollToSlide(0)" title="Playlists"></button>
+  <button class="nav-dot" data-slide="1" onclick="scrollToSlide(1)" title="Categories"></button>
+  <button class="nav-dot" data-slide="2" onclick="scrollToSlide(2)" title="Channels"></button>
   <button class="nav-dot" data-slide="3" onclick="scrollToSlide(3)" title="Account Info"></button>
 </div>
 
@@ -979,8 +981,8 @@ button{font:inherit}
                 <i data-lucide="search" width="13" height="13"></i>
                 <input type="text" id="pl-search" placeholder="Search playlists…" style="padding-left:32px">
               </div>
-              <button class="btn-sec btn-ico" id="pl-fetch-btn" onclick="fetchSelectedPreview(this)">Fetch</button>
-              <button class="action primary btn-ico" onclick="openModal('stalker')">Import</button>
+              <button class="action primary btn-ico" id="pl-load-btn" onclick="loadAllPlaylists(this)"><i data-lucide="layers" width="14" height="14"></i> Load</button>
+              <button class="action primary btn-ico" onclick="openModal('stalker')"><i data-lucide="plus" width="14" height="14"></i> Import</button>
             </div>
             <div class="cat-select-bar">
               <label><input type="checkbox" id="pl-select-all" onchange="toggleAllPlaylists(this.checked)"> Select all visible &nbsp;<span id="pl-visible-count" style="color:var(--text);font-weight:600">0</span></label>
@@ -988,9 +990,9 @@ button{font:inherit}
             </div>
             <div style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--stage);margin-bottom:0">
               <div style="display:grid;grid-template-columns:30px 1fr 70px;background:var(--surface-3);border-bottom:1px solid var(--line-2);padding:7px 12px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;flex-shrink:0">
-                <div></div><div>Playlist Name</div><div style="text-align:center">Items</div>
+                <div></div><div>Playlist Name</div><div style="text-align:center">Categories</div>
               </div>
-              <div style="flex:1;overflow-y:auto">
+              <div id="pl-scroll" style="flex:1;overflow-y:auto">
                 <div id="playlist-list"></div>
                 <div id="playlist-empty" style="padding:32px;text-align:center;color:var(--muted);font-size:13px">No playlists</div>
               </div>
@@ -998,7 +1000,7 @@ button{font:inherit}
           </div>
         </div>
         <div class="card-footer" style="display:flex;gap:0 10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
-          <button class="action primary btn-ico" onclick=""><i data-lucide="download" width="14" height="14"></i> Save</button>
+          <button class="action primary btn-ico" id="pl-next-btn" onclick="goNextPlaylists(this)"><i data-lucide="arrow-right" width="14" height="14"></i> Next</button>
         </div>
       </div>
     </div>
@@ -1059,7 +1061,7 @@ button{font:inherit}
     </div>
   </div>
 
-  <div class="snap-slide">
+  <div class="snap-slide" id="slide-2">
     <div class="snap-section">
       <div class="card-full">
         <div class="sec-label" style="padding:5px 20px;border-bottom:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center">
@@ -1205,16 +1207,10 @@ button{font:inherit}
 
     <!-- STALKER -->
     <div class="src-panel active" id="src-stalker">
-      <div class="field"><label>Saved Portals</label>
-        <div class="portals-row">
-          <select id="saved-portals-select" onchange="loadSavedPortalModal(this.value)"><option value="">— Select a saved portal —</option></select>
-          <button class="btn-del-portal" onclick="deleteSavedPortalModal()" title="Delete selected"><i data-lucide="trash-2" width="15" height="15"></i></button>
-        </div>
-      </div>
       <div class="field"><label>Portal URL</label><input id="modal-portal-url" placeholder="http://portal:port/c/"></div>
       <div class="field"><label>MAC Address</label><input id="modal-mac-addr" placeholder="00:1A:79:XX:XX:XX"></div>
       <div class="form-actions" style="margin-top:var(--s3);justify-content:space-between;align-items:center">
-        <button class="btn-sec" onclick="startCheckModal()"><i data-lucide="wifi" width="14" height="14"></i> Check Portal</button>
+        <button class="btn-sec" id="check-portal-btn" onclick="startCheckModal()"><i data-lucide="wifi" width="14" height="14"></i> Check Portal</button>
           <span class="mini-toggle">
             <button onclick=""><i data-lucide="tv" width="13" height="13"></i> Live <span class="pane-count" id="mtb-live">0</span></button>
             <button onclick=""><i data-lucide="film" width="13" height="13"></i> VOD <span class="pane-count" id="mtb-vod">0</span></button>
@@ -1224,7 +1220,7 @@ button{font:inherit}
     </div>
 
     <div class="form-actions modal-foot">
-      <button class="btn-prim" onclick="addPlaylist()">Add Playlist</button>
+      <button class="btn-prim" id="add-playlist-btn" onclick="addPlaylist()">Add Playlist</button>
       <button class="btn-sec" onclick="closeModal('importScrim')">Cancel</button>
     </div>
   </div>
@@ -1643,6 +1639,9 @@ document.addEventListener('click',e=>{
 });
 
 function openModal(which){
+  _existingPlaylist=null;
+  const addBtn=document.getElementById('add-playlist-btn'); if(addBtn) addBtn.disabled=true;
+  const checkBtn=document.getElementById('check-portal-btn'); if(checkBtn) checkBtn.disabled=false;
   if(which==='url'){document.getElementById('urlScrim').classList.add('show');}
   else{switchSrc(which);document.getElementById('importScrim').classList.add('show');}
   lucide.createIcons();
@@ -1665,8 +1664,31 @@ function m3uMode(btn,mode){
   document.getElementById('m3u-file').style.display = mode==='file'?'block':'none';
 }
 let _activePlaylistName='';
-function addPlaylist(){
+let _existingPlaylist=null;
+async function addPlaylist(){
   closeModal('importScrim');
+  const btn=document.getElementById('add-playlist-btn'); if(btn) btn.disabled=true;
+  if(_existingPlaylist&&_existingPlaylist.id){
+    const ep=_existingPlaylist;
+    const name=ep.name||portalPlaylistName();
+    _activePlaylistName=name;
+    openPlays.add(name);
+    showToast('loading','Loading playlist…');
+    const ok=await loadPlaylistIntoApp(ep.id,name,ep.portal_url,ep.mac);
+    if(!ok){ showToast('error','✗ Could not load playlist file',5000); if(btn) btn.disabled=false; return; }
+    window._activeFilename=ep.id;
+    rememberActivePlaylist(ep.id,name);
+    setActivePlaylist(name);
+    buildCombinedCats();
+    updatePlaylistCounts();
+    updateCatBadges();
+    updateSidebarCounts();
+    loadPlaylists();
+    if(typeof applyCatFilter==='function') applyCatFilter();
+    updateSaveBtnState();
+    showToast('success','✓ Playlist loaded: '+name,4000);
+    return;
+  }
   const name=portalPlaylistName();
   _activePlaylistName=name;
   openPlays.add(name);
@@ -1684,11 +1706,6 @@ function portalPlaylistName(){
     try{ hostname=new URL(raw).hostname; }catch(e){}
     hostname=hostname.replace(/[^\w.-]/g,'');
     if(hostname) return hostname;
-    const saved=document.getElementById('saved-portals-select');
-    if(saved){
-      const opt=[...saved.options].find(o=>o.dataset.url===raw);
-      if(opt) return opt.textContent.replace(/\s*\[.*\]\s*$/,'').trim();
-    }
     return raw;
   }
   return 'Untitled';
@@ -1722,6 +1739,7 @@ function switchPlTab(tab){
   plTab=tab;
   document.querySelectorAll('#pl-tabs button').forEach(t=>t.classList.toggle('active',t.dataset.pt===tab));
   updatePlFilter();
+  updatePlaylistCounts();
 }
 function applyPlSearch(){
   const raw=(document.getElementById('pl-search').value||'').toLowerCase().trim();
@@ -1737,8 +1755,7 @@ function applyPlSearch(){
 function updatePlFilter(){
   applyPlSearch();
   const info=document.getElementById('pl-filter-info');
-  const names=Object.keys(playlistCats);
-  if(info) info.textContent=names.length?(plTab.charAt(0).toUpperCase()+plTab.slice(1))+' preview' : '';
+  if(info) info.textContent='';
 }
 function toggleAllPlaylists(checked){
   document.querySelectorAll('#playlist-list .cat-row[data-key]').forEach(row=>{
@@ -1754,92 +1771,28 @@ function updatePlSelectAll(){
   const rows=[...document.querySelectorAll('#playlist-list .cat-row[data-key]')].filter(r=>r.style.display!=='none');
   const checked=rows.filter(r=>r.querySelector('.cat-cb')&&r.querySelector('.cat-cb').checked).length;
   const cnt=document.getElementById('pl-visible-count');
-  if(cnt) cnt.textContent=checked+' / '+rows.length;
+  if(cnt) cnt.textContent=checked+' of '+rows.length;
   box.checked=rows.length>0&&checked===rows.length;
   box.indeterminate=checked>0&&checked<rows.length;
 }
 function updatePlaylistCounts(){
   const list=document.getElementById('playlist-list');
   if(!list) return;
+  const t=plTab||'live';
   list.querySelectorAll('.cat-row[data-key]').forEach(row=>{
     const name=row.dataset.key;
     const pc=playlistCats[name];
+    const cc=_plCatCounts[name];
     const cntEl=row.querySelector('.pl-count');
-    if(cntEl){
-      if(pc&&pc._previewed){
-        let total=0;
-        ['live','vod','series'].forEach(function(t){ (pc[t]||[]).forEach(function(c){ if(c._previewCount!==undefined) total+=c._previewCount; }); });
-        cntEl.textContent=total.toLocaleString();
-      } else cntEl.textContent='–';
+    if(!cntEl) return;
+    let n=null;
+    if(pc){
+      n=(pc[t]||[]).length;
+    }else if(cc){
+      n=(cc[t]||0);
     }
+    cntEl.textContent=(n>0)?n.toLocaleString():'';
   });
-}
-let _plFetchBusy=false;
-async function fetchSelectedPreview(btnEl){
-  if(_plFetchBusy){ showToast('info','Already fetching…',2000); return; }
-  const rows=[...document.querySelectorAll('#playlist-list .cat-row[data-key]')].filter(r=>{
-    const cb=r.querySelector('.cat-cb');
-    return cb&&cb.checked && r.style.display!=='none';
-  });
-  if(!rows.length){ showToast('info','Select a playlist to fetch',3000); return; }
-  const names=rows.map(r=>r.dataset.key);
-  const groups=[];
-  let totalJobs=0;
-  names.forEach(function(name){
-    const pl=playlistCats[name];
-    if(!pl||!pl.portal_url||!pl.mac) return;
-    const pending=(pl[plTab]||[]).filter(c=>!(c._pending)&&c._previewCount===undefined);
-    if(pending.length){
-      pending.forEach(c=>{ c._pending=true; });
-      groups.push({pl:pl,pending:pending});
-      totalJobs+=pending.length;
-    }
-  });
-  if(!totalJobs){
-    let done=0;
-    names.forEach(function(name){
-      const pl=playlistCats[name];
-      if(pl&&pl._previewed) done++;
-    });
-    if(done) showToast('success','✓ '+plTab.charAt(0).toUpperCase()+plTab.slice(1)+' already fetched for the selected '+pluralize(done,'playlist')+'.',4000);
-    else showToast('info','Nothing to fetch — select a playlist first',3000);
-    return;
-  }
-  let succeeded=0,failed=0,completed=0;
-  showToast('loading','Fetching '+plTab+' previews…',0);
-  _plFetchBusy=true;
-  if(btnEl) btnEl.disabled=true;
-  try{
-    for(const g of groups){
-      try{
-        const r=await fetch('/api/fetch-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:g.pl.portal_url,mac:g.pl.mac,cats:g.pending.map(function(c){ return {type:plTab,id:c.id,name:c.name}; })})});
-        const d=await r.json();
-        if(d.ok&&d.results){
-          (d.results||[]).forEach(function(res){
-            if(res&&res.ok){
-              const catsIn=res.type?g.pl[res.type]:g.pending;
-              const arr=Array.isArray(catsIn)?catsIn:(g.pending||[]);
-              const cat=arr.find(function(x){ return String(x.id)===String(res.id); });
-              if(cat){ cat.count=res.count; cat._previewCount=res.count; succeeded++; }
-              else failed++;
-            } else failed++;
-          });
-        } else failed+=g.pending.length;
-      }catch(e){ failed+=g.pending.length; }
-      g.pending.forEach(c=>{ c._pending=false; });
-      g.pl._previewed=true;
-      completed+=g.pending.length;
-    }
-  }catch(e){ showToast('error','✗ '+e.message,5000); }
-  _plFetchBusy=false;
-  if(btnEl) btnEl.disabled=false;
-  buildCombinedCats();
-  updatePlaylistCounts();
-  updateCatBadges();
-  if(typeof applyCatFilter==='function') applyCatFilter();
-  updateSaveBtnState();
-  if(failed) showToast('warning','✓ '+succeeded+' done, '+failed+' failed — click Fetch to retry',5000);
-  else showToast('success','✓ '+plTab.charAt(0).toUpperCase()+plTab.slice(1)+' preview complete: '+succeeded+' categor'+(succeeded===1?'y':'ies'),4000);
 }
 function pluralize(n,w){ return n===1?w:w+'s'; }
 function copyToast(msg){ showToast('success', msg||'Copied to clipboard', 1800); }
@@ -1883,19 +1836,53 @@ async function runCheck(urlId,macId,btnId){
   if(btn) btn.disabled=true;
   showToast('loading','Authenticating…');
   try{
-    fetch('/api/portals',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:portalUrl,mac})}).catch(()=>{});
-    initModalPortals();
     const res=await fetch('/api/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:portalUrl,mac})});
     const data=await res.json();
     if(!data.ok) return showToast('error','✗ '+data.error,5000);
+    _existingPlaylist=null;
     _currentProfile={sn:data.sn,device_id:data.device_id,device_id2:data.device_id2,expiry:data.expiry,status:data.status,max_connections:data.max_connections};
     showToast('loading','✓ Authenticated');
     const catSuccess=await loadCategoryCounts(urlId,macId);
     if(catSuccess) showToast('success','✓ Categories found: '+cats.live.length+' live, '+cats.vod.length+' VOD, '+cats.series.length+' series',4000);
+    enableAddPlaylist();
   }catch(err){ showToast('error','✗ '+err.message,5000); }
   finally{ if(btn) btn.disabled=false; }
 }
-function startCheckModal(){ runCheck('modal-portal-url','modal-mac-addr',null); }
+function startCheckModal(){
+  const portalUrl=document.getElementById('modal-portal-url').value.trim();
+  const mac=document.getElementById('modal-mac-addr').value.trim().toUpperCase();
+  if(!portalUrl) return showToast('error','Enter a portal URL',3000);
+  if(!mac) return showToast('error','Enter a MAC address',3000);
+  (async()=>{
+    const btn=document.getElementById('check-portal-btn'); if(btn) btn.disabled=true;
+    try{
+      const r=await fetch('/api/check-playlist-exists',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:portalUrl,mac})});
+      const d=await r.json();
+      if(d.ok&&d.exists){
+        _existingPlaylist={id:d.id,name:d.name,portal_url:d.portal_url,mac:d.mac};
+        _currentProfile=d.profile||null;
+        if(_currentProfile) renderProfile(_currentProfile);
+        try{
+          const cjr=await fetch('/api/playlists/'+encodeURIComponent(d.id)+'/channels');
+          const cjd=await cjr.json();
+          if(cjd&&cjd.categories){
+            cats={live:cjd.categories.live||[],vod:cjd.categories.vod||[],series:cjd.categories.series||[]};
+            updateModalCounts();
+          }
+        }catch(e){}
+        enableAddPlaylist();
+        return showToast('success','✓ Playlist already exists — Add will load it',4000);
+      }
+      _existingPlaylist=null;
+      await runCheck('modal-portal-url','modal-mac-addr');
+    }catch(err){ showToast('error','✗ '+err.message,5000); }
+    finally{ if(btn) btn.disabled=false; }
+  })();
+}
+function enableAddPlaylist(){
+  const btn=document.getElementById('add-playlist-btn');
+  if(btn) btn.disabled=false;
+}
 async function loadCategoryCounts(urlId,macId){
   const portalUrl=document.getElementById(urlId).value.trim();
   const mac=document.getElementById(macId).value.trim().toUpperCase();
@@ -1941,9 +1928,24 @@ function buildCombinedCats(){
   updatePlBadges();
 }
 function updatePlBadges(){
+  let tc={live:0,vod:0,series:0};
+  document.querySelectorAll('#playlist-list .cat-row[data-key]').forEach(row=>{
+    const n=row.dataset.key;
+    const pc=playlistCats[n];
+    const cc=_plCatCounts[n];
+    if(pc){
+      tc.live+=(pc.live||[]).length;
+      tc.vod+=(pc.vod||[]).length;
+      tc.series+=(pc.series||[]).length;
+    }else if(cc){
+      tc.live+=(cc.live||0);
+      tc.vod+=(cc.vod||0);
+      tc.series+=(cc.series||0);
+    }
+  });
   [['plb-live','live'],['plb-vod','vod'],['plb-series','series']].forEach(function(p){
     const el=document.getElementById(p[0]);
-    if(el) el.textContent=(cats[p[1]]||[]).length;
+    if(el) el.textContent=tc[p[1]];
   });
 }
 async function loadCategories(urlId='modal-portal-url',macId='modal-mac-addr',playlistName){
@@ -1967,9 +1969,7 @@ async function loadCategories(urlId='modal-portal-url',macId='modal-mac-addr',pl
     buildCombinedCats();
     updatePlaylistCounts();
     loadPlaylists();
-    document.getElementById('ctb-live').textContent=cats.live.length;
-    document.getElementById('ctb-vod').textContent=cats.vod.length;
-    document.getElementById('ctb-series').textContent=cats.series.length;
+    updateCatBadges();
     document.getElementById('card-step2').style.display='flex';
     document.getElementById('cat-picker').style.display='flex';
     updateSaveBtnState();
@@ -1987,45 +1987,137 @@ function switchCatTab(tab){
   applyCatFilter();
 }
 
-/* ── saved portals ── */
-async function fetchPortals(){
-  try { const r=await fetch('/api/portals'); const d=await r.json(); return d.portals||[]; }
-  catch { return []; }
+/* ── playlist loading (from PlayLists folder) ── */
+async function loadPlaylistIntoApp(id,name,portal_url,mac){
+  try{
+    const jr=await fetch('/api/playlists/'+encodeURIComponent(id)+'/channels');
+    const jd=await jr.json();
+    if(!jd||!jd.channels) return false;
+    const pl={portal_url:portal_url||jd.portal_url||'',mac:mac||jd.mac||'',filename:id,name:name};
+    ['live','vod','series'].forEach(function(t){
+      pl[t]=(jd.categories&&jd.categories[t]||[]).map(function(cat){
+        return {id:cat.id||'',name:cat.name||'',count:cat.count||0,cached:!!cat.cached,_channels:[],_fetched:false,type:t,_playlist:name,_portal_url:portal_url||jd.portal_url,_mac:mac||jd.mac};
+      });
+    });
+    (jd.channels||[]).forEach(function(ch){
+      const t=ch.content_type||'live';
+      const cat=(pl[t]||[]).find(function(c){ return String(c.name)===String(ch.group); });
+      if(!cat) return;
+      if(!cat._channels) cat._channels=[];
+      cat._channels.push({
+        id:ch.id||'',name:ch.name||'',cmd:ch.cmd||'',url:ch.url||'',content_type:t,
+        needsResolve:!ch.url&&!!ch.cmd,series_id:ch.series_id||'',season_num:ch.season_num||0,episode_num:ch.episode_num||0,
+        _playlist:name,_portal_url:portal_url||jd.portal_url,_mac:mac||jd.mac
+      });
+      cat._fetched=true;
+    });
+    playlistCats[name]=pl;
+    addPlaylistNameRow(name);
+    _loadedPlaylistNames.add(name);
+    return true;
+  }catch(e){ return false; }
 }
-async function deleteSavedPortalModal(){
-  const select=document.getElementById('saved-portals-select');
-  const idx=select.value;
-  if(idx==='') return;
-  const opt=select.options[select.selectedIndex];
-  if(!confirm('Delete "'+opt.textContent.trim()+'"?')) return;
-  try {
-    await fetch('/api/portals/'+idx,{method:'DELETE'});
-    select.value='';
-    const url=document.getElementById('modal-portal-url'); if(url) url.value='';
-    const mac=document.getElementById('modal-mac-addr'); if(mac) mac.value='';
-    await initModalPortals();
-  } catch { showToast('error','✗ Delete failed',5000); }
+let _plLoadBusy=false;
+let _loadedPlaylistNames=new Set();
+let _plMeta={};
+let _plCatCounts={};
+async function loadAllPlaylists(btnEl){
+  if(_plLoadBusy){ showToast('info','Already loading…',2000); return; }
+  if(btnEl) btnEl.disabled=true;
+  _plLoadBusy=true;
+  showToast('loading','Loading playlists…');
+  try{
+    const r=await fetch('/api/playlists');
+    const d=await r.json();
+    const list=d.playlists||[];
+    const loadable=list.filter(function(p){
+      return (p.portal_url&&p.mac)||p.name==='Favorites';
+    });
+    if(!loadable.length){ showToast('info','No loadable playlists found',3000); return; }
+    const chosen=[];
+    loadable.forEach(function(p){
+      const name=p.name||p.id;
+      const found=chosen.find(function(e){ return e.name===name; });
+      if(found){
+        if(p.id===name&&found.id!==name){ found.p=p; found.id=p.id; }
+        return;
+      }
+      chosen.push({name:name,p:p,id:p.id});
+    });
+    const rows=document.querySelectorAll('#playlist-list .cat-row[data-key]');
+    rows.forEach(function(row){ row.remove(); });
+    _plMeta={};
+    _plCatCounts={};
+    let done=0;
+    for(const e of chosen){
+      const p=e.p;
+      _plMeta[e.name]={id:p.id,portal_url:p.portal_url||'',mac:p.mac||''};
+      const cc=p.category_counts||{};
+      _plCatCounts[e.name]={live:cc.live||0,vod:cc.vod||0,series:cc.series||0};
+      addPlaylistNameRow(e.name);
+      const ok=await loadPlaylistIntoApp(p.id,e.name,p.portal_url||'',p.mac||'');
+      if(ok) done++;
+    }
+    buildCombinedCats();
+    updatePlaylistCounts();
+    updateCatBadges();
+    updatePlBadges();
+    updateSidebarCounts();
+    if(typeof applyCatFilter==='function') applyCatFilter();
+    updateSaveBtnState();
+    updatePlSelectAll();
+    if(done){
+      const first=chosen[0];
+      window._activeFilename=first.p.id;
+      rememberActivePlaylist(first.p.id,first.name);
+      setActivePlaylist(first.name);
+      loadPlaylists();
+    }
+    showToast('success','✓ Loaded '+done+' playlist'+(done>1?'s':''),4000);
+  }catch(e){ showToast('error','✗ '+e.message,5000); }
+  finally{ _plLoadBusy=false; if(btnEl) btnEl.disabled=false; }
 }
-async function initModalPortals(){
-  const select=document.getElementById('saved-portals-select');
-  if(!select) return;
-  const list=await fetchPortals();
-  while(select.options.length>1) select.remove(1);
-  list.forEach((p,i)=>{
-    const opt=document.createElement('option');
-    opt.value=i;
-    opt.textContent=p.label+'  ['+p.mac+']';
-    opt.dataset.url=p.url;
-    opt.dataset.mac=p.mac;
-    select.appendChild(opt);
-  });
-}
-function loadSavedPortalModal(idx){
-  const select=document.getElementById('saved-portals-select');
-  if(!select||idx===''||!select.options[select.selectedIndex]) return;
-  const opt=select.options[select.selectedIndex];
-  const url=document.getElementById('modal-portal-url'); if(url) url.value=opt.dataset.url||'';
-  const mac=document.getElementById('modal-mac-addr'); if(mac) mac.value=opt.dataset.mac||'';
+async function goNextPlaylists(btnEl){
+  const rows=[...document.querySelectorAll('#playlist-list .cat-row[data-key]')].filter(function(r){ return r.style.display!=='none'; });
+  let targets=[];
+  if(rows.length===1){
+    targets=[rows[0].dataset.key];
+  }else if(rows.length>1){
+    targets=rows.filter(function(r){ const cb=r.querySelector('.cat-cb'); return cb&&cb.checked; }).map(function(r){ return r.dataset.key; });
+    if(!targets.length) showToast('warning','Nothing selected — nothing imported',3000);
+  }else{
+    showToast('info','Nothing loaded yet',2500);
+  }
+  const fresh=targets.filter(function(n){ return !playlistCats[n]; });
+  if(fresh.length){
+    if(btnEl) btnEl.disabled=true;
+    showToast('loading','Importing playlists…');
+    try{
+      let imported=0;
+      for(const name of fresh){
+        const meta=_plMeta[name]||{};
+        const ok=await loadPlaylistIntoApp(meta.id||name,name,meta.portal_url||'',meta.mac||'');
+        if(ok) imported++;
+      }
+      buildCombinedCats();
+      updatePlaylistCounts();
+      updateCatBadges();
+      updateSidebarCounts();
+      if(typeof applyCatFilter==='function') applyCatFilter();
+      updateSaveBtnState();
+      const first=fresh[0];
+      const meta=_plMeta[first]||{};
+      window._activeFilename=meta.id||first;
+      rememberActivePlaylist(meta.id||first,first);
+      setActivePlaylist(first);
+      loadPlaylists();
+      showToast('success','✓ Imported '+imported+' playlist'+(imported>1?'s':''),4000);
+    }catch(e){ showToast('error','✗ '+e.message,5000); }
+    finally{ if(btnEl) btnEl.disabled=false; }
+  }else if(targets.length){
+    showToast('success','✓ Already imported',2500);
+  }
+  scrollToSlide(1);
 }
 
 /* ── category list ── */
@@ -2355,14 +2447,19 @@ async function fetchAllCategoryCounts(btnEl){
   }
 }
 function updateCatBadges(){
-  var totals={live:0,vod:0,series:0};
-  cats.live.forEach(function(c){ if(c.count!==undefined) totals.live+=c.count; });
-  cats.vod.forEach(function(c){ if(c.count!==undefined) totals.vod+=c.count; });
-  cats.series.forEach(function(c){ if(c.count!==undefined) totals.series+=c.count; });
-  const set=(id,base,total)=>{ const el=document.getElementById(id); if(el) el.textContent=base+(total?' ('+total.toLocaleString()+')':''); };
-  set('ctb-live',cats.live.length,totals.live);
-  set('ctb-vod',cats.vod.length,totals.vod);
-  set('ctb-series',cats.series.length,totals.series);
+  let tc={live:cats.live.length,vod:cats.vod.length,series:cats.series.length};
+  Object.keys(_plCatCounts||{}).forEach(function(name){
+    const inCats=cats.live.some(c=>c._playlist===name)||cats.vod.some(c=>c._playlist===name)||cats.series.some(c=>c._playlist===name);
+    if(inCats) return;
+    const cc=_plCatCounts[name];
+    tc.live+=(cc.live||0);
+    tc.vod+=(cc.vod||0);
+    tc.series+=(cc.series||0);
+  });
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('ctb-live',tc.live);
+  set('ctb-vod',tc.vod);
+  set('ctb-series',tc.series);
 }
 function allCategoriesFetched(){
   var all=cats.live.concat(cats.vod,cats.series);
@@ -2954,7 +3051,6 @@ if(macField) macField.addEventListener('input',function(e){
   if(f.length>17) f=f.slice(0,17);
   e.target.value=f;
 });
-initModalPortals();
 attachCatSearchListeners();
 attachChSearchListeners();
 attachPlSearchListeners();
@@ -2967,6 +3063,23 @@ function scrollToSlide(idx){
   const slide=document.getElementById('slide-'+idx);
   if(slide) slide.scrollIntoView({behavior:'smooth'});
 }
+document.addEventListener('keydown',function(e){
+  const v=document.getElementById('view-import');
+  if(!v||!v.classList.contains('active')) return;
+  const tag=(document.activeElement&&document.activeElement.tagName||'').toUpperCase();
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
+  if(e.key==='ArrowUp'||e.key==='ArrowDown'){
+    e.preventDefault();
+    const sw=document.getElementById('snap-wrapper');
+    const idx=Math.round((sw?sw.scrollTop:0)/Math.max(sw?sw.clientHeight:1,1));
+    const map={0:'pl-scroll',1:'cat-scroll',2:'ch-scroll'};
+    const sc=map[idx]?document.getElementById(map[idx]):null;
+    if(sc) sc.scrollBy({top:e.key==='ArrowDown'?60:-60,behavior:'smooth'});
+    return;
+  }
+  if(e.key==='PageUp'||e.key==='PageDown'||e.key==='Home'||e.key==='End'){ e.preventDefault(); return; }
+  if(e.key===' '){ if(!document.activeElement||document.activeElement===document.body) e.preventDefault(); }
+});
 const snapWrapper=document.getElementById('snap-wrapper');
 if(snapWrapper){
   snapWrapper.addEventListener('scroll',()=>{

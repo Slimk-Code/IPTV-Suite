@@ -1667,58 +1667,27 @@ def resolve_channels():
 
 
 # ─── Portals JSON file ────────────────────────────────────────────────────────
-PORTALS_FILE = os.path.join(os.path.dirname(__file__), "portals.json")
-
-def read_portals():
-    try:
-        with open(PORTALS_FILE) as f:
-            return json.load(f)
-    except:
-        return []
-
-def write_portals(data):
-    with open(PORTALS_FILE, "w") as f:
-        json.dump(data, f, indent=2)
-
-
-@app.route("/api/portals", methods=["GET"])
-def portals_get():
-    typ = request.args.get("type", "portal")
-    return jsonify({"ok": True, "portals": [p for p in read_portals() if p.get("type", "portal") == typ]})
-
-
-@app.route("/api/portals", methods=["POST"])
-def portals_save():
-    data = request.json
-    url  = data.get("url","").strip()
-    mac  = data.get("mac","").strip().upper()
-    if not url or not mac:
-        return jsonify({"ok":False,"error":"url and mac required"}),400
-    try:
-        from urllib.parse import urlparse as _up
-        label = _up(url).hostname or url
-    except:
-        label = url
-    portals = read_portals()
-    if not any(p["url"]==url and p["mac"]==mac for p in portals):
-        portals.append({"url":url,"mac":mac,"label":label})
-        write_portals(portals)
-    return jsonify({"ok":True,"portals":portals})
-
-
-@app.route("/api/portals/<int:idx>", methods=["DELETE"])
-def portals_delete(idx):
-    typ = request.args.get("type", "portal")
-    portals = read_portals()
-    seen = 0
-    for i, p in enumerate(portals):
-        if p.get("type", "portal") == typ:
-            if seen == idx:
-                portals.pop(i)
-                write_portals(portals)
-                break
-            seen += 1
-    return jsonify({"ok": True, "portals": portals})
+@app.route("/api/check-playlist-exists", methods=["POST"])
+def check_playlist_exists():
+    """Look in the PlayLists folder for a stored playlist matching the given
+    portal_url + mac. Returns exists + file id/profile when found, else
+    exists=false (normal flow = fetch from portal)."""
+    data = request.json or {}
+    portal_url = (data.get("portal_url", "") or "").strip().rstrip("/")
+    mac = (data.get("mac", "") or "").strip().upper()
+    if not portal_url or not mac:
+        return jsonify({"ok": False, "error": "url and mac required"}), 400
+    for pl in _scan_json_playlists():
+        pu = (pl.get("portal_url", "") or "").strip().rstrip("/").lower()
+        mc = (pl.get("mac", "") or "").strip().upper()
+        if pu == portal_url.lower() and mc == mac:
+            return jsonify({
+                "ok": True, "exists": True,
+                "id": pl["id"], "name": pl.get("name", pl["id"]),
+                "portal_url": pl.get("portal_url", ""), "mac": pl.get("mac", ""),
+                "profile": pl.get("profile", {}),
+            })
+    return jsonify({"ok": True, "exists": False})
 
 
 @app.route("/api/proxy_stream")
@@ -1941,12 +1910,6 @@ def m3u_parse():
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(pl_data, f, indent=2, ensure_ascii=False)
 
-    portals = read_portals()
-    entry = {"type": "m3u", "url": filename, "mac": "", "label": safe}
-    if not any(p.get("type") == "m3u" and p.get("url") == filename for p in portals):
-        portals.append(entry)
-        write_portals(portals)
-
     return jsonify({
         "ok": True,
         "filename": filename,
@@ -1999,6 +1962,22 @@ def _scan_json_playlists():
             cts = _count_by_type(data)
             if cts["live"] + cts["vod"] + cts["series"] == 0 and ch_count:
                 cts["live"] = ch_count
+            cat_counts = {"live": 0, "vod": 0, "series": 0}
+            cats_data = data.get("categories")
+            if isinstance(cats_data, dict):
+                for ct in ("live", "vod", "series"):
+                    cat_counts[ct] = len(cats_data.get(ct, []) or [])
+            else:
+                chs = data.get("channels")
+                if isinstance(chs, list):
+                    seen = {"live": set(), "vod": set(), "series": set()}
+                    for ch in chs:
+                        ct = str(ch.get("content_type", "")) or "live"
+                        if ct not in seen:
+                            ct = "live"
+                        seen[ct].add(ch.get("group") or "All")
+                    for ct in ("live", "vod", "series"):
+                        cat_counts[ct] = len(seen[ct])
             pls.append({
                 "id": fn[:-5],
                 "name": data.get("name", fn[:-5]),
@@ -2007,6 +1986,7 @@ def _scan_json_playlists():
                 "channels": ch_count,
                 "channel_count": ch_count,
                 "counts": cts,
+                "category_counts": cat_counts,
                 "updated": data.get("updated", 0),
                 "portal_url": data.get("portal_url", ""),
                 "mac": data.get("mac", ""),
