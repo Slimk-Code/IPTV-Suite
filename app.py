@@ -768,6 +768,127 @@ def enrich_counts():
     return jsonify({"ok":True,"counts":counts})
 
 
+@app.route("/api/fetch-preview", methods=["POST"])
+def fetch_preview():
+    """Quick preview: fetches ONLY page 1 of each requested category.
+    No stream URL resolution, no file writes — returns items + portal total
+    so the UI can show counts instantly without a full fetch."""
+    data = request.json
+    portal_url = (data.get("portal_url","") or "").strip()
+    mac = (data.get("mac","") or "").strip().upper()
+    cats = data.get("cats", [])
+    if not portal_url or not mac or not cats:
+        return jsonify({"ok":False,"error":"Missing params"}),400
+    ctx = get_token(portal_url, mac)
+    if not ctx: return jsonify({"ok":False,"error":"Auth failed"}),400
+    auth_session(ctx)
+
+    def fetch_one(cat):
+        ct  = cat.get("type","live")
+        cid = cat.get("id","")
+        cname = cat.get("name","")
+        for attempt in range(3):
+            try:
+                if ct == "live":
+                    url = (f"{ctx['base_url']}{ctx['portal_type']}?type=itv&action=get_ordered_list"
+                           f"&genre={cid}&force_ch_link_check=&fav=0&sortby=number&hd=0"
+                           f"&p=1&JsHttpRequest=1-xml")
+                else:
+                    pt = "series" if ct == "series" else "vod"
+                    url = (f"{ctx['base_url']}{ctx['portal_type']}?type={pt}&action=get_ordered_list"
+                           f"&category={cid}&fav=0&sortby=added&hd=0"
+                           f"&p=1&JsHttpRequest=1-xml")
+                r = ctx["session"].get(url, timeout=30)
+                js = r.json().get("js", {})
+                pdata = js.get("data", [])
+                total = int(js.get("total_items", len(pdata)))
+                items = []
+                for item in pdata:
+                    cmd = (item.get("cmd","")
+                        or item.get("series_cmd","")
+                        or item.get("url","")
+                        or item.get("link",""))
+                    if ct == "series":
+                        items.append({"id": str(item.get("id","")),
+                                      "name": item.get("name", item.get("title","Unknown")),
+                                      "series_id": str(item.get("id","")),
+                                      "cmd": cmd, "content_type": ct})
+                    else:
+                        items.append({"id": str(item.get("id","")),
+                                      "name": item.get("name", item.get("title","Unknown")),
+                                      "number": item.get("number",""),
+                                      "cmd": cmd, "content_type": ct})
+                return {"ok":True,"type":ct,"id":cid,"name":cname,"count":total,"items":items}
+            except Exception:
+                pass
+            if attempt < 2:
+                time.sleep(1)
+        return {"ok":False,"type":ct,"id":cid,"name":cname,"count":0,"items":[]}
+
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        results = list(ex.map(fetch_one, cats))
+    return jsonify({"ok":True,"results":results})
+
+
+@app.route("/api/fetch-full-category", methods=["POST"])
+def fetch_full_category():
+    """Fetch ALL pages of each requested category. No stream URL resolution —
+    returns the full item list so the UI/hardcopies can show channels.
+    Fetched live/vod channels are merged into the playlist file (compare-then-
+    merge, so already-resolved links are kept), so a refresh restores them."""
+    data = request.json
+    portal_url = (data.get("portal_url","") or "").strip()
+    mac = (data.get("mac","") or "").strip().upper()
+    cats = data.get("cats", [])
+    if not portal_url or not mac or not cats:
+        return jsonify({"ok":False,"error":"Missing params"}),400
+    ctx = get_token(portal_url, mac)
+    if not ctx: return jsonify({"ok":False,"error":"Auth failed"}),400
+    auth_session(ctx)
+    if any(c.get("type") == "live" for c in cats):
+        unlock_adult(ctx)
+
+    def fetch_one(cat):
+        ct  = cat.get("type","live")
+        cid = cat.get("id","")
+        cname = cat.get("name","")
+        items = []
+        try:
+            if ct == "live":
+                gen = iter_live_category(ctx, cid, cname)
+            else:
+                gen = iter_vod_category(ctx, cid, cname, content_type=ct)
+            total = 0
+            for it in gen:
+                if isinstance(it, dict) and "_total" in it:
+                    total = it["_total"]
+                    continue
+                it["content_type"] = ct
+                if it.get("cmd"): it["needsResolve"] = True
+                items.append(it)
+            if not total:
+                total = len(items)
+            return {"ok":True,"type":ct,"id":cid,"name":cname,"count":total,"items":items}
+        except Exception:
+            return {"ok":False,"type":ct,"id":cid,"name":cname,"count":0,"items":[]}
+
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        results = list(ex.map(fetch_one, cats))
+
+    filepath = _playlist_filepath(_playlist_filename(portal_url, mac))
+    for r in results:
+        if not r.get("ok") or not r.get("items"):
+            continue
+        if r.get("type") not in ("live", "vod"):
+            continue
+        _merge_channels_into_file(
+            filepath, r.get("type"), r.get("name", ""), r.get("id", ""),
+            [dict(it) for it in r["items"]],
+            portal_url=portal_url, mac=mac,
+        )
+    return jsonify({"ok":True,"results":results})
+
+
 @app.route("/api/fetch-category", methods=["POST"])
 def fetch_category():
     data = request.json
@@ -830,7 +951,7 @@ def fetch_category():
         item.pop("portal_url", None)
         item.pop("mac", None)
 
-    fp = os.path.join(PLAYLIST_DIR, filename + ".json")
+    fp = _playlist_filepath(filename)
     if os.path.isfile(fp):
         with open(fp, "r") as f:
             jdata = json.load(f)
@@ -931,7 +1052,7 @@ def fetch_series_episodes():
         if failed_count == 0:
             _clear_progress(progress_key)
 
-    fp = os.path.join(PLAYLIST_DIR, filename + ".json")
+    fp = _playlist_filepath(filename)
     if os.path.isfile(fp):
         with open(fp, "r") as f:
             jdata = json.load(f)
@@ -1090,7 +1211,7 @@ def recover_categories():
                     _clear_progress(progress_key)
 
         # Save to JSON
-        fp = os.path.join(PLAYLIST_DIR, filename + ".json")
+        fp = _playlist_filepath(filename)
         if os.path.isfile(fp):
             with open(fp, "r") as f:
                 jdata = json.load(f)
@@ -1402,6 +1523,149 @@ def resolve():
     return jsonify({"ok":True,"url":url})
 
 
+def _persist_resolved_channels(portal_url, mac, resolved_items):
+    """Merge successfully resolved channels back into the playlist file so a
+    restart can restore them without re-fetching. Live items go into
+    Channel[], vod into Movie[], series episodes into series[].episode[]."""
+    filename = _playlist_filename(portal_url, mac)
+    fp = _playlist_filepath(filename)
+    if os.path.isfile(fp):
+        try:
+            with open(fp, "r") as f:
+                data = json.load(f)
+        except Exception:
+            data = None
+        if not isinstance(data, dict):
+            data = {}
+    else:
+        data = {
+            "name": urlparse(portal_url).hostname or "unknown",
+            "source": "portal",
+            "portal_url": portal_url,
+            "mac": mac,
+        }
+    data.setdefault("categories", {})
+    for ct in ("live","vod","series"):
+        data["categories"].setdefault(ct, [])
+    container = {"live": "Channel", "vod": "Movie", "series": "series"}
+
+    for it in resolved_items:
+        if not it.get("ok") or not it.get("url"):
+            continue
+        ct = it.get("content_type", "live")
+        if ct not in container:
+            ct = "live"
+        cat_id = str(it.get("cat_id", ""))
+        cat_name = it.get("cat_name", "") or "All"
+        clist = data["categories"].get(ct, [])
+        cat = next((c for c in clist if str(c.get("id", "")) == cat_id), None)
+        if cat is None:
+            cat = {"id": cat_id, "name": cat_name, "cached": True, "count": 0}
+            cat[container[ct]] = []
+            clist.append(cat)
+        cat["cached"] = True
+        if not cat.get("count"):
+            cat["count"] = 0
+        if ct == "series":
+            sid = str(it.get("series_id", ""))
+            sname = it.get("name", "")
+            s_entry = next((s for s in cat.get("series", []) if str(s.get("id", "")) == sid), None)
+            if s_entry is None:
+                s_entry = {"id": sid, "name": sname, "episode": []}
+                cat["series"].append(s_entry)
+            sn = int(it.get("season_num", 1) or 1)
+            en = int(it.get("episode_num", 1) or 1)
+            existing_eps = s_entry.get("episode", [])
+            existing_eps = [e for e in existing_eps if not (int(e.get("season_num", 1)) == sn and int(e.get("episode_num", 1)) == en)]
+            existing_eps.append({"season_num": sn, "episode_num": en, "cmd": it.get("cmd", ""), "url": it.get("url", "")})
+            s_entry["episode"] = existing_eps
+        else:
+            arr = cat[container[ct]]
+            entry = {"name": it.get("name", ""), "cmd": it.get("cmd", ""), "url": it.get("url", ""), "content_type": ct}
+            if it.get("id"):
+                entry["id"] = str(it.get("id", ""))
+            idx = None
+            if it.get("id"):
+                idx = next((i for i, e in enumerate(arr) if str(e.get("id", "")) == str(it["id"])), None)
+            if idx is None:
+                arr.append(entry)
+                cat["count"] = cat.get("count", 0) + 1
+            else:
+                arr[idx] = entry
+    data["updated"] = time.time()
+    os.makedirs(PLAYLIST_DIR, exist_ok=True)
+    try:
+        with open(fp, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+    except Exception:
+        pass
+
+
+@app.route("/api/resolve-channels", methods=["POST"])
+def resolve_channels():
+    """Resolve playable stream URLs for a batch of channels in parallel.
+    Works per playlist (all channels in one call). Successfully resolved
+    channels are merged back into the playlist file so they survive a restart.
+    Body: {portal_url, mac, channels:[{id, name, cmd, content_type, cat_id, cat_name, series_id, season_num, episode_num}]}
+    Returns results aligned with the input order: [{ok, url, needsResolve}]."""
+    data = request.json
+    portal_url = (data.get("portal_url","") or "").strip()
+    mac = (data.get("mac","") or "").strip().upper()
+    channels = data.get("channels", [])
+    if not portal_url or not mac or not channels:
+        return jsonify({"ok":False,"error":"Missing params"}),400
+    ctx = get_token(portal_url, mac)
+    if not ctx: return jsonify({"ok":False,"error":"Auth failed"}),400
+    auth_session(ctx)
+
+    items = []
+    for ch in channels:
+        ch_item = {
+            "id": str(ch.get("id","")),
+            "name": ch.get("name", ""),
+            "cmd": ch.get("cmd",""),
+            "content_type": ch.get("content_type","live"),
+            "cat_id": ch.get("cat_id",""),
+            "cat_name": ch.get("cat_name",""),
+            "series_id": ch.get("series_id",""),
+            "season_num": ch.get("season_num", 0),
+            "episode_num": ch.get("episode_num", 0),
+        }
+        items.append(ch_item)
+
+    resolved, failed = 0, 0
+    if any(i.get("cmd") for i in items):
+        try:
+            resolved, failed = _resolve_items_batch(ctx, items, max_workers=8, attempt_limit=3)
+        except Exception:
+            resolved, failed = 0, len(items)
+
+    persist_items = []
+    results = []
+    for it, ch in zip(items, channels):
+        url = it.get("url","")
+        results.append({
+            "ok": bool(url),
+            "url": url,
+            "needsResolve": not bool(url),
+        })
+        persist_items.append({
+            "id": it.get("id", ""),
+            "name": it.get("name", ""),
+            "cmd": it.get("cmd", ""),
+            "url": url,
+            "ok": bool(url),
+            "content_type": it.get("content_type", "live"),
+            "cat_id": it.get("cat_id", ""),
+            "cat_name": it.get("cat_name", ""),
+            "series_id": it.get("series_id", ""),
+            "season_num": it.get("season_num", 0),
+            "episode_num": it.get("episode_num", 0),
+        })
+    _persist_resolved_channels(portal_url, mac, persist_items)
+    return jsonify({"ok":True,"resolved":resolved,"failed":failed,"results":results})
+
+
 # ─── Portals JSON file ────────────────────────────────────────────────────────
 PORTALS_FILE = os.path.join(os.path.dirname(__file__), "portals.json")
 
@@ -1503,6 +1767,45 @@ def proxy_stream():
     except Exception as e:
         return str(e), 500
 
+def _merge_m3u_into(pl_data, new_chs):
+    """Merge newly parsed m3u channels into an existing playlist file (same
+    link -> replace in place, new link -> append). Returns (pl_data, added,
+    replaced)."""
+    if not isinstance(pl_data, dict):
+        pl_data = {}
+    pl_data.setdefault("categories", {})
+    cats = pl_data["categories"].setdefault("live", [])
+    cat_map = {str(c.get("name", "")): c for c in cats}
+    next_id = len(cats)
+    added = 0
+    replaced = 0
+    for ch in new_chs:
+        g = ch.get("group", "") or "Ungrouped"
+        cat = cat_map.get(str(g))
+        if cat is None:
+            cat = {"id": "g" + str(next_id), "name": g, "count": 0, "cached": True, "Channel": []}
+            next_id += 1
+            cats.append(cat)
+            cat_map[str(g)] = cat
+        arr = cat.setdefault("Channel", [])
+        url = ch.get("url", "")
+        idx = next((i for i, e in enumerate(arr) if str(e.get("url", "")) == url), None)
+        if idx is not None:
+            arr[idx] = {"name": ch.get("name", ""), "url": url, "group": g,
+                        "logo": ch.get("logo", ""), "content_type": "live"}
+            replaced += 1
+        else:
+            arr.append({"name": ch.get("name", ""), "url": url, "group": g,
+                        "logo": ch.get("logo", ""), "content_type": "live"})
+            added += 1
+        cat["count"] = len(arr)
+    pl_data["categories"]["live"] = cats
+    pl_data.setdefault("name", "playlist")
+    pl_data.setdefault("source", "m3u")
+    pl_data.setdefault("portal_url", "")
+    pl_data.setdefault("mac", "")
+    return pl_data, added, replaced
+
 @app.route("/api/add/m3u-file", methods=["POST"])
 def add_m3u_file():
     f = request.files.get("file")
@@ -1589,39 +1892,54 @@ def m3u_parse():
     safe = re.sub(r'[^\w\s-]', "", name).strip() or "unnamed"
     safe = re.sub(r'\s+', '_', safe)
     filename = "m3u_" + safe + ".json"
-    filepath = os.path.join(PLAYLIST_DIR, filename)
-
-    cats_live = []
-    for i, g in enumerate(order):
-        chs = groups[g]
-        cats_live.append({
-            "id": "g" + str(i),
-            "name": g,
-            "count": len(chs),
-            "cached": True,
-            "Channel": [
-                {"name": c["name"], "url": c["url"], "group": g,
-                 "logo": c.get("logo", ""), "content_type": "live"}
-                for c in chs
-            ],
-        })
-
-    pl_data = {
-        "name": safe,
-        "source": "m3u",
-        "portal_url": "",
-        "mac": "",
-        "updated": time.time(),
-        "channels": [
-            {"name": c["name"], "url": c["url"], "group": c["group"],
-             "logo": c.get("logo", ""), "content_type": "live"}
-            for c in channels_all
-        ],
-        "categories": {"live": cats_live, "vod": [], "series": []},
-    }
+    filepath = _playlist_filepath(filename)
+    added = 0
+    replaced = 0
     os.makedirs(PLAYLIST_DIR, exist_ok=True)
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(pl_data, f, indent=2)
+
+    if os.path.isfile(filepath):
+        # Playlist already exists -> compare-then-merge into the SAME file.
+        with open(filepath, "r", encoding="utf-8") as f:
+            pl_data = json.load(f)
+        pl_data, added, replaced = _merge_m3u_into(pl_data, channels_all)
+        pl_data["updated"] = time.time()
+        pl_data["channels"] = _reconstruct_channels(pl_data)
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(pl_data, f, indent=2, ensure_ascii=False)
+        cats_live = []
+        for i, c in enumerate(pl_data["categories"].get("live", [])):
+            cats_live.append({"id": c.get("id", "g" + str(i)), "name": c.get("name", ""), "count": c.get("count", 0)})
+    else:
+        cats_live = []
+        for i, g in enumerate(order):
+            chs = groups[g]
+            cats_live.append({
+                "id": "g" + str(i),
+                "name": g,
+                "count": len(chs),
+                "cached": True,
+                "Channel": [
+                    {"name": c["name"], "url": c["url"], "group": g,
+                     "logo": c.get("logo", ""), "content_type": "live"}
+                    for c in chs
+                ],
+            })
+        pl_data = {
+            "name": safe,
+            "source": "m3u",
+            "portal_url": "",
+            "mac": "",
+            "updated": time.time(),
+            "channels": [
+                {"name": c["name"], "url": c["url"], "group": c["group"],
+                 "logo": c.get("logo", ""), "content_type": "live"}
+                for c in channels_all
+            ],
+            "categories": {"live": cats_live, "vod": [], "series": []},
+        }
+        added = len(channels_all)
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(pl_data, f, indent=2, ensure_ascii=False)
 
     portals = read_portals()
     entry = {"type": "m3u", "url": filename, "mac": "", "label": safe}
@@ -1634,6 +1952,8 @@ def m3u_parse():
         "filename": filename,
         "name": safe,
         "total": len(channels_all),
+        "added": added,
+        "replaced": replaced,
         "categories": {
             "live": [{"id": c["id"], "name": c["name"], "count": c["count"]} for c in cats_live],
             "vod": [],
@@ -1649,6 +1969,15 @@ def _playlist_filename(portal_url, mac):
     safe_mac = mac.replace(':', '')[:12]
     return f"{safe_host}_{safe_mac}.json"
 
+def _playlist_filepath(raw):
+    """Canonical .json path for a playlist file/id/name. Always produces a
+    single .json extension — never name.json.json (regardless of how the
+    caller passes the filename)."""
+    s = re.sub(r'[^\w.-]', '', str(raw or "")).strip()
+    while s.lower().endswith(".json"):
+        s = s[:-5]
+    return os.path.join(PLAYLIST_DIR, s + ".json")
+
 def _scan_json_playlists():
     """Scan PlayLists/ for .json playlist files."""
     pls = []
@@ -1656,6 +1985,8 @@ def _scan_json_playlists():
         return pls
     for fn in sorted(os.listdir(PLAYLIST_DIR)):
         if not fn.lower().endswith(".json"):
+            continue
+        if fn.lower().endswith(".json.json"):
             continue
         fp = os.path.join(PLAYLIST_DIR, fn)
         try:
@@ -1687,8 +2018,7 @@ def _scan_json_playlists():
 
 def _find_playlist_file(pl_id):
     """Find a playlist file by id in PlayLists/."""
-    safe = re.sub(r'[^\w\s.-]', "", pl_id).strip()
-    fp = os.path.join(PLAYLIST_DIR, f"{safe}.json")
+    fp = _playlist_filepath(pl_id)
     return fp if os.path.isfile(fp) else None
 
 def _count_channels(data):
@@ -1848,6 +2178,31 @@ def api_get_playlist_channels(pl_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/playlists/<pl_id>/channels", methods=["POST"])
+def api_append_channels_to_playlist(pl_id):
+    """Add/move/merge channels into ANY playlist. Compare-then-merge: matching
+    link/cmd or series episode is replaced in place, everything else is
+    appended. Always edits the SAME single file — no duplicates, no extra
+    files. Body: {type, cat_name, cat_id, channels:[...]}."""
+    fp = _find_playlist_file(pl_id)
+    if not fp:
+        return jsonify({"ok": False, "error": "Playlist not found"}), 404
+    data = request.get_json(silent=True) or {}
+    pl_type = data.get("type", "live")
+    cat_name = data.get("cat_name", "")
+    cat_id = data.get("cat_id", "")
+    channels = data.get("channels", [])
+    if not cat_name or not channels:
+        return jsonify({"ok": False, "error": "cat_name and channels required"}), 400
+    res = _merge_channels_into_file(
+        fp, pl_type, cat_name, cat_id, channels,
+        series_name=data.get("series_name", "") or "",
+        series_id=data.get("series_id", "") or "",
+        portal_url=data.get("portal_url", "") or "",
+        mac=data.get("mac", "") or "",
+    )
+    return jsonify({"ok": True, "added": res["added"], "replaced": res["replaced"]})
+
 @app.route("/api/playlists/<pl_id>/rename-category", methods=["POST"])
 def api_rename_playlist_category(pl_id):
     data = request.get_json(silent=True) or {}
@@ -1916,7 +2271,7 @@ def _convert_to_json(portal_url, mac, channels):
     safe_host = re.sub(r'[^\w.-]', '', hostname)
     safe_mac = mac.replace(':', '')[:12]
     filename = f"{safe_host}_{safe_mac}.json"
-    filepath = os.path.join(PLAYLIST_DIR, filename)
+    filepath = _playlist_filepath(filename)
 
     new_entries = []
     for ch in channels:
@@ -1937,7 +2292,7 @@ def _convert_to_json(portal_url, mac, channels):
     existing = []
     if os.path.isfile(filepath):
         try:
-            with open(filepath, "r") as f:
+            with open(filepath, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 existing = data.get("channels", [])
         except Exception:
@@ -1947,7 +2302,7 @@ def _convert_to_json(portal_url, mac, channels):
     merged = existing + [e for e in new_entries if e["cmd"] not in existing_cmds]
 
     os.makedirs(PLAYLIST_DIR, exist_ok=True)
-    with open(filepath, "w") as f:
+    with open(filepath, "w", encoding="utf-8") as f:
         json.dump({
             "name": safe_host,
             "source": "portal",
@@ -1955,7 +2310,7 @@ def _convert_to_json(portal_url, mac, channels):
             "mac": mac,
             "updated": time.time(),
             "channels": merged,
-        }, f, indent=2)
+        }, f, indent=2, ensure_ascii=False)
 
     def gen():
         yield f"data: {json.dumps({'_start': True, 'total': len(new_entries), 'filename': filename})}\n\n"
@@ -1978,7 +2333,7 @@ def save_categories():
         return jsonify({"ok":False,"error":"Missing portal_url or mac"}),400
 
     filename = _playlist_filename(portal_url, mac)
-    filepath = os.path.join(PLAYLIST_DIR, filename)
+    filepath = _playlist_filepath(filename)
 
     # Read existing file (created by /api/check) or create fresh
     if os.path.isfile(filepath):
@@ -1994,16 +2349,22 @@ def save_categories():
 
     # Build category skeleton with empty nested arrays
     cat_data = {}
+    existing_cats = {ct: {str(c.get("id", "")): c for c in pl_data.get("categories", {}).get(ct, [])} for ct in ("live", "vod", "series")}
     for ct in ("live","vod","series"):
         cat_data[ct] = []
         for c in cats.get(ct, []):
             entry = {"id":c.get("id",""),"name":c.get("name",""),"cached":False,"count":c.get("count",0)}
+            # Preserve already-resolved channel data for this category
+            old = existing_cats.get(ct, {}).get(str(c.get("id", "")))
+            if old:
+                entry["cached"] = old.get("cached", entry.get("cached", False))
+                if old.get("count"): entry["count"] = old.get("count", entry.get("count", 0))
             if ct == "live":
-                entry["Channel"] = []
+                entry["Channel"] = list(old.get("Channel", [])) if old else []
             elif ct == "vod":
-                entry["Movie"] = []
+                entry["Movie"] = list(old.get("Movie", [])) if old else []
             elif ct == "series":
-                entry["series"] = []
+                entry["series"] = list(old.get("series", [])) if old else []
             cat_data[ct].append(entry)
 
     pl_data["categories"] = cat_data
@@ -2045,6 +2406,208 @@ def check_vlc_path():
         return jsonify({"ok": True})
     return jsonify({"ok": False, "error": "File not found at this path"})
 
+def _load_or_new_playlist(fp, portal_url="", mac="", name=""):
+    """Load a playlist file or return a fresh skeleton so we always edit ONE
+    canonical file in place (never create a duplicate)."""
+    os.makedirs(PLAYLIST_DIR, exist_ok=True)
+    data = {}
+    if os.path.isfile(fp):
+        try:
+            with open(fp, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            data = {}
+    if not isinstance(data, dict):
+        data = {}
+    if not data.get("categories"):
+        data = {
+            "name": name or (urlparse(portal_url).hostname if portal_url else "playlist"),
+            "source": "portal" if portal_url else "playlist",
+            "portal_url": portal_url,
+            "mac": mac,
+            "updated": time.time(),
+            "categories": {"live": [], "vod": [], "series": []},
+        }
+    else:
+        if portal_url and not data.get("portal_url"):
+            data["portal_url"] = portal_url
+        if mac and not data.get("mac"):
+            data["mac"] = mac
+        data.setdefault("name", name or "playlist")
+        data.setdefault("source", "portal")
+        data.setdefault("categories", {})
+        for ct in ("live", "vod", "series"):
+            data["categories"].setdefault(ct, [])
+    return data
+
+
+def _norm_cmd(c):
+    c = str(c or "").strip()
+    if c.startswith("ffmpeg "):
+        c = c[7:].strip()
+    return c
+
+
+def _merge_channels_into_file(fp, pl_type, cat_name, cat_id, channels,
+                              series_name="", series_id="", portal_url="", mac=""):
+    """Compare-then-merge channels into ONE playlist file (never a duplicate,
+    never a second file). Same link/cmd (or same series episode) found ->
+    replaced in place; otherwise appended. Updates counts + timestamp and
+    writes the file back."""
+    pl_type = pl_type or "live"
+    data = _load_or_new_playlist(fp, portal_url, mac)
+    cats = data["categories"].get(pl_type, [])
+    cat = next((c for c in cats if str(c.get("name", "")) == str(cat_name)), None)
+    if cat is None:
+        cat = {"id": cat_id or "", "name": cat_name, "cached": True, "count": 0}
+        arm = {"live": "Channel", "vod": "Movie", "series": "series"}.get(pl_type)
+        if arm:
+            cat[arm] = []
+        cats.append(cat)
+        data["categories"][pl_type] = cats
+    cat["cached"] = True
+    added, replaced = 0, 0
+
+    if pl_type == "series":
+        sname = (series_name or "").strip()
+        entries = cat.get("series", [])
+        if sname:
+            s_entry = next((s for s in entries if str(s.get("name", "")) == sname), None)
+            if s_entry is None:
+                s_entry = {"id": series_id or "", "name": sname, "episode": []}
+                entries.append(s_entry)
+            eps = s_entry.get("episode", [])
+            by_key = {(int(e.get("season_num", 1) or 1), int(e.get("episode_num", 1) or 1)): e for e in eps}
+            for ch in channels:
+                sn = int(ch.get("season_num", 1) or 1)
+                en = int(ch.get("episode_num", 1) or 1)
+                key = (sn, en)
+                if key in by_key:
+                    old = by_key[key]
+                    replaced += 1
+                    if ch.get("url") and old.get("url") != ch["url"]:
+                        old["url"] = ch["url"]
+                    if ch.get("cmd") and old.get("cmd") != ch["cmd"]:
+                        old["cmd"] = ch["cmd"]
+                    if ch.get("portal_url"): old["portal_url"] = ch["portal_url"]
+                    if ch.get("mac"): old["mac"] = ch["mac"]
+                else:
+                    eps.append({
+                        "portal_url": ch.get("portal_url", ""),
+                        "mac": ch.get("mac", ""),
+                        "season_num": sn,
+                        "episode_num": en,
+                        "cmd": ch.get("cmd", ""),
+                        "url": ch.get("url", ""),
+                    })
+                    by_key[key] = eps[-1]
+                    added += 1
+            s_entry["episode"] = eps
+        else:
+            groups = {}
+            for ch in channels:
+                sid = str(ch.get("series_id", "") or "") or "__unknown__"
+                if sid not in groups:
+                    s_nm = ch.get("series_name", "")
+                    if not s_nm:
+                        s_nm = re.sub(r'\s+S\d{2,4}\s+E\d{2,4}(?:\s|$)', '', ch.get("name", "")).strip()
+                    groups[sid] = {"id": "" if sid == "__unknown__" else sid,
+                                   "name": s_nm or ch.get("name", ""), "episode": []}
+                groups[sid]["episode"].append(ch)
+            existing_map = {}
+            for s in entries:
+                existing_map[str(s.get("id", "") or "") or str(s.get("name", ""))] = s
+            for sid, s_entry in groups.items():
+                key = "" if sid == "__unknown__" else sid
+                es = existing_map.get(key)
+                if es is None:
+                    entries.append(s_entry)
+                    added += len(s_entry["episode"])
+                    continue
+                eps = es.get("episode", [])
+                by_key = {(int(e.get("season_num", 1) or 1), int(e.get("episode_num", 1) or 1)): e for e in eps}
+                for ch in s_entry["episode"]:
+                    sn = int(ch.get("season_num", 1) or 1)
+                    en = int(ch.get("episode_num", 1) or 1)
+                    k = (sn, en)
+                    if k in by_key:
+                        old = by_key[k]
+                        replaced += 1
+                        if ch.get("url") and old.get("url") != ch["url"]:
+                            old["url"] = ch["url"]
+                        if ch.get("cmd") and old.get("cmd") != ch["cmd"]:
+                            old["cmd"] = ch["cmd"]
+                    else:
+                        eps.append({
+                            "portal_url": ch.get("portal_url", ""),
+                            "mac": ch.get("mac", ""),
+                            "season_num": sn,
+                            "episode_num": en,
+                            "cmd": ch.get("cmd", ""),
+                            "url": ch.get("url", ""),
+                        })
+                        by_key[k] = eps[-1]
+                        added += 1
+                es["episode"] = eps
+        cat["series"] = entries
+        cat["count"] = len(entries)
+    else:
+        arm = "Channel" if pl_type == "live" else "Movie"
+        container = cat.setdefault(arm, [])
+        idx_by_id = {}
+        idx_by_cmd = {}
+        for i, e in enumerate(container):
+            if e.get("id"):
+                idx_by_id[str(e["id"])] = i
+            c = _norm_cmd(e.get("cmd", ""))
+            if c:
+                idx_by_cmd[c] = i
+        for ch in channels:
+            key_id = str(ch.get("id", "")) if ch.get("id") else ""
+            key_cmd = _norm_cmd(ch.get("cmd", ""))
+            i = idx_by_id.get(key_id) if key_id else None
+            if i is None and key_cmd:
+                i = idx_by_cmd.get(key_cmd)
+            if i is not None:
+                e = container[i]
+                replaced += 1
+                if ch.get("url") and e.get("url") != ch["url"]:
+                    e["url"] = ch["url"]
+                if ch.get("cmd") and e.get("cmd") != ch["cmd"]:
+                    e["cmd"] = ch["cmd"]
+                if ch.get("name") and not e.get("name"):
+                    e["name"] = ch["name"]
+                if key_id and not e.get("id"):
+                    e["id"] = key_id
+                if ch.get("content_type"):
+                    e["content_type"] = ch["content_type"]
+                if key_id:
+                    idx_by_id[key_id] = i
+                if key_cmd:
+                    idx_by_cmd[key_cmd] = i
+            else:
+                container.append({
+                    "id": ch.get("id", ""),
+                    "portal_url": ch.get("portal_url", ""),
+                    "mac": ch.get("mac", ""),
+                    "name": ch.get("name", ""),
+                    "cmd": ch.get("cmd", ""),
+                    "url": ch.get("url", ""),
+                    "content_type": ch.get("content_type", pl_type),
+                })
+                if key_id:
+                    idx_by_id[key_id] = len(container) - 1
+                if key_cmd:
+                    idx_by_cmd[key_cmd] = len(container) - 1
+                added += 1
+        cat[arm] = container
+        cat["count"] = len(container)
+
+    data["updated"] = time.time()
+    with open(fp, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+    return {"added": added, "replaced": replaced}
+
 @app.route("/api/playlists/favorites/add-category", methods=["POST"])
 def add_category_to_favorites():
     data = request.json
@@ -2052,165 +2615,20 @@ def add_category_to_favorites():
     cat_name = data.get("cat_name", "")
     cat_id = data.get("cat_id", "")
     channels = data.get("channels", [])
-    src_id = data.get("source_playlist_id", "")
 
     if not cat_name or not channels:
         return jsonify({"ok": False, "error": "Missing cat_name or channels"}), 400
 
-    fp = os.path.join(PLAYLIST_DIR, "Favorites.json")
-    os.makedirs(PLAYLIST_DIR, exist_ok=True)
-
-    fav = {}
-    if os.path.isfile(fp):
-        with open(fp, "r") as f:
-            fav = json.load(f)
-
-    if not fav.get("categories"):
-        fav = {"name": "Favorites", "source": "portal", "updated": time.time(), "categories": {"live": [], "vod": [], "series": []}}
-
-    # For series with series_name, treat as individual series entry
+    fp = _playlist_filepath("Favorites")
     series_name = data.get("series_name", "") or data.get("series_id", "") or ""
-
-    # Find or create category entry
-    cat_entry = None
-    cats = fav["categories"].get(pl_type, [])
-    for c in cats:
-        if c.get("name") == cat_name:
-            cat_entry = c
-            break
-    if not cat_entry:
-        cat_entry = {"id": cat_id, "name": cat_name, "cached": True, "count": 0}
-        if pl_type == "live":
-            cat_entry["Channel"] = []
-        elif pl_type == "vod":
-            cat_entry["Movie"] = []
-        elif pl_type == "series":
-            cat_entry["series"] = []
-        cats.append(cat_entry)
-        fav["categories"][pl_type] = cats
-
-    # Merge channels (dedupe by id)
-    added = 0
-
-    if pl_type == "series" and series_name:
-        # Remove cat_count for now; will be set below
-        # Find or create series entry inside category
-        series_entries = cat_entry.get("series", [])
-        s_entry = None
-        for s in series_entries:
-            if s.get("name") == series_name:
-                s_entry = s
-                break
-        if not s_entry:
-            s_entry = {"id": data.get("series_id", ""), "name": series_name, "episode": []}
-            series_entries.append(s_entry)
-        # Merge episodes (dedupe by season_num+episode_num)
-        existing_eps = s_entry.get("episode", [])
-        existing_keys = {(ep.get("season_num"), ep.get("episode_num")) for ep in existing_eps if ep.get("season_num") is not None}
-        for ch in channels:
-            sn = ch.get("season_num")
-            en = ch.get("episode_num")
-            key = (sn, en)
-            if key in existing_keys:
-                continue
-            existing_eps.append({
-                "portal_url": ch.get("portal_url", ""),
-                "mac": ch.get("mac", ""),
-                "season_num": sn,
-                "episode_num": en,
-                "cmd": ch.get("cmd", ""),
-                "url": ch.get("url", ""),
-            })
-            if key != (None, None):
-                existing_keys.add(key)
-            added += 1
-        s_entry["episode"] = existing_eps
-        cat_entry["series"] = series_entries
-        cat_entry["count"] = len(series_entries)
-    else:
-        if pl_type == "series":
-            # Group channels by series_id into proper series entries
-            groups = {}
-            for ch in channels:
-                sid = ch.get("series_id", "") or ""
-                if not sid:
-                    sid = "__unknown__"
-                if sid not in groups:
-                    sname = ch.get("series_name", "")
-                    if not sname:
-                        sname = re.sub(r'\s+S\d{2,4}\s+E\d{2,4}(?:\s|$)', '', ch.get("name", "")).strip()
-                    groups[sid] = {"id": sid if sid != "__unknown__" else "", "name": sname or ch.get("name", ""), "episode": []}
-                groups[sid]["episode"].append({
-                    "portal_url": ch.get("portal_url", ""),
-                    "mac": ch.get("mac", ""),
-                    "season_num": ch.get("season_num", 0),
-                    "episode_num": ch.get("episode_num", 0),
-                    "cmd": ch.get("cmd", ""),
-                    "url": ch.get("url", ""),
-                })
-            series_entries = cat_entry.get("series", [])
-            existing_map = {s.get("id", ""): s for s in series_entries}
-            for sid, s_entry in groups.items():
-                key = sid if sid != "__unknown__" else ""
-                if key in existing_map:
-                    es = existing_map[key]
-                    existing_eps = es.get("episode", [])
-                    existing_keys = {(ep.get("season_num"), ep.get("episode_num")) for ep in existing_eps}
-                    for ep in s_entry["episode"]:
-                        k = (ep.get("season_num"), ep.get("episode_num"))
-                        if k not in existing_keys:
-                            existing_eps.append(ep)
-                            existing_keys.add(k)
-                            added += 1
-                    es["episode"] = existing_eps
-                else:
-                    s_entry["episode"] = s_entry["episode"]
-                    series_entries.append(s_entry)
-                    added += len(s_entry["episode"])
-            cat_entry["series"] = series_entries
-            cat_entry["count"] = len(series_entries)
-        else:
-            container_key = {"live": "Channel", "vod": "Movie", "series": "series"}.get(pl_type, "Channel")
-            existing = cat_entry.get(container_key, [])
-            existing_ids = {ch.get("id", "") for ch in existing if ch.get("id")}
-            existing_cmds = set()
-            for e in existing:
-                c = (e.get("cmd", "") or "").strip()
-                if c.startswith("ffmpeg "):
-                    c = c[7:].strip()
-                if c:
-                    existing_cmds.add(c)
-            for ch in channels:
-                ch_id = ch.get("id", "")
-                if ch_id and ch_id in existing_ids:
-                    continue
-                ch_cmd = (ch.get("cmd", "") or "").strip()
-                if ch_cmd.startswith("ffmpeg "):
-                    ch_cmd = ch_cmd[7:].strip()
-                if ch_cmd and ch_cmd in existing_cmds:
-                    continue
-                entry = {
-                    "id": ch_id,
-                    "portal_url": ch.get("portal_url", ""),
-                    "mac": ch.get("mac", ""),
-                    "name": ch.get("name", ""),
-                    "cmd": ch.get("cmd", ""),
-                    "url": ch.get("url", ""),
-                }
-                existing.append(entry)
-                if ch_id:
-                    existing_ids.add(ch_id)
-                if ch_cmd:
-                    existing_cmds.add(ch_cmd)
-                added += 1
-            cat_entry[container_key] = existing
-            cat_entry["count"] = len(existing)
-    fav["updated"] = time.time()
-
-    with open(fp, "w") as f:
-        json.dump(fav, f, indent=2)
-
-    return jsonify({"ok": True, "added": added})
+    series_id = data.get("series_id", "") or ""
+    sample = channels[0] or {}
+    res = _merge_channels_into_file(
+        fp, pl_type, cat_name, cat_id, channels,
+        series_name=series_name, series_id=series_id,
+        portal_url=sample.get("portal_url", ""), mac=sample.get("mac", ""),
+    )
+    return jsonify({"ok": True, "added": res["added"], "replaced": res["replaced"]})
 
 @app.route("/api/playlists/favorites/save", methods=["POST"])
 def save_favorites():
