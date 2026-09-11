@@ -1091,7 +1091,7 @@ button{font:inherit}
             </div>
             <div style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--stage);margin-bottom:0">
               <div id="ch-list-header" style="grid-template-columns:30px 1fr 70px;flex-shrink:0">
-                <div></div><div>Channel Name</div><div style="text-align:center">Items</div>
+                <div></div><div>Channel Name</div><div style="text-align:center">Fetch</div>
               </div>
               <div id="ch-scroll" style="flex:1;overflow-y:auto">
                 <div id="ch-list-body"></div>
@@ -2022,6 +2022,7 @@ let _loadedPlaylistNames=new Set();
 let _plMeta={};
 let _plCatCounts={};
 let _snap2Imported=new Set();
+let _snap3Imported=new Set();
 async function loadAllPlaylists(btnEl){
   if(_plLoadBusy){ showToast('info','Already loading…',2000); return; }
   if(btnEl) btnEl.disabled=true;
@@ -2108,12 +2109,30 @@ async function goNextPlaylists(btnEl){
   updateCatBadges();
   updateSidebarCounts();
   if(typeof applyCatFilter==='function') applyCatFilter();
-  if(typeof applyChFilter==='function') applyChFilter();
   updateSaveBtnState();
   scrollToSlide(1);
 }
 function goNextCategories(){
+  const names=Object.keys(catFilteredByPlaylist||{});
+  let picks=[];
+  if(names.length===1){
+    picks=[names[0]];
+  }else if(names.length>1){
+    picks=names.filter(function(name){
+      return (catFilteredByPlaylist[name]||[]).some(function(c){ return catSel.has(catKey(c)); });
+    });
+    if(!picks.length) showToast('warning','Nothing selected — nothing moved',3000);
+  }else{
+    showToast('info','Nothing here yet',2500);
+  }
+  const warmed=picks.filter(function(n){ return !_snap3Imported.has(n); });
+  if(warmed.length) showToast('loading','Preparing channels…',0);
+  picks.forEach(function(n){ _snap3Imported.add(n); });
+  _chUnlocked=true;
+  if(typeof applyChFilter==='function') applyChFilter();
   scrollToSlide(2);
+  if(warmed.length) showToast('success','✓ Moved '+warmed.length+' playlist'+(warmed.length>1?'s':''),4000);
+  else if(picks.length) showToast('success','✓ Already moved',2500);
 }
 
 /* ── category list ── */
@@ -2535,6 +2554,7 @@ let chFilteredChans={};
 let chOpenPlays=new Set();
 let chOpenCats=new Set();
 let chSearchTimer=null;
+let _chUnlocked=false;
 function chKey(c,i){ return catKey(c)+'\u0003'+i; }
 function switchChTab(tab){
   chanTab=tab;
@@ -2552,13 +2572,23 @@ function attachChSearchListeners(){
   ['input','cut','paste'].forEach(evt=>{ el.addEventListener(evt,()=>setTimeout(onChSearch,0)); });
 }
 function applyChFilter(){
+  if(!_chUnlocked){
+    chFilteredByPlaylist={};
+    chFilteredChans={};
+    const vis=document.getElementById('ch-visible-count');
+    if(vis) vis.textContent='0';
+    renderChanList();
+    updateChSelectAll();
+    updateChCounts();
+    return;
+  }
   const raw=(document.getElementById('ch-search').value||'').toLowerCase().trim();
   const words=raw.split(/\s+/).filter(Boolean);
   chFilteredByPlaylist={};
   chFilteredChans={};
   let totalCh=0;
   Object.keys(playlistCats).forEach(function(name){
-    if(!_snap2Imported.has(name)) return;
+    if(!_snap3Imported.has(name)) return;
     const arr=playlistCats[name][chanTab]||[];
     const filtered=[];
     arr.forEach(function(c){
@@ -2605,43 +2635,52 @@ function renderChanList(){
     const cats=chFilteredByPlaylist[name]||[];
     if(!cats.length) return;
     const open=q?true:chOpenPlays.has(name);
-    const grandTotal=cats.reduce((n,c)=>(c._channels||[]).length+n,0);
     html+='<div class="ed-cat-acc">'
       +'<div class="cat-row chan-group" data-playlist="'+esc(name)+'" style="grid-template-columns:30px 1fr 70px">'
       +'<div class="cat-check"><input type="checkbox" class="cat-cb group-cb" data-playlist="'+esc(name)+'"></div>'
       +'<div class="cat-name" style="display:flex;align-items:center;gap:6px;min-width:0">'
       +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(name)+'</span></div>'
-      +'<div style="text-align:center"><span style="color:#555555;font-size:11px">'+grandTotal.toLocaleString()+'</span></div>'
+      +'<div style="text-align:center"></div>'
       +'</div>';
     if(open){
       cats.forEach(function(c,cidx){
         const ck=catKey(c);
         const subOpen=q?true:chOpenCats.has(ck);
         const chs=c._channels||[];
-        const visChs=chFilteredChans[ck]||chs;
+        const visChs=(chFilteredChans[ck]||chs).slice().sort(function(a,b){ return (a.url?1:0)-(b.url?1:0); });
         const fetched=!!c._fetched;
+        const catAllRes=chs.length>0&&chs.every(function(ch){ return !!ch.url; });
         var chRows='';
         if(subOpen){
           chRows=visChs.map(function(ch,i){
             const ci=(c._channels||[]).indexOf(ch);
             const key=chKey(c,ci);
             const sel=chSel.has(key);
-            const status=ch.url?'✓':(ch.needsResolve?'…':'');
+            var badgeHtml;
+            if(ch.url){
+              badgeHtml='<button class="cat-fetch-btn disabled" disabled title="Resolved"><i data-lucide="badge-check" width="13" height="13"></i></button>';
+            }else{
+              badgeHtml='<button class="cat-fetch-btn" title="Resolve" onclick="event.stopPropagation();resolveSingleChannel(\''+esc(name)+'\',\''+esc(String(c.id))+'\',\''+ci+'\',this)"><i data-lucide="badge-plus" width="13" height="13"></i></button>';
+            }
             return '<div class="cat-row ed-ch-row'+(sel?' selected':'')+'" data-pl="'+esc(name)+'" data-catid="'+esc(String(c.id))+'" data-ci="'+ci+'" style="grid-template-columns:24px 30px 1fr 50px;padding-left:70px">'
               +'<div style="text-align:center"><input type="checkbox" class="cat-cb"'+(sel?' checked':'')+'></div>'
               +'<div style="text-align:center;color:var(--muted);font-size:11px">'+(ci+1)+'</div>'
               +'<div class="cat-name">'+esc(ch.name)+'</div>'
-              +'<div style="text-align:center;color:var(--muted);font-size:11px">'+status+'</div>'
+              +'<div style="text-align:center">'+badgeHtml+'</div>'
               +'</div>';
           }).join('');
           if(!visChs.length) chRows='<div style="padding:10px 24px 10px 70px;color:var(--muted);font-size:12px">No channels</div>';
         }
         html+='<div class="cat-row chan-group ch-cat-group" data-pl="'+esc(name)+'" data-catid="'+esc(String(c.id))+'" style="grid-template-columns:24px 30px 1fr 70px;padding-left:36px;border-top:1px solid var(--surface-3)">'
           +'<div class="cat-check"><input type="checkbox" class="cat-cb group-cb ch-gcb" data-pl="'+esc(name)+'" data-catid="'+esc(String(c.id))+'"></div>'
-          +'<div style="text-align:center;color:var(--muted);font-size:11px">'+(fetched?'✓':'')+'</div>'
+          +'<div style="text-align:center"></div>'
           +'<div class="cat-name" style="display:flex;align-items:center;gap:6px;min-width:0">'
           +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.name)+'</span></div>'
-          +'<div style="text-align:center"><span style="color:#555555;font-size:11px">'+chs.length.toLocaleString()+'</span></div>'
+          +'<div style="text-align:center">'
+          +(catAllRes
+            ?'<button class="cat-fetch-btn disabled" disabled title="All resolved"><i data-lucide="badge-check" width="13" height="13"></i></button>'
+            :'<button class="cat-fetch-btn disabled" disabled title="Pending"><i data-lucide="badge-plus" width="13" height="13"></i></button>')
+          +'</div>'
           +'</div>'
           +chRows;
       });
@@ -2702,6 +2741,7 @@ function renderChanList(){
   });
   updateChGroupStates();
   updateChCatStates();
+  if(window.lucide) lucide.createIcons();
 }
 function toggleCh(c,ci,checked){
   const key=chKey(c,ci);
@@ -2852,6 +2892,24 @@ async function resolveSelectedChannels(btnEl){
   else if(failed) showToast('error','✓ '+succeeded+' resolved, '+failed+' failed — click Fetch to retry',5000);
   else showToast('success','✓ '+succeeded+' channel'+(succeeded===1?'':'s')+' resolved',4000);
 }
+async function resolveSingleChannel(name,catId,ci,btnEl){
+  const c=(playlistCats[name]&&playlistCats[name][chanTab]||[]).find(function(x){ return String(x.id)===String(catId); });
+  if(!c||!c._channels) return;
+  const ch=c._channels[+ci];
+  if(!ch||ch.url) return;
+  if(btnEl){ btnEl.disabled=true; btnEl.innerHTML='<i data-lucide="loader" width="13" height="13"></i>'; if(window.lucide) lucide.createIcons(); }
+  showToast('loading','Resolving '+ch.name+'…',0);
+  const pl=playlistCats[name];
+  try{
+    const r=await fetch('/api/resolve-channels',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:pl.portal_url||'',mac:pl.mac||'',channels:[{id:ch.id||'',name:ch.name||'',cmd:ch.cmd||'',content_type:ch.content_type||chanTab,cat_id:c.id||'',cat_name:c.name||'',series_id:ch.series_id||'',season_num:ch.season_num||0,episode_num:ch.episode_num||0}]})});
+    const d=await r.json();
+    const res=d&&d.ok&&d.results?d.results[0]:null;
+    if(res&&res.ok){ ch.url=res.url; ch.needsResolve=false; showToast('success','✓ Resolved',2500); }
+    else showToast('error','✗ Could not resolve',4000);
+  }catch(e){ showToast('error','✗ '+e.message,5000); }
+  buildCombinedCats();
+  applyChFilter(); updateSaveBtnState(); updateChCounts(); updateSidebarCounts();
+}
 function deleteSelChannels(){
   const total=chSel.size;
   if(!total){ showToast('info','Select channels to delete',3000); return; }
@@ -2879,7 +2937,7 @@ function deleteSelChannels(){
 function updateChCounts(){
   const tot={live:0,vod:0,series:0};
   Object.keys(playlistCats).forEach(function(name){
-    if(!_snap2Imported.has(name)) return;
+    if(!_snap3Imported.has(name)) return;
     ['live','vod','series'].forEach(function(t){
       (playlistCats[name][t]||[]).forEach(function(c){ tot[t]+=(c._channels||[]).length; });
     });
