@@ -539,7 +539,7 @@ button{font:inherit}
 #view-import .cat-check input{width:13px;height:13px;accent-color:var(--red);cursor:pointer}
 #view-import .cat-name{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px}
 #view-import .cat-empty{padding:32px;text-align:center;color:var(--muted);font-size:13px}
-#view-import .cat-fetch-btn{background:none;border:1px solid var(--line-2);border-radius:4px;color:var(--white);cursor:pointer;font-size:12px;padding:2px 6px;transition:all .15s;line-height:1.4}
+#view-import .cat-fetch-btn{background:none;border:none;padding:2px;display:inline-flex;align-items:center;justify-content:center;color:var(--white);cursor:pointer;transition:all .15s;line-height:1}
 #view-import .cat-fetch-btn:hover:not(.disabled){background:rgba(88,166,255,.12)}
 #view-import .cat-fetch-btn.disabled{opacity:.35;cursor:default;color:var(--white)}
 
@@ -1052,9 +1052,9 @@ button{font:inherit}
         </div>
         </div>
         <div class="card-footer" style="display:flex;gap:0 10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
-          <button class="action primary btn-ico" id="dl-catlist-btn" onclick="downloadCategoryList()" disabled>
-            <i data-lucide="download" width="14" height="14"></i>
-            Save
+          <button class="action primary btn-ico" id="cat-next-btn" onclick="goNextCategories()">
+            <i data-lucide="arrow-right" width="14" height="14"></i>
+            Next
           </button>
         </div>
       </div>
@@ -2021,6 +2021,7 @@ let _plLoadBusy=false;
 let _loadedPlaylistNames=new Set();
 let _plMeta={};
 let _plCatCounts={};
+let _snap2Imported=new Set();
 async function loadAllPlaylists(btnEl){
   if(_plLoadBusy){ showToast('info','Already loading…',2000); return; }
   if(btnEl) btnEl.disabled=true;
@@ -2048,17 +2049,14 @@ async function loadAllPlaylists(btnEl){
     rows.forEach(function(row){ row.remove(); });
     _plMeta={};
     _plCatCounts={};
-    let done=0;
-    for(const e of chosen){
+    chosen.forEach(function(e){
       const p=e.p;
       _plMeta[e.name]={id:p.id,portal_url:p.portal_url||'',mac:p.mac||''};
       const cc=p.category_counts||{};
       _plCatCounts[e.name]={live:cc.live||0,vod:cc.vod||0,series:cc.series||0};
-      addPlaylistNameRow(e.name);
-      const ok=await loadPlaylistIntoApp(p.id,e.name,p.portal_url||'',p.mac||'');
-      if(ok) done++;
-    }
-    buildCombinedCats();
+    });
+    Object.keys(_plMeta).forEach(function(name){ addPlaylistNameRow(name); });
+    const shown=Object.keys(_plMeta).length;
     updatePlaylistCounts();
     updateCatBadges();
     updatePlBadges();
@@ -2066,14 +2064,7 @@ async function loadAllPlaylists(btnEl){
     if(typeof applyCatFilter==='function') applyCatFilter();
     updateSaveBtnState();
     updatePlSelectAll();
-    if(done){
-      const first=chosen[0];
-      window._activeFilename=first.p.id;
-      rememberActivePlaylist(first.p.id,first.name);
-      setActivePlaylist(first.name);
-      loadPlaylists();
-    }
-    showToast('success','✓ Loaded '+done+' playlist'+(done>1?'s':''),4000);
+    showToast('success','✓ Loaded '+shown+' playlist'+(shown>1?'s':''),4000);
   }catch(e){ showToast('error','✗ '+e.message,5000); }
   finally{ _plLoadBusy=false; if(btnEl) btnEl.disabled=false; }
 }
@@ -2088,6 +2079,7 @@ async function goNextPlaylists(btnEl){
   }else{
     showToast('info','Nothing loaded yet',2500);
   }
+  targets.forEach(function(n){ _snap2Imported.add(n); });
   const fresh=targets.filter(function(n){ return !playlistCats[n]; });
   if(fresh.length){
     if(btnEl) btnEl.disabled=true;
@@ -2099,12 +2091,6 @@ async function goNextPlaylists(btnEl){
         const ok=await loadPlaylistIntoApp(meta.id||name,name,meta.portal_url||'',meta.mac||'');
         if(ok) imported++;
       }
-      buildCombinedCats();
-      updatePlaylistCounts();
-      updateCatBadges();
-      updateSidebarCounts();
-      if(typeof applyCatFilter==='function') applyCatFilter();
-      updateSaveBtnState();
       const first=fresh[0];
       const meta=_plMeta[first]||{};
       window._activeFilename=meta.id||first;
@@ -2117,7 +2103,17 @@ async function goNextPlaylists(btnEl){
   }else if(targets.length){
     showToast('success','✓ Already imported',2500);
   }
+  buildCombinedCats();
+  updatePlaylistCounts();
+  updateCatBadges();
+  updateSidebarCounts();
+  if(typeof applyCatFilter==='function') applyCatFilter();
+  if(typeof applyChFilter==='function') applyChFilter();
+  updateSaveBtnState();
   scrollToSlide(1);
+}
+function goNextCategories(){
+  scrollToSlide(2);
 }
 
 /* ── category list ── */
@@ -2157,15 +2153,14 @@ function applyCatFilter(){
   catFilteredByPlaylist={};
   catFiltered=[];
   Object.keys(playlistCats).forEach(function(name){
+    if(!_snap2Imported.has(name)) return;
     const arr=playlistCats[name][catTab]||[];
     const filtered=arr.filter(c=>{
       const h=(c.name||'').toLowerCase();
       return !words.length || words.every(w=>h.includes(w));
     }).slice();
     filtered.sort(function(a,b){
-      var aEmpty=(a.count!==undefined&&a.count>0)?1:0;
-      var bEmpty=(b.count!==undefined&&b.count>0)?1:0;
-      return aEmpty-bEmpty;
+      return (a._fetched?1:0)-(b._fetched?1:0);
     });
     catFilteredByPlaylist[name]=filtered;
     catFiltered=catFiltered.concat(filtered);
@@ -2180,7 +2175,14 @@ function applyCatFilter(){
 function renderCatList(){
   const body=document.getElementById('cat-list-body');
   if(!body) return;
-  const names=Object.keys(playlistCats);
+  const allNames=Object.keys(catFilteredByPlaylist);
+  const pendingList=[], doneList=[];
+  allNames.forEach(function(name){
+    const arr=(playlistCats[name]&&playlistCats[name][catTab])||[];
+    const allDone=arr.length>0&&arr.every(function(c){ return c._fetched; });
+    (allDone?doneList:pendingList).push(name);
+  });
+  const names=pendingList.concat(doneList);
   if(!names.length||!catFiltered.length){
     body.innerHTML='<div class="cat-empty">'+(names.length?'No categories found':'Import a playlist to see categories')+'</div>';
     return;
@@ -2190,15 +2192,16 @@ function renderCatList(){
   names.forEach(function(name){
     const filtered=catFilteredByPlaylist[name]||[];
     const open=q?true:openPlays.has(name);
-    var countStr='<span style="color:#555555;font-size:11px">'+filtered.length.toLocaleString()+'</span>';
+    var countStr='';
     var childRows='';
     if(open){
       childRows=filtered.map((c,ci)=>{
         const key=catKey(c);
         const sel=catSel.has(key);
         var isFetched=!!c._fetched;
-        var fetchBtnHtml='<button class="cat-fetch-btn'+(isFetched?' disabled':'')+'" '+(isFetched?'disabled':'')+' title="'+(isFetched?'Fetched':'Fetch channels')+'" onclick="event.stopPropagation();fetchSingleCategoryCount(\''+c.type+'\',\''+c.id+'\',\''+name+'\',this)"><i data-lucide="'+(isFetched?'check':'refresh-cw')+'" width="13" height="13"></i></button>';
-        var cntHtml='<span style="color:var(--muted);font-size:11px">'+(c._previewCount!==undefined?c._previewCount.toLocaleString():'–')+'</span>';
+        var fetchBtnHtml='<button class="cat-fetch-btn'+(isFetched?' disabled':'')+'" '+(isFetched?'disabled':'')+' title="'+(isFetched?'Fetched':'Fetch channels')+'" onclick="event.stopPropagation();fetchSingleCategoryCount(\''+c.type+'\',\''+c.id+'\',\''+name+'\',this)"><i data-lucide="'+(isFetched?'database-check':'database-arrow-down')+'" width="13" height="13"></i></button>';
+        var realCount=(c._previewCount!==undefined)?c._previewCount:c.count;
+        var cntHtml='<span style="color:var(--muted);font-size:11px">'+(realCount!==undefined&&realCount>0?realCount.toLocaleString():'–')+'</span>';
         return '<div class="cat-row ed-ch-row'+(sel?' selected':'')+'" data-key="'+key+'" style="grid-template-columns:24px 30px 1fr 70px 50px;padding-left:34px">'
           +'<div style="text-align:center"><input type="checkbox" class="cat-cb"'+(sel?' checked':'')+' data-key="'+key+'"></div>'
           +'<div style="text-align:center;color:var(--muted);font-size:11px">'+(ci+1)+'</div>'
@@ -2368,7 +2371,7 @@ async function fetchSingleCategoryCount(type,catId,playlistName,btnEl){
     const r=await fetch('/api/fetch-full-category',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:portalUrl,mac,cats:[{type:type,id:catId,name:cat.name}]})});
     const d=await r.json();
     var res=d.ok&&d.results&&d.results[0];
-    if(!d.ok||!res||!res.ok){ showToast('error','✗ '+(d.error||'Fetch failed'),5000); btnEl.disabled=false; btnEl.innerHTML='<i data-lucide="refresh-cw" width="13" height="13"></i>'; if(window.lucide) lucide.createIcons(); return; }
+    if(!d.ok||!res||!res.ok){ showToast('error','✗ '+(d.error||'Fetch failed'),5000); btnEl.disabled=false; btnEl.innerHTML='<i data-lucide="database-arrow-down" width="13" height="13"></i>'; if(window.lucide) lucide.createIcons(); return; }
     cat.count=res.count;
     cat._channels=res.items||[];
     cat._fetched=true;
@@ -2376,7 +2379,7 @@ async function fetchSingleCategoryCount(type,catId,playlistName,btnEl){
     applyCatFilter(); updateCatBadges(); updateSaveBtnState(); applyChFilter(); updateChCounts();
     if(res.count>0) showToast('success','✓ '+res.count.toLocaleString()+' channels',4000);
     else showToast('info','0 items — retry available',3000);
-  }catch(e){ showToast('error','✗ '+e.message,5000); btnEl.disabled=false; btnEl.innerHTML='<i data-lucide="refresh-cw" width="13" height="13"></i>'; if(window.lucide) lucide.createIcons(); }
+  }catch(e){ showToast('error','✗ '+e.message,5000); btnEl.disabled=false; btnEl.innerHTML='<i data-lucide="database-arrow-down" width="13" height="13"></i>'; if(window.lucide) lucide.createIcons(); }
 }
 let _catFetchBusy=false;
 async function fetchAllCategoryCounts(btnEl){
@@ -2555,6 +2558,7 @@ function applyChFilter(){
   chFilteredChans={};
   let totalCh=0;
   Object.keys(playlistCats).forEach(function(name){
+    if(!_snap2Imported.has(name)) return;
     const arr=playlistCats[name][chanTab]||[];
     const filtered=[];
     arr.forEach(function(c){
@@ -2581,7 +2585,7 @@ function renderChanList(){
   const body=document.getElementById('ch-list-body');
   const empty=document.getElementById('ch-empty');
   if(!body) return;
-  const names=Object.keys(playlistCats);
+  const names=Object.keys(chFilteredByPlaylist);
   let anyFetched=false;
   names.forEach(function(name){
     const cats=chFilteredByPlaylist[name]||[];
@@ -2875,6 +2879,7 @@ function deleteSelChannels(){
 function updateChCounts(){
   const tot={live:0,vod:0,series:0};
   Object.keys(playlistCats).forEach(function(name){
+    if(!_snap2Imported.has(name)) return;
     ['live','vod','series'].forEach(function(t){
       (playlistCats[name][t]||[]).forEach(function(c){ tot[t]+=(c._channels||[]).length; });
     });
