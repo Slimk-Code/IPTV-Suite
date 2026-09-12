@@ -2241,6 +2241,20 @@ def api_save_playlist_file(pl_id):
     if not isinstance(cats, dict):
         cats = {}
 
+    erase = bool(data.get("erase"))
+    if erase:
+        kept = _load_or_new_playlist(fp, portal_url, mac)
+        for ct in ("live", "vod", "series"):
+            for c in kept.get("categories", {}).get(ct, []) or []:
+                for arm in ("Channel", "Movie", "series"):
+                    if isinstance(c.get(arm), list):
+                        c[arm] = []
+                c["count"] = 0
+                c["cached"] = False
+        kept["updated"] = time.time()
+        with open(fp, "w", encoding="utf-8") as f:
+            json.dump(kept, f, indent=2, ensure_ascii=False)
+
     added, replaced = 0, 0
     for ct in ("live", "vod", "series"):
         for c in cats.get(ct, []) or []:

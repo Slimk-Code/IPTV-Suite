@@ -118,6 +118,15 @@ button{font:inherit}
 .import-dd-menu{position:absolute;bottom:calc(100% + 6px);left:0;right:0;background:var(--surface);border:1px solid var(--line-2);border-radius:8px;padding:4px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 .import-dd-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:background .12s,color .12s}
 .import-dd-item:hover{background:var(--active);color:var(--white)}
+.import-dd-sep{border-top:1px solid var(--line-2);margin:4px 2px}
+.import-dd-item.chooser{position:relative}
+.import-dd-item.gray{opacity:.45;cursor:default;pointer-events:none}
+.import-dd-item.chooser .choose-menu{display:none;position:absolute;left:calc(100% - 2px);bottom:0;min-width:220px;max-width:280px;max-height:260px;overflow-y:auto;background:var(--surface);border:1px solid var(--line-2);border-radius:8px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:var(--z-dropdown)}
+.import-dd-item.chooser:hover .choose-menu{display:block}
+.import-dd-item.chooser.gray{opacity:.45;cursor:default;pointer-events:none}
+.choose-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:background .12s,color .12s;white-space:nowrap}
+.choose-item:hover{background:var(--active);color:var(--white)}
+.choose-item .sub{color:var(--faint);font-weight:500;font-size:10px;overflow:hidden;text-overflow:ellipsis;max-width:110px}
 
 /* user dropdown */
 .user-dd{position:absolute;top:56px;left:var(--s3);width:212px;background:var(--surface);
@@ -632,9 +641,13 @@ button{font:inherit}
       <div style="position:relative;margin-top:6px" id="import-dd">
         <button class="btn-red" onclick="toggleImportDD(event)"><i data-lucide="download" width="14" height="14"></i>Import playlist <i data-lucide="chevron-down" width="13" height="13"></i></button>
         <div class="import-dd-menu" id="import-dd-menu" style="display:none">
-          <div class="import-dd-item" onclick="importDDGo('import')"><i data-lucide="download" width="14" height="14"></i>Import playlist</div>
-          <div class="import-dd-item" onclick="importDDGo('load-playlist')"><i data-lucide="folder-open" width="14" height="14"></i>Load playlist</div>
+<div class="import-dd-item" onclick="importDDGo('import')"><i data-lucide="download" width="14" height="14"></i>Import playlist</div>
           <div class="import-dd-item" onclick="importDDGo('checker')"><i data-lucide="shield-check" width="14" height="14"></i>Playlist checker</div>
+          <div class="import-dd-sep"></div>
+          <div class="import-dd-item" id="import-dd-edit" onclick="editPlaylistGo()"><i data-lucide="pencil" width="14" height="14"></i><span id="import-dd-edit-label">edit playlist</span></div>
+          <div class="import-dd-item chooser" id="import-dd-chooser"><i data-lucide="list-check" width="14" height="14"></i>choose a playlist <i data-lucide="chevron-right" width="12" height="12" style="margin-left:auto"></i>
+            <div class="choose-menu" id="choose-pl-menu"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1034,13 +1047,21 @@ button{font:inherit}
         </div>
         <div class="card-body" style="padding:0;display:flex;flex-direction:column;overflow:hidden">
         <div class="imp-cat-picker" id="cat-picker" style="display:flex;flex:1;flex-direction:column;overflow:hidden;padding:12px 20px 10px;min-height:0">
-          <div class="cat-toolbar">
-            <div class="cat-search-wrap field" style="margin-bottom:0">
-              <i data-lucide="search" width="13" height="13"></i>
-              <input type="text" id="cat-search" placeholder="Search categories…" style="padding-left:32px">
+<div class="cat-toolbar">
+              <div class="cat-search-wrap field" style="margin-bottom:0">
+                <i data-lucide="search" width="13" height="13"></i>
+                <input type="text" id="cat-search" placeholder="Search categories…" style="padding-left:32px">
+              </div>
+              <select id="cat-move-select" class="btn-sec" onchange="moveSelCats(this)" style="padding:var(--s2) var(--s4);border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;height:auto;line-height:normal">
+                <option value="" selected disabled>Move</option>
+                <option value="live">Live</option>
+                <option value="vod">VOD</option>
+                <option value="series">Series</option>
+              </select>
+              <button class="btn-sec" id="cat-merge-btn" onclick="mergeSelCats()">Merge</button>
+              <button class="btn-sec" id="cat-del-btn" onclick="deleteSelCats()">Delete</button>
+              <button class="action primary btn-ico" id="fetch-counts-btn" onclick="fetchAllCategoryCounts()" style="margin-left:auto">Fetch</button>
             </div>
-            <button class="action primary btn-ico" id="fetch-counts-btn" onclick="fetchAllCategoryCounts()" style="margin-left:auto">Fetch</button>
-          </div>
           <div class="cat-select-bar">
             <label>
               <input type="checkbox" id="cat-select-all" onchange="toggleCatSelectAll(this.checked)">
@@ -1232,57 +1253,13 @@ button{font:inherit}
       <div class="topbar"><div class="view-title">Load Playlist</div></div>
 
 <div class="imp-scroll-nav" id="lp-scroll-nav">
-  <button class="nav-dot active" data-slide="0" onclick="scrollToSlide(0)" title="Playlists"></button>
-  <button class="nav-dot" data-slide="1" onclick="scrollToSlide(1)" title="Categories"></button>
-  <button class="nav-dot" data-slide="2" onclick="scrollToSlide(2)" title="Channels"></button>
-  <button class="nav-dot" data-slide="3" onclick="scrollToSlide(3)" title="Account Info"></button>
+  <button class="nav-dot active" data-slide="0" onclick="scrollToSlide(0)" title="Categories"></button>
+  <button class="nav-dot" data-slide="1" onclick="scrollToSlide(1)" title="Channels"></button>
 </div>
 
 <div class="imp-snap-wrapper" id="lp-snap-wrapper">
 
   <div class="snap-slide" id="lp-slide-0">
-    <div class="snap-section">
-      <div class="card-full">
-        <div class="sec-label" style="padding:5px 20px;border-bottom:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center">
-          Playlists
-          <span class="mini-toggle" id="lp-pl-tabs" style="margin:0 0 0 auto">
-            <button class="active" data-pt="live" onclick="switchPlTab('live')"><i data-lucide="tv" width="13" height="13"></i> Live <span class="pane-count" id="lp-plb-live">0</span></button>
-            <button data-pt="vod" onclick="switchPlTab('vod')"><i data-lucide="film" width="13" height="13"></i> VOD <span class="pane-count" id="lp-plb-vod">0</span></button>
-            <button data-pt="series" onclick="switchPlTab('series')"><i data-lucide="clapperboard" width="13" height="13"></i> Series <span class="pane-count" id="lp-plb-series">0</span></button>
-          </span>
-        </div>
-        <div class="card-body" style="padding:0;display:flex;flex-direction:column;overflow:hidden">
-          <div style="display:flex;flex:1;flex-direction:column;overflow:hidden;padding:12px 20px 10px;min-height:0">
-            <div class="cat-toolbar">
-              <div class="cat-search-wrap field" style="margin-bottom:0">
-                <i data-lucide="search" width="13" height="13"></i>
-                <input type="text" id="lp-pl-search" placeholder="Search playlists…" style="padding-left:32px">
-              </div>
-<button class="action primary btn-ico" id="lp-pl-load-btn" onclick="loadAllPlaylists(this)"><i data-lucide="layers" width="14" height="14"></i> Load</button>
-            </div>
-            <div class="cat-select-bar">
-              <label><input type="checkbox" id="lp-pl-select-all" onchange="toggleAllPlaylists(this.checked)"> Select all visible &nbsp;<span id="lp-pl-visible-count" style="color:var(--text);font-weight:600">0</span></label>
-              <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="lp-pl-filter-info"></span>
-            </div>
-            <div style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--stage);margin-bottom:0">
-              <div style="display:grid;grid-template-columns:30px 1fr 70px;background:var(--surface-3);border-bottom:1px solid var(--line-2);padding:7px 12px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;flex-shrink:0">
-                <div></div><div>Playlist Name</div><div style="text-align:center">Categories</div>
-              </div>
-              <div id="lp-pl-scroll" style="flex:1;overflow-y:auto">
-                <div id="lp-playlist-list"></div>
-                <div id="lp-playlist-empty" style="padding:32px;text-align:center;color:var(--muted);font-size:13px">No playlists</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card-footer" style="display:flex;gap:0 10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
-          <button class="action primary btn-ico" id="lp-pl-next-btn" onclick="goNextPlaylists(this)"><i data-lucide="arrow-right" width="14" height="14"></i> Next</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="snap-slide" id="lp-slide-1">
     <div class="snap-section">
       <div class="card-full" id="lp-card-step2" style="display:flex">
         <div class="sec-label" style="padding:5px 20px;border-bottom:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center">
@@ -1295,21 +1272,14 @@ button{font:inherit}
         </div>
         <div class="card-body" style="padding:0;display:flex;flex-direction:column;overflow:hidden">
         <div class="imp-cat-picker" id="lp-cat-picker" style="display:flex;flex:1;flex-direction:column;overflow:hidden;padding:12px 20px 10px;min-height:0">
-          <div class="cat-toolbar">
-            <div class="cat-search-wrap field" style="margin-bottom:0">
-              <i data-lucide="search" width="13" height="13"></i>
-              <input type="text" id="lp-cat-search" placeholder="Search categories…" style="padding-left:32px">
+<div class="cat-toolbar">
+              <div class="cat-search-wrap field" style="margin-bottom:0">
+                <i data-lucide="search" width="13" height="13"></i>
+                <input type="text" id="lp-cat-search" placeholder="Search categories…" style="padding-left:32px">
+              </div>
+              <button class="btn-sec" id="lp-cat-del-btn" onclick="deleteSelCats()">Delete</button>
+              <button class="action primary btn-ico" id="lp-fetch-counts-btn" onclick="fetchAllCategoryCounts()" style="margin-left:auto">Fetch</button>
             </div>
-            <select id="lp-cat-move-select" class="btn-sec" onchange="moveSelCats(this)" style="padding:var(--s2) var(--s4);border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;height:auto;line-height:normal">
-              <option value="" selected disabled>Move</option>
-              <option value="live">Live</option>
-              <option value="vod">VOD</option>
-              <option value="series">Series</option>
-            </select>
-            <button class="btn-sec" id="lp-cat-merge-btn" onclick="mergeSelCats()">Merge</button>
-            <button class="btn-sec" id="lp-cat-del-btn" onclick="deleteSelCats()">Delete</button>
-            <button class="action primary btn-ico" id="lp-fetch-counts-btn" onclick="fetchAllCategoryCounts()" style="margin-left:auto">Fetch</button>
-          </div>
           <div class="cat-select-bar">
             <label>
               <input type="checkbox" id="lp-cat-select-all" onchange="toggleCatSelectAll(this.checked)">
@@ -1337,7 +1307,7 @@ button{font:inherit}
     </div>
   </div>
 
-  <div class="snap-slide" id="lp-slide-2">
+  <div class="snap-slide" id="lp-slide-1">
     <div class="snap-section">
       <div class="card-full">
         <div class="sec-label" style="padding:5px 20px;border-bottom:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center">
@@ -1353,7 +1323,7 @@ button{font:inherit}
             <div class="cat-toolbar">
               <div class="cat-search-wrap field" style="margin-bottom:0">
                 <i data-lucide="search" width="13" height="13"></i>
-                <input type="text" id="lp-ch-search" placeholder="Search channels…" style="padding-left:32px">
+<input type="text" id="lp-ch-search" placeholder="Search channels…" style="padding-left:32px">
               </div>
               <button class="btn-sec" id="lp-ch-del-btn" onclick="deleteSelChannels()">Delete</button>
               <button class="action primary btn-ico" id="lp-ch-fetch-btn" onclick="resolveSelectedChannels(this)" style="margin-left:auto">Fetch</button>
@@ -1376,28 +1346,8 @@ button{font:inherit}
             </div>
           </div>
         </div>
-        <div class="card-footer" style="display:flex;gap:0 10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
-          <button class="action primary btn-ico" id="lp-dl-catlist-btn" onclick="savePlaylistsToFiles()"><i data-lucide="download" width="14" height="14"></i> Save</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="snap-slide" id="lp-slide-3">
-    <div class="snap-section">
-      <div class="card-full">
-        <div class="sec-label" style="padding:5px 20px;border-bottom:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center">
-          Account Info
-        </div>
-        <div class="card-body" style="padding-top:20px">
-          <div class="profile-grid" id="lp-profile-grid">
-            <div class="pi"><div class="pi-label">Serial Number</div><div class="pi-value" id="lp-pi-sn">—</div></div>
-            <div class="pi"><div class="pi-label">Device ID</div><div class="pi-value" id="lp-pi-did">—</div></div>
-            <div class="pi"><div class="pi-label">Device ID 2</div><div class="pi-value" id="lp-pi-did2">—</div></div>
-            <div class="pi"><div class="pi-label">Expiry</div><div class="pi-value" id="lp-pi-exp">N/A</div></div>
-            <div class="pi"><div class="pi-label">Max Connections</div><div class="pi-value" id="lp-pi-mc">N/A</div></div>
-            <div class="pi"><div class="pi-label">Status</div><div class="pi-value" id="lp-pi-st">N/A</div></div>
-          </div>
+<div class="card-footer" style="display:flex;gap:0 10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
+          <button class="action primary btn-ico" id="lp-dl-catlist-btn" onclick="savePlaylistsToFiles()"><i data-lucide="download" width="14" height="14"></i> Update</button>
         </div>
       </div>
     </div>
@@ -2174,12 +2124,158 @@ function toggleImportDD(e){
   if(e) e.stopPropagation();
   const menu=document.getElementById('import-dd-menu');
   if(!menu) return;
-  menu.style.display = menu.style.display==='block' ? 'none' : 'block';
+  const show=menu.style.display!=='block';
+  menu.style.display = show ? 'block' : 'none';
+  if(show){ loadChoosePlaylists(); refreshEditEntry(); }
 }
 function importDDGo(id){
   const menu=document.getElementById('import-dd-menu');
   if(menu) menu.style.display='none';
   showView(id);
+  if(window.lucide) lucide.createIcons();
+}
+async function loadChoosePlaylists(){
+  const host=document.getElementById('import-dd-chooser');
+  const box=document.getElementById('choose-pl-menu');
+  if(!host||!box) return;
+  const items=[];
+  try{
+    const r=await fetch('/api/playlists');
+    const d=await r.json();
+    const seen={};
+    (d.playlists||[]).forEach(function(p){
+      if(!p.portal_url||!p.mac) return;
+      const name=p.name||p.id||'';
+      if(!name) return;
+      if(!seen[name]) seen[name]=p;
+      else if(p.id===name&&(seen[name].id!==name)) seen[name]=p;
+    });
+    Object.keys(seen).forEach(function(k){ items.push(seen[k]); });
+  }catch(e){}
+  host.classList.toggle('gray',!items.length);
+  box.innerHTML=items.map(function(p){
+    const name=p.name||p.id||'';
+    const sub=(p.portal_url||'').replace(/^https?:\/\//,'').replace(/\/+$/,'');
+    return '<div class="choose-item" data-name="'+esc(name)+'" data-id="'+esc(p.id)+'" title="'+esc(name)+'"><i data-lucide="play-list" width="13" height="13"></i><span>'+esc(name)+'</span><span class="sub">'+esc(sub)+'</span></div>';
+  }).join('');
+  if(window.lucide) lucide.createIcons();
+}
+async function choosePlaylistActivate(name,id){
+  const menu=document.getElementById('import-dd-menu');
+  if(menu) menu.style.display='none';
+  if(!id) return;
+  window._activeFilename=id;
+  rememberActivePlaylist(id,name||id);
+  try{
+    if(!playerCats[name]){
+      const jr=await fetch('/api/playlists/'+encodeURIComponent(id)+'/channels');
+      const jd=await jr.json();
+      if(jd&&jd.channels){
+        const portal_url=jd.portal_url||'';
+        const mac=jd.mac||'';
+        const pl={portal_url:portal_url,mac:mac,filename:id,name:name};
+        ['live','vod','series'].forEach(function(t){
+          pl[t]=(jd.categories&&jd.categories[t]||[]).map(function(cat){
+            return {id:cat.id||'',name:cat.name||'',count:cat.count||0,cached:!!cat.cached,_channels:[],_fetched:false,type:t,_playlist:name,_portal_url:portal_url,_mac:mac};
+          });
+        });
+        (jd.channels||[]).forEach(function(ch){
+          const t=ch.content_type||'live';
+          const cat=(pl[t]||[]).find(function(c){ return String(c.name)===String(ch.group); });
+          if(!cat) return;
+          if(!cat._channels) cat._channels=[];
+          cat._channels.push({
+            id:ch.id||'',name:ch.name||'',cmd:ch.cmd||'',url:ch.url||'',content_type:t,
+            needsResolve:!ch.url&&!!ch.cmd,series_id:ch.series_id||'',season_num:ch.season_num||0,episode_num:ch.episode_num||0,
+            _playlist:name,_portal_url:portal_url,_mac:mac
+          });
+          cat._fetched=true;
+        });
+        ['live','vod','series'].forEach(function(t){
+          (pl[t]||[]).forEach(function(cat){ if(cat._channels.length>cat.count) cat.count=cat._channels.length; });
+        });
+        playerCats[name]=pl;
+      }
+    }
+  }catch(e){}
+  setActivePlaylist(name);
+  updateSidebarCounts();
+  loadPlaylists();
+  refreshEditEntry();
+  showView('player');
+}
+(function(){
+  const box=document.getElementById('choose-pl-menu');
+  if(!box) return;
+  box.addEventListener('click',function(e){
+    const item=e.target.closest('.choose-item');
+    if(!item) return;
+    choosePlaylistActivate(item.dataset.name||'',item.dataset.id||'');
+  });
+})();
+async function resolveActivePlaylistName(){
+  const id=window._activeFilename;
+  if(!id) return '';
+  try{
+    const r=await fetch('/api/playlists');
+    const d=await r.json();
+    const p=(d.playlists||[]).find(function(x){ return x.id===id; });
+    if(p&&(p.list_name||p.name)) return p.list_name||p.name;
+  }catch(e){}
+  try{
+    const pl=playerCats[id];
+    if(!pl) {
+      const r=await fetch('/api/playlists/'+encodeURIComponent(id)+'/channels');
+      const d=await r.json();
+      if(d&&(d.name||d.list_name)) return d.name||d.list_name;
+    }
+  }catch(e){}
+  return id;
+}
+async function refreshEditEntry(){
+  const item=document.getElementById('import-dd-edit');
+  const label=document.getElementById('import-dd-edit-label');
+  if(!item||!label) return;
+  const id=window._activeFilename;
+  if(!id){ label.textContent='edit playlist'; item.classList.add('gray'); return; }
+  const name=await resolveActivePlaylistName()||id;
+  label.textContent='edit '+name;
+  item.classList.remove('gray');
+}
+async function editPlaylistGo(){
+  const menu=document.getElementById('import-dd-menu');
+  if(menu) menu.style.display='none';
+  const item=document.getElementById('import-dd-edit');
+  const id=window._activeFilename;
+  if(!item||item.classList.contains('gray')||!id) return;
+  showView('load-playlist');
+  playlistCats={}; cats={live:[],vod:[],series:[]};
+  _snap2Imported=new Set(); _snap2Dirty=new Set();
+  catSel.clear(); chSel.clear(); openPlays.clear();
+  const catSearch=el('cat-search'); if(catSearch) catSearch.value='';
+  const chSearch=el('ch-search'); if(chSearch) chSearch.value='';
+  const name=await resolveActivePlaylistName()||id;
+  try{
+    await loadPlaylistIntoApp(id,name,'','');
+  }catch(e){}
+  ['live','vod','series'].forEach(function(t){
+    ((playlistCats[name]&&playlistCats[name][t])||[]).forEach(function(c){
+      c._channels=[];
+      c._fetched=false;
+      c.count=0;
+    });
+  });
+  openPlays.add(name);
+  buildCombinedCats();
+  updatePlaylistCounts();
+  updateCatBadges();
+  applyCatFilter();
+  applyChFilter();
+  updateSaveBtnState();
+  updateChCounts();
+  updateCatSelCount();
+  updatePlSelectAll();
+  scrollToSlide(0);
   if(window.lucide) lucide.createIcons();
 }
 document.addEventListener('click',function(e){
@@ -2912,8 +3008,8 @@ if(!selected.length){
 _chUnlocked=true;
   applyChFilter();
   updateChCounts();
-  updateSaveBtnState();
-  scrollToSlide(2);
+updateSaveBtnState();
+  scrollToSlide(impPage==='load-playlist'?1:2);
   showToast('success','✓ Copied '+selected.length+' categor'+(selected.length===1?'y':'ies')+' to Channels',4000);
 }
 
@@ -2991,7 +3087,7 @@ function renderCatList(){
   });
   const names=pendingList.concat(doneList);
 if(!names.length||!catFiltered.length){
-    body.innerHTML='<div class="cat-empty">'+(impPage==='checker'?'No category fetched yet':(allNames.length?'No categories found':'Import a playlist to see categories'))+'</div>';
+    body.innerHTML='<div class="cat-empty">'+(impPage==='checker'||impPage==='load-playlist'?'No category fetched yet':(allNames.length?'No categories found':'Import a playlist to see categories'))+'</div>';
     return;
   }
   const q=(el('cat-search').value||'').toLowerCase().trim();
@@ -3093,7 +3189,7 @@ function updateCatSelectAll(){
   if(!cb) return;
   const sel=catFiltered.filter(c=>catSel.has(catKey(c))).length;
 const cnt=el('cat-visible-count');
-  if(cnt) cnt.textContent=sel+(impPage==='checker'?' of ':' / ')+catFiltered.length;
+  if(cnt) cnt.textContent=sel+(impPage==='checker'||impPage==='load-playlist'?' of ':' / ')+catFiltered.length;
   cb.indeterminate=sel>0&&sel<catFiltered.length;
   cb.checked=catFiltered.length>0&&sel===catFiltered.length;
 }
@@ -3284,7 +3380,7 @@ function restoreSaveBtn(){
   const btn=el('dl-catlist-btn');
   if(!btn) return;
   btn.disabled=false; updateSaveBtnState();
-  btn.innerHTML='<i data-lucide="download" width="14" height="14"></i> Save';
+  btn.innerHTML='<i data-lucide="download" width="14" height="14"></i> '+(impPage==='import'?'Save':'Update');
   if(window.lucide) lucide.createIcons();
 }
 function movedPlaylistNames(){
@@ -3304,10 +3400,11 @@ async function savePlaylistsToFiles(){
       let target=pl.filename||'';
       if(!target) target=await ensurePlaylistSaved(name);
       if(!target){ showToast('error','✗ Cannot save "'+name+'" — no source file found',5000); continue; }
-      const payload={
+const payload={
         name:pl.name||name,
         portal_url:pl.portal_url||'',
         mac:pl.mac||'',
+        erase:impPage==='load-playlist',
         categories:{live:[],vod:[],series:[]}
       };
       ['live','vod','series'].forEach(function(t){
@@ -3440,7 +3537,7 @@ function renderChanList(){
   });
   if(!names.length||!anyFetched){
     body.innerHTML='';
-    if(empty){ empty.style.display='block'; empty.textContent=(impPage==='checker'?(_chUnlocked?'No channels found, fetch a category first':'No channel fetched yet'):'Nothing here yet — pick categories on the Category Import step and press Next'); }
+    if(empty){ empty.style.display='block'; empty.textContent=(impPage==='checker'||impPage==='load-playlist'?(_chUnlocked?'No channels found, fetch a category first':'No channel fetched yet'):'Nothing here yet — pick categories on the Category Import step and press Next'); }
     updateChCounts();
     return;
   }
@@ -3637,7 +3734,7 @@ function updateChSelectAll(){
   });
   const sel=keys.filter(k=>chSel.has(k)).length;
 const cnt=el('ch-visible-count');
-  if(cnt) cnt.textContent=sel+(impPage==='checker'?' of ':' / ')+keys.length;
+  if(cnt) cnt.textContent=sel+(impPage==='checker'||impPage==='load-playlist'?' of ':' / ')+keys.length;
   cb.indeterminate=sel>0&&sel<keys.length;
   cb.checked=keys.length>0&&sel===keys.length;
 }
@@ -3890,11 +3987,11 @@ async function restoreActivePlaylist(){
             if(cat._channels.length>cat.count) cat.count=cat._channels.length;
           });
         });
-        playerCats[name]=pl;
-        updateSidebarCounts();
+playerCats[name]=pl;
       }
     }
     setActivePlaylist(name);
+    updateSidebarCounts();
     loadPlaylists();
   }catch(e){}
 }
