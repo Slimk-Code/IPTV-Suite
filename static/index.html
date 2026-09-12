@@ -393,7 +393,7 @@ button{font:inherit}
 .import-scrim .form-actions .mini-toggle button{cursor:default;pointer-events:none}
 /* drop zone */
 .dropzone{border:2px dashed var(--line-2);border-radius:var(--r);padding:var(--s4);
-  text-align:center;color:var(--muted);cursor:pointer;transition:all .15s var(--ease);margin-bottom:var(--s3)}
+  text-align:center;color:var(--muted);cursor:pointer;transition:all .15s var(--ease);margin-bottom:var(--s3);min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .dropzone:hover{border-color:var(--red);color:var(--white);background:var(--red-wash)}
 .dropzone i{margin-bottom:var(--s2)}
 .dropzone p{font-size:12px}
@@ -641,7 +641,7 @@ button{font:inherit}
       <div style="position:relative;margin-top:6px" id="import-dd">
         <button class="btn-red" onclick="toggleImportDD(event)"><i data-lucide="download" width="14" height="14"></i>Import playlist <i data-lucide="chevron-down" width="13" height="13"></i></button>
         <div class="import-dd-menu" id="import-dd-menu" style="display:none">
-<div class="import-dd-item" onclick="importDDGo('import')"><i data-lucide="download" width="14" height="14"></i>Import playlist</div>
+<div class="import-dd-item" onclick="importDDGo('import')"><i data-lucide="download" width="14" height="14"></i>M3U Merge</div>
           <div class="import-dd-item" onclick="importDDGo('checker')"><i data-lucide="shield-check" width="14" height="14"></i>Playlist checker</div>
           <div class="import-dd-sep"></div>
           <div class="import-dd-item" id="import-dd-edit" onclick="editPlaylistGo()"><i data-lucide="pencil" width="14" height="14"></i><span id="import-dd-edit-label">edit playlist</span></div>
@@ -986,8 +986,7 @@ button{font:inherit}
 <div class="imp-scroll-nav" id="scroll-nav">
   <button class="nav-dot active" data-slide="0" onclick="scrollToSlide(0)" title="Playlists"></button>
   <button class="nav-dot" data-slide="1" onclick="scrollToSlide(1)" title="Categories"></button>
-  <button class="nav-dot" data-slide="2" onclick="scrollToSlide(2)" title="Channels"></button>
-  <button class="nav-dot" data-slide="3" onclick="scrollToSlide(3)" title="Account Info"></button>
+<button class="nav-dot" data-slide="2" onclick="scrollToSlide(2)" title="Channels"></button>
 </div>
 
 <div class="imp-snap-wrapper" id="snap-wrapper">
@@ -1010,7 +1009,8 @@ button{font:inherit}
                 <i data-lucide="search" width="13" height="13"></i>
                 <input type="text" id="pl-search" placeholder="Search playlists…" style="padding-left:32px">
               </div>
-              <button class="action primary btn-ico" id="pl-import-btn" onclick="openModal('stalker')"><i data-lucide="plus" width="14" height="14"></i> Import</button>
+              <button class="btn-sec" id="pl-del-btn" onclick="deleteSelectedPlaylists()"><i data-lucide="trash-2" width="14" height="14"></i> Delete</button>
+              <button class="action primary btn-ico" id="pl-import-btn" onclick="openModal('stalker')" style="margin-left:auto"><i data-lucide="plus" width="14" height="14"></i> Import</button>
             </div>
             <div class="cat-select-bar">
               <label><input type="checkbox" id="pl-select-all" onchange="toggleAllPlaylists(this.checked)"> Select all visible &nbsp;<span id="pl-visible-count" style="color:var(--text);font-weight:600">0</span></label>
@@ -1106,8 +1106,7 @@ button{font:inherit}
               <div class="cat-search-wrap field" style="margin-bottom:0">
                 <i data-lucide="search" width="13" height="13"></i>
                 <input type="text" id="ch-search" placeholder="Search channels…" style="padding-left:32px">
-              </div>
-              <button class="action primary btn-ico" id="ch-fetch-btn" onclick="resolveSelectedChannels(this)" style="margin-left:auto">Fetch</button>
+</div>
             </div>
             <div class="cat-select-bar">
               <label>
@@ -1117,8 +1116,8 @@ button{font:inherit}
               <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="ch-filter-info"></span>
             </div>
             <div style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--stage);margin-bottom:0">
-              <div class="imp-list-header" id="ch-list-header" style="grid-template-columns:30px 1fr 70px;flex-shrink:0">
-                <div></div><div>Channel Name</div><div style="text-align:center">Fetch</div>
+<div class="imp-list-header" id="ch-list-header" style="grid-template-columns:30px 1fr 70px;flex-shrink:0">
+                <div></div><div>Channel Name</div><div style="text-align:center"></div>
               </div>
               <div class="imp-list-scroll" id="ch-scroll" style="flex:1;overflow-y:auto">
                 <div id="ch-list-body"></div>
@@ -1132,27 +1131,7 @@ button{font:inherit}
         </div>
       </div>
     </div>
-  </div>
-
-  <div class="snap-slide" id="slide-3">
-    <div class="snap-section">
-      <div class="card-full">
-        <div class="sec-label" style="padding:5px 20px;border-bottom:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center">
-          Account Info
-        </div>
-        <div class="card-body" style="padding-top:20px">
-          <div class="profile-grid" id="profile-grid">
-            <div class="pi"><div class="pi-label">Serial Number</div><div class="pi-value" id="pi-sn">—</div></div>
-            <div class="pi"><div class="pi-label">Device ID</div><div class="pi-value" id="pi-did">—</div></div>
-            <div class="pi"><div class="pi-label">Device ID 2</div><div class="pi-value" id="pi-did2">—</div></div>
-            <div class="pi"><div class="pi-label">Expiry</div><div class="pi-value" id="pi-exp">N/A</div></div>
-            <div class="pi"><div class="pi-label">Max Connections</div><div class="pi-value" id="pi-mc">N/A</div></div>
-            <div class="pi"><div class="pi-label">Status</div><div class="pi-value" id="pi-st">N/A</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+</div>
 
 </div>
 <div class="stream-modal" id="stream-modal" onclick="if(event.target===this)closeStreamModal()">
@@ -1197,9 +1176,9 @@ button{font:inherit}
         <div class="field"><label>M3U URL</label><input placeholder="http://server:port/get.php?..."></div>
         <div class="field"><label>Custom User-Agent (optional)</label><input placeholder="VLC/3.0.20 LibVLC/3.0.20"></div>
       </div>
-      <div id="m3u-file" style="display:none">
-        <div class="field"><label>Playlist Name</label><input placeholder="e.g. My Home"></div>
-        <div class="dropzone"><i data-lucide="upload-cloud" width="30" height="30"></i><p>Click to browse or drag an M3U file here</p></div>
+<div id="m3u-file" style="display:none">
+        <div class="dropzone" id="m3u-dropzone" style="cursor:pointer"><i data-lucide="upload-cloud" width="30" height="30"></i><p>Click to browse or drag an M3U file here</p></div>
+        <input type="file" id="m3u-file-input" accept=".m3u,.m3u8,audio/x-mpegurl,video/mp2t" multiple style="display:none">
       </div>
       <div class="form-actions" style="margin-top:var(--s3);justify-content:space-between;align-items:center">
         <button class="btn-sec"><i data-lucide="wifi" width="14" height="14"></i> Check Portal</button>
@@ -2132,6 +2111,7 @@ function importDDGo(id){
   const menu=document.getElementById('import-dd-menu');
   if(menu) menu.style.display='none';
   showView(id);
+  if(id==='import') loadAllPlaylists();
   if(window.lucide) lucide.createIcons();
 }
 async function loadChoosePlaylists(){
@@ -2301,8 +2281,29 @@ function openModal(which){
   _existingPlaylist=null;
   const addBtn=el('add-playlist-btn'); if(addBtn) addBtn.disabled=(impPage==='checker')?false:true;
   const checkBtn=el('check-portal-btn'); if(checkBtn) checkBtn.disabled=false;
+  const scrim=el('importScrim');
+  const importView=document.getElementById('view-import');
+  const m3uOnly=!!(scrim&&importView&&importView.classList.contains('active'));
   if(which==='url'){document.getElementById('urlScrim').classList.add('show');}
-  else{switchSrc(which);el('importScrim').classList.add('show');}
+  else{
+    if(m3uOnly){
+      const tabs=scrim.querySelector('.src-tabs'); if(tabs) tabs.style.display='none';
+      scrim.querySelectorAll('.src-panel').forEach(p=>{ if(p.id!=='src-m3u') p.style.display='none'; });
+      const panel=scrim.querySelector('#src-m3u');
+      if(panel){
+        const fa=panel.querySelector('.form-actions'); if(fa) fa.style.display='none';
+        const tg=panel.querySelector('.mini-toggle');
+        if(tg){ const bts=tg.querySelectorAll('button'); if(bts.length) m3uMode(bts[bts.length-1],'file'); }
+        const u=el('m3u-url'); if(u) u.style.display='none';
+        const f=el('m3u-file'); if(f) f.style.display='block';
+      }
+      _pendingM3U=[];
+      const dzP=scrim.querySelector('#m3u-dropzone p'); if(dzP) dzP.textContent='Click to browse or drag an M3U file here';
+      which='m3u';
+    }
+    switchSrc(which);
+    scrim.classList.add('show');
+  }
   lucide.createIcons();
 }
 function closeModal(id){document.getElementById(id).classList.remove('show');}
@@ -2324,6 +2325,22 @@ function m3uMode(btn,mode){
   el('m3u-url').style.display = mode==='url'?'block':'none';
   el('m3u-file').style.display = mode==='file'?'block':'none';
 }
+const _m3uDropzone=el('m3u-dropzone');
+const _m3uFileInput=el('m3u-file-input');
+if(_m3uDropzone&&_m3uFileInput){
+  _m3uDropzone.addEventListener('click',function(){ _m3uFileInput.click(); });
+  _m3uFileInput.addEventListener('change',function(){
+    const list=Array.prototype.slice.call(_m3uFileInput.files||[]).map(function(file){
+      return {file:file, base:file.name.replace(/\.[^.]+$/, '')};
+    });
+    _pendingM3U=list;
+    const p=_m3uDropzone.querySelector('p');
+    if(p) p.textContent=list.length?('Chosen: '+list.map(function(x){ return x.file.name; }).join(', ')):'Click to browse or drag an M3U file here';
+    const ab=el('add-playlist-btn');
+    if(ab) ab.disabled=!list.length;
+    _m3uFileInput.value='';
+  });
+}
 function stalkerSubMode(btn,mode){
   btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
@@ -2332,8 +2349,12 @@ function stalkerSubMode(btn,mode){
 }
 let _activePlaylistName='';
 let _existingPlaylist=null;
+let _pendingM3U=[];
 async function addPlaylist(){
   if(impPage==='checker'){ await injectPlaylistRows(); return; }
+  const scrim=el('importScrim');
+  const importView=document.getElementById('view-import');
+  if(scrim&&importView&&importView.classList.contains('active')){ await addM3UPlaylist(); return; }
   closeImpModal();
   const btn=el('add-playlist-btn'); if(btn) btn.disabled=true;
   playlistCats={};
@@ -2384,6 +2405,48 @@ function portalPlaylistName(){
     return raw;
   }
 return 'Untitled';
+}
+async function addM3UPlaylist(){
+  const files=_pendingM3U||[];
+  if(!files.length){ showToast('error','Choose an M3U file first',3000); return; }
+  closeImpModal();
+  const btn=el('add-playlist-btn'); if(btn) btn.disabled=true;
+  let added=0, failed=0;
+  for(const f of files){
+    let name=f.base||'My Playlist';
+    let nm=name, n=2;
+    while(_plMeta[nm]){ nm=name+' #'+n; n++; }
+    name=nm;
+    try{
+      const fd=new FormData();
+      fd.append('file', f.file);
+      fd.append('name', name);
+      const r=await fetch('/api/m3u/parse',{method:'POST',body:fd});
+      const d=await r.json();
+      if(!d.ok){ throw new Error(d.error||'failed'); }
+      const cc=d.categories||{};
+      const session={live:[],vod:[],series:[]};
+      ['live','vod','series'].forEach(function(t){
+        (cc[t]||[]).forEach(function(c){
+          const chans=(c.channels||[]).map(function(ch){
+            return {name:ch.name||'',url:ch.url||'',group:ch.group||c.name,logo:ch.logo||'',content_type:ch.content_type||t};
+          });
+          session[t].push({id:c.id||'',name:c.name||'',count:chans.length||c.count||0,cached:true,_fetched:true,type:t,_playlist:name,_channels:chans});
+        });
+      });
+      _m3uSession[name]=session;
+      _plMeta[name]={id:'',portal_url:'',mac:''};
+      _plCatCounts[name]={live:(cc.live||[]).length,vod:(cc.vod||[]).length,series:(cc.series||[]).length};
+      addPlaylistNameRow(name);
+      added++;
+    }catch(e){ failed++; showToast('error','✗ '+name+': '+(e.message||'failed'),4000); }
+  }
+  _pendingM3U=[];
+  const dz=el('m3u-dropzone'); if(dz){ const p=dz.querySelector('p'); if(p) p.textContent='Click to browse or drag an M3U file here'; }
+  if(btn) btn.disabled=false;
+  updatePlaylistCounts();
+  updatePlSelectAll();
+  showToast('success','✓ Added '+added+' playlist'+(added>1?'s':'')+(failed?(' · '+failed+' failed'):''),4000);
 }
 async function injectPlaylistRows(){
   const entries=[];
@@ -2849,6 +2912,7 @@ function cloneCategory(c){
 let _plLoadBusy=false;
 let _loadedPlaylistNames=new Set();
 let _plMeta={};
+let _m3uSession={};
 let _plProfile={};
 let _plCats={};
 let _plCatCounts={};
@@ -2857,6 +2921,27 @@ let _snap3Imported=new Set();
 let _snap2Dirty=new Set();
 let _snap3Dirty=new Set();
 let _snap3Store={};
+function deleteSelectedPlaylists(){
+  const list=el('playlist-list');
+  const rows=list?[...list.querySelectorAll('.cat-row[data-key]')].filter(function(r){ return r.style.display!=='none'; }):[];
+  const targets=rows.filter(function(r){
+    const cb=r.querySelector('.cat-cb');
+    return cb&&cb.checked;
+  }).map(function(r){ return r.dataset.key; });
+  if(!targets.length){ showToast('info','Select playlists to delete',3000); return; }
+  if(!confirm('Remove '+targets.length+' selected playlist'+(targets.length>1?'s':'')+' from this session?')) return;
+  targets.forEach(function(name){
+    delete _plMeta[name];
+    delete _plCatCounts[name];
+    delete _m3uSession[name];
+    if(playlistCats[name]) delete playlistCats[name];
+    const row=list&&list.querySelector('.cat-row[data-key="'+name+'"]');
+    if(row&&row.parentElement) row.parentElement.remove();
+  });
+  updatePlaylistCounts();
+  updatePlSelectAll();
+  showToast('success','✓ Removed '+targets.length+' playlist'+(targets.length>1?'s':'')+' from this session',4000);
+}
 async function loadAllPlaylists(btnEl){
   if(_plLoadBusy){ showToast('info','Already loading…',2000); return; }
   if(btnEl) btnEl.disabled=true;
@@ -2936,24 +3021,73 @@ let targets=rows.filter(function(r){
   showToast('loading','Copying playlists to Categories…');
 try{
     let imported=0;
-    for(const name of targets){
-      if(playlistCats[name]) continue;
-      const meta=_plMeta[name]||{};
-      if(impPage==='checker'){
-        try{
-          const sr=await fetch('/api/playlists/save-new',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:meta.portal_url||'',mac:meta.mac||'',profile:_plProfile[name]||null,categories:_plCats[name]||{live:[],vod:[],series:[]}})});
-          const sd=await sr.json();
-          if(sd.ok){ meta.id=sd.filename.replace(/\.json$/,''); }
-          else{ showToast('error','✗ Save failed for '+name,4000); continue; }
-        }catch(e){ showToast('error','✗ Save failed for '+name+': '+e.message,4000); continue; }
+    if(impPage==='checker'||impPage==='load-playlist'){
+      for(const name of targets){
+        if(playlistCats[name]) continue;
+        const meta=_plMeta[name]||{};
+        if(impPage==='checker'){
+          try{
+            const sr=await fetch('/api/playlists/save-new',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:meta.portal_url||'',mac:meta.mac||'',profile:_plProfile[name]||null,categories:_plCats[name]||{live:[],vod:[],series:[]}})});
+            const sd=await sr.json();
+            if(sd.ok){ meta.id=sd.filename.replace(/\.json$/,''); }
+            else{ showToast('error','✗ Save failed for '+name,4000); continue; }
+          }catch(e){ showToast('error','✗ Save failed for '+name+': '+e.message,4000); continue; }
+        }
+        const ok=await loadPlaylistIntoApp(meta.id||name,name,meta.portal_url||'',meta.mac||'');
+        if(ok) imported++;
       }
-      const ok=await loadPlaylistIntoApp(meta.id||name,name,meta.portal_url||'',meta.mac||'');
-      if(ok) imported++;
-    }
-    if(impPage==='checker'&&imported===0){
-      showToast('warning','No categories found, check a playlist first',3500);
     }else{
+      const merged={portal_url:'',mac:'',filename:'m3u_merge',name:'m3u_merge',live:[],vod:[],series:[]};
+      for(const name of targets){
+        const session=_m3uSession&&_m3uSession[name];
+        if(session){
+          ['live','vod','series'].forEach(function(t){
+            (session[t]||[]).forEach(function(c){ merged[t].push(c); });
+          });
+          imported++;
+        }else{
+          const meta=_plMeta[name]||{};
+          const ok=await loadPlaylistIntoApp(meta.id||name,name,meta.portal_url||'',meta.mac||'');
+          if(ok&&playlistCats[name]){
+            const pl=playlistCats[name];
+            ['live','vod','series'].forEach(function(t){
+              (pl[t]||[]).forEach(function(c){ merged[t].push(c); });
+            });
+            delete playlistCats[name];
+            imported++;
+          }
+        }
+      }
+      ['live','vod','series'].forEach(function(t){
+        merged[t].forEach(function(c){ c._playlist='m3u_merge'; });
+      });
+      ['live','vod','series'].forEach(function(t){
+        const byName={};
+        const out=[];
+        (merged[t]||[]).forEach(function(c){
+          if(!c._channels||!c._channels.length) return;
+          const nm=c.name||'';
+          const m=byName[nm];
+          if(m){ m._channels=(m._channels||[]).concat(c._channels||[]); }
+          else{ byName[nm]=c; out.push(c); }
+        });
+        out.forEach(function(c){ if(c._channels.length) c.count=c._channels.length; });
+        merged[t]=out;
+      });
+      let _gid=0;
+      ['live','vod','series'].forEach(function(t){
+        merged[t].forEach(function(c){ c.id='g'+(_gid++); });
+      });
+      playlistCats={'m3u_merge':merged};
+      openPlays.add('m3u_merge');
+      _snap2Imported.add('m3u_merge');
+    }
+    if(imported===0){
+      showToast('warning','No categories found, check a playlist first',3500);
+    }else if(impPage==='checker'||impPage==='load-playlist'){
       showToast('success','✓ Copied '+imported+' playlist'+(imported>1?'s':'')+' to Categories',4000);
+    }else{
+      showToast('success','✓ Merged '+imported+' playlist'+(imported>1?'s':'')+' into m3u_merge',4000);
     }
   }catch(e){ showToast('error','✗ '+e.message,5000); }
   finally{
@@ -3004,6 +3138,20 @@ if(!selected.length){
     const entry=_snap3Store[s.name]||{portal_url:s.pl.portal_url||'',mac:s.pl.mac||'',filename:s.pl.filename||'',name:s.name,live:[],vod:[],series:[]};
     entry[s.t].push(cloneCategory(s.c));
     _snap3Store[s.name]=entry;
+});
+  const _seenUrl={};
+  Object.keys(_snap3Store).forEach(function(dn){
+    ['live','vod','series'].forEach(function(t){
+      (_snap3Store[dn][t]||[]).forEach(function(c){
+        if(!c._channels) return;
+        c._channels=c._channels.filter(function(ch){
+          if(!ch.url||ch.url==='') return true;
+          if(_seenUrl[ch.url]) return false;
+          _seenUrl[ch.url]=true;
+          return true;
+        });
+      });
+    });
   });
 _chUnlocked=true;
   applyChFilter();
@@ -3101,8 +3249,11 @@ if(!names.length||!catFiltered.length){
       childRows=filtered.map((c,ci)=>{
         const key=catKey(c);
         const sel=catSel.has(key);
-        var isFetched=!!c._fetched;
-        var fetchBtnHtml='<button class="cat-fetch-btn'+(isFetched?' disabled':'')+'" '+(isFetched?'disabled':'')+' title="'+(isFetched?'Fetched':'Fetch channels')+'" onclick="event.stopPropagation();fetchSingleCategoryCount(\''+c.type+'\',\''+c.id+'\',\''+name+'\',this)"><i data-lucide="'+(isFetched?'database-check':'database-arrow-down')+'" width="13" height="13"></i></button>';
+var isFetched=!!c._fetched;
+        var fetchBtnHtml='';
+        if(impPage!=='import'){
+          fetchBtnHtml='<button class="cat-fetch-btn'+(isFetched?' disabled':'')+'" '+(isFetched?'disabled':'')+' title="'+(isFetched?'Fetched':'Fetch channels')+'" onclick="event.stopPropagation();fetchSingleCategoryCount(\''+c.type+'\',\''+c.id+'\',\''+name+'\',this)"><i data-lucide="'+(isFetched?'database-check':'database-arrow-down')+'" width="13" height="13"></i></button>';
+        }
         var realCount=(c._previewCount!==undefined)?c._previewCount:c.count;
         var cntHtml='<span style="color:var(--muted);font-size:11px">'+(realCount!==undefined&&realCount>0?realCount.toLocaleString():'–')+'</span>';
         return '<div class="cat-row ed-ch-row'+(sel?' selected':'')+'" data-key="'+key+'" style="grid-template-columns:24px 30px 1fr 70px 50px;padding-left:34px">'
@@ -3391,8 +3542,33 @@ async function savePlaylistsToFiles(){
   if(!btn) return;
   btn.disabled=true; btn.innerHTML='Saving…';
   try{
-    const names=movedPlaylistNames();
+const names=movedPlaylistNames();
     if(!names.length){ showToast('error','✗ Nothing to save — select categories and press Next on the Category step first',5000); restoreSaveBtn(); return; }
+    if(impPage==='import'){
+      var lines=['#EXTM3U'];
+      names.forEach(function(nm){
+        const pl=_snap3Store[nm];
+        if(!pl) return;
+        ['live','vod','series'].forEach(function(t){
+          (pl[t]||[]).forEach(function(c){
+            (c._channels||[]).forEach(function(ch){
+              if(!ch.url) return;
+              lines.push('#EXTINF:-1 tvg-logo="'+(ch.logo||'')+'" group-title="'+(c.name||nm)+'",'+(ch.name||'Channel'));
+              lines.push(ch.url);
+            });
+          });
+        });
+      });
+      const blob=new Blob([lines.join('\n')],{type:'audio/x-mpegurl'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download='m3u_merge.m3u';
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+      showToast('success','✓ Exported merged playlist as m3u_merge.m3u',4500);
+      restoreSaveBtn();
+      return;
+    }
     var savedCnt=0, firstTarget='';
     for(const name of names){
       const pl=_snap3Store[name];
@@ -3568,11 +3744,13 @@ function renderChanList(){
             const ci=(c._channels||[]).indexOf(ch);
             const key=chKey(c,ci);
             const sel=chSel.has(key);
-            var badgeHtml;
-            if(ch.url){
-              badgeHtml='<button class="cat-fetch-btn disabled" disabled title="Ready"><i data-lucide="database-check" width="13" height="13"></i></button>';
-            }else{
-              badgeHtml='<button class="cat-fetch-btn" title="Fetch" onclick="event.stopPropagation();resolveSingleChannel(\''+esc(name)+'\',\''+esc(String(c.id))+'\',\''+ci+'\',this)"><i data-lucide="database-arrow-down" width="13" height="13"></i></button>';
+var badgeHtml='';
+            if(impPage!=='import'){
+              if(ch.url){
+                badgeHtml='<button class="cat-fetch-btn disabled" disabled title="Ready"><i data-lucide="database-check" width="13" height="13"></i></button>';
+              }else{
+                badgeHtml='<button class="cat-fetch-btn" title="Fetch" onclick="event.stopPropagation();resolveSingleChannel(\''+esc(name)+'\',\''+esc(String(c.id))+'\',\''+ci+'\',this)"><i data-lucide="database-arrow-down" width="13" height="13"></i></button>';
+              }
             }
             return '<div class="cat-row ed-ch-row'+(sel?' selected':'')+'" data-pl="'+esc(name)+'" data-catid="'+esc(String(c.id))+'" data-ci="'+ci+'" style="grid-template-columns:24px 30px 1fr 50px;padding-left:70px">'
               +'<div style="text-align:center"><input type="checkbox" class="cat-cb"'+(sel?' checked':'')+'></div>'

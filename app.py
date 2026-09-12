@@ -1901,65 +1901,30 @@ def m3u_parse():
 
     safe = re.sub(r'[^\w\s-]', "", name).strip() or "unnamed"
     safe = re.sub(r'\s+', '_', safe)
-    filename = "m3u_" + safe + ".json"
-    filepath = _playlist_filepath(filename)
-    added = 0
-    replaced = 0
-    os.makedirs(PLAYLIST_DIR, exist_ok=True)
 
-    if os.path.isfile(filepath):
-        # Playlist already exists -> compare-then-merge into the SAME file.
-        with open(filepath, "r", encoding="utf-8") as f:
-            pl_data = json.load(f)
-        pl_data, added, replaced = _merge_m3u_into(pl_data, channels_all)
-        pl_data["updated"] = time.time()
-        pl_data["channels"] = _reconstruct_channels(pl_data)
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(pl_data, f, indent=2, ensure_ascii=False)
-        cats_live = []
-        for i, c in enumerate(pl_data["categories"].get("live", [])):
-            cats_live.append({"id": c.get("id", "g" + str(i)), "name": c.get("name", ""), "count": c.get("count", 0)})
-    else:
-        cats_live = []
-        for i, g in enumerate(order):
-            chs = groups[g]
-            cats_live.append({
-                "id": "g" + str(i),
-                "name": g,
-                "count": len(chs),
-                "cached": True,
-                "Channel": [
-                    {"name": c["name"], "url": c["url"], "group": g,
-                     "logo": c.get("logo", ""), "content_type": "live"}
-                    for c in chs
-                ],
-            })
-        pl_data = {
-            "name": safe,
-            "source": "m3u",
-            "portal_url": "",
-            "mac": "",
-            "updated": time.time(),
+    cats_live = []
+    for i, g in enumerate(order):
+        chs = groups[g]
+        cats_live.append({
+            "id": "g" + str(i),
+            "name": g,
+            "count": len(chs),
+            "cached": True,
             "channels": [
-                {"name": c["name"], "url": c["url"], "group": c["group"],
+                {"name": c["name"], "url": c["url"], "group": g,
                  "logo": c.get("logo", ""), "content_type": "live"}
-                for c in channels_all
+                for c in chs
             ],
-            "categories": {"live": cats_live, "vod": [], "series": []},
-        }
-        added = len(channels_all)
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(pl_data, f, indent=2, ensure_ascii=False)
+        })
 
     return jsonify({
         "ok": True,
-        "filename": filename,
         "name": safe,
         "total": len(channels_all),
-        "added": added,
-        "replaced": replaced,
+        "added": len(channels_all),
+        "replaced": 0,
         "categories": {
-            "live": [{"id": c["id"], "name": c["name"], "count": c["count"]} for c in cats_live],
+            "live": cats_live,
             "vod": [],
             "series": [],
         },
