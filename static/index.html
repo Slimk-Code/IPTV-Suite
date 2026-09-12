@@ -115,6 +115,9 @@ button{font:inherit}
   color:var(--white);font-weight:600;padding:var(--s2) 0;transition:box-shadow .14s var(--ease),transform .14s var(--ease);
   display:inline-flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 14px rgba(229,9,20,.28)}
 .btn-red:hover{background:var(--red-grad-hover);box-shadow:0 6px 20px rgba(229,9,20,.42)}
+.import-dd-menu{position:absolute;bottom:calc(100% + 6px);left:0;right:0;background:var(--surface);border:1px solid var(--line-2);border-radius:8px;padding:4px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.import-dd-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:background .12s,color .12s}
+.import-dd-item:hover{background:var(--active);color:var(--white)}
 
 /* user dropdown */
 .user-dd{position:absolute;top:56px;left:var(--s3);width:212px;background:var(--surface);
@@ -340,6 +343,7 @@ button{font:inherit}
 .btn-ico{display:inline-flex;align-items:center;gap:6px;font-size:13px}
 .btn-ico svg{flex-shrink:0;transform:translateY(1px)}
 
+
 /* ── MODAL SYSTEM ─────────────────────────────────────────────────────── */
 .scrim{position:fixed;inset:0;background:var(--scrim);display:none;align-items:center;
   justify-content:center;z-index:var(--z-scrim);padding:var(--s5)}
@@ -365,9 +369,9 @@ button{font:inherit}
 .src-tab.active{background:var(--active);color:var(--white)}
 .src-panel{display:none}
 .src-panel.active{display:block}
-#importScrim .modal{min-height:540px;position:relative}
-#importScrim .modal-foot{position:absolute;left:var(--s5);right:var(--s5);bottom:var(--s5);display:flex;gap:var(--s2);margin:0}
-#importScrim .src-panel{padding-bottom:64px}
+.import-scrim .modal{min-height:540px;position:relative}
+.import-scrim .modal-foot{position:absolute;left:var(--s5);right:var(--s5);bottom:var(--s5);display:flex;gap:var(--s2);margin:0}
+.import-scrim .src-panel{padding-bottom:64px}
 /* url/file toggle */
 .mini-toggle{display:inline-flex;gap:var(--s1);background:var(--stage);border:1px solid var(--line);
   border-radius:99px;padding:3px;margin-bottom:var(--s4)}
@@ -376,8 +380,8 @@ button{font:inherit}
   display:inline-flex;align-items:center;gap:var(--s1)}
 .mini-toggle button.active{background:var(--red-grad);color:var(--white)}
 .mini-toggle .pane-count{color:inherit}
-#importScrim .form-actions .mini-toggle{margin:0}
-#importScrim .form-actions .mini-toggle button{cursor:default;pointer-events:none}
+.import-scrim .form-actions .mini-toggle{margin:0}
+.import-scrim .form-actions .mini-toggle button{cursor:default;pointer-events:none}
 /* drop zone */
 .dropzone{border:2px dashed var(--line-2);border-radius:var(--r);padding:var(--s4);
   text-align:center;color:var(--muted);cursor:pointer;transition:all .15s var(--ease);margin-bottom:var(--s3)}
@@ -424,46 +428,46 @@ button{font:inherit}
 /* ══ STALKER PORTAL IMPORT (merged in from netflix.css) ══ */
 
 /* layout: make the import view a flex column so snap-scroll works */
-#view-import.active{display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.imp-view.active{display:flex;flex-direction:column;overflow:hidden;min-height:0}
 
 /* ── snap-scroll ── */
-#snap-wrapper{
+.imp-snap-wrapper{
   flex:1;min-height:0;overflow-y:scroll;
   scroll-snap-type:y mandatory;scroll-behavior:smooth;overscroll-behavior:contain;
 }
-#snap-wrapper::-webkit-scrollbar{width:5px}
-#snap-wrapper::-webkit-scrollbar-track{background:var(--stage)}
-#snap-wrapper::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:3px}
+.imp-snap-wrapper::-webkit-scrollbar{width:5px}
+.imp-snap-wrapper::-webkit-scrollbar-track{background:var(--stage)}
+.imp-snap-wrapper::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:3px}
 
-#view-import .snap-section{
+.imp-view .snap-section{
   height:100%;display:flex;flex-direction:column;padding:0 32px;
   width:100%;box-sizing:border-box;overflow:hidden;
 }
-#view-import .snap-slide{
+.imp-view .snap-slide{
   scroll-snap-align:start;scroll-snap-stop:always;
   height:100%;display:flex;justify-content:center;align-items:stretch;
 }
 
 /* ── cards ── */
-#view-import .card-full{
+.imp-view .card-full{
   background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r);
   display:flex;flex-direction:column;flex:1;overflow:hidden;margin:16px 0;
 }
-#view-import .card-full .card-body{flex:1;overflow-y:auto;padding:0 20px 10px}
-#view-import .card-full .card-body::-webkit-scrollbar{width:5px}
-#view-import .card-full .card-body::-webkit-scrollbar-track{background:var(--stage)}
-#view-import .card-full .card-body::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:3px}
-#view-import .card-full .card-footer{flex-shrink:0;border-top:1px solid var(--line-2);padding:14px 20px}
+.imp-view .card-full .card-body{flex:1;overflow-y:auto;padding:0 20px 10px}
+.imp-view .card-full .card-body::-webkit-scrollbar{width:5px}
+.imp-view .card-full .card-body::-webkit-scrollbar-track{background:var(--stage)}
+.imp-view .card-full .card-body::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:3px}
+.imp-view .card-full .card-footer{flex-shrink:0;border-top:1px solid var(--line-2);padding:14px 20px}
 
 /* ── credentials ── */
-#view-import .fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-@media(max-width:560px){#view-import .fields{grid-template-columns:1fr}}
+.imp-view .fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+@media(max-width:560px){.imp-view .fields{grid-template-columns:1fr}}
 
-#view-import .portals-wrap{position:relative;margin-bottom:10px}
-#view-import .portals-wrap .sec-label{padding:0;margin-bottom:8px;font-size:10px;font-weight:700;letter-spacing:.07em;color:var(--gray)}
-#view-import .portals-row{display:flex;gap:8px;align-items:center}
-#importScrim .portals-row{display:flex;gap:8px;align-items:center}
-#importScrim .portals-row select{flex:1;min-width:0}
+.imp-view .portals-wrap{position:relative;margin-bottom:10px}
+.imp-view .portals-wrap .sec-label{padding:0;margin-bottom:8px;font-size:10px;font-weight:700;letter-spacing:.07em;color:var(--gray)}
+.imp-view .portals-row{display:flex;gap:8px;align-items:center}
+.import-scrim .portals-row{display:flex;gap:8px;align-items:center}
+.import-scrim .portals-row select{flex:1;min-width:0}
 #portal-select{
   flex:1;height:38px;background:var(--stage);border:1px solid var(--line-2);color:var(--white);
   padding:var(--s2) var(--s3);border-radius:var(--r-sm);font:inherit;
@@ -471,94 +475,98 @@ button{font:inherit}
 }
 #portal-select:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--red-glow-soft)}
 #portal-select option{background:var(--surface)}
-#view-import .btn-del-portal{
+.imp-view .btn-del-portal{
   width:38px;height:38px;flex-shrink:0;background:var(--stage);border:1px solid var(--line-2);
   color:var(--muted);border-radius:var(--r-sm);cursor:pointer;display:flex;
   align-items:center;justify-content:center;transition:all .12s var(--ease);
 }
-#view-import .btn-del-portal:hover{color:var(--white);border-color:var(--gray)}
-#importScrim .btn-del-portal{
+.imp-view .btn-del-portal:hover{color:var(--white);border-color:var(--gray)}
+.import-scrim .btn-del-portal{
   width:38px;height:38px;flex-shrink:0;background:var(--stage);border:1px solid var(--line-2);
   color:var(--muted);border-radius:var(--r-sm);cursor:pointer;display:flex;
   align-items:center;justify-content:center;transition:all .12s var(--ease);
 }
-#importScrim .btn-del-portal:hover{color:var(--white);border-color:var(--gray)}
+.import-scrim .btn-del-portal:hover{color:var(--white);border-color:var(--gray)}
 
-#view-import .profile-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
-#view-import .pi{background:var(--stage);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:var(--s2) var(--s3)}
-#view-import .pi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-#view-import .pi-value{font-size:13px;word-break:break-all;color:var(--white)}
-#view-import .pi-value.green{color:#46D369}
-#view-import .pi-value.yellow{color:#F5C518}
+.imp-view .profile-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.imp-view .pi{background:var(--stage);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:var(--s2) var(--s3)}
+.imp-view .pi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.imp-view .pi-value{font-size:13px;word-break:break-all;color:var(--white)}
+.imp-view .pi-value.green{color:#46D369}
+.imp-view .pi-value.yellow{color:#F5C518}
 
 /* ── buttons ── */
-#view-import .btn{
+.imp-view .btn{
   display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:6px;
   font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;
   outline:none;white-space:nowrap;
 }
-#view-import .btn:disabled{opacity:.4;cursor:not-allowed}
-#view-import .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line-2)}
-#view-import .btn-ghost:not(:disabled):hover{border-color:var(--white);color:var(--white)}
-#view-import .btn-sm{padding:6px 12px;font-size:12px}
+.imp-view .btn:disabled{opacity:.4;cursor:not-allowed}
+.imp-view .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line-2)}
+.imp-view .btn-ghost:not(:disabled):hover{border-color:var(--white);color:var(--white)}
+.imp-view .btn-sm{padding:6px 12px;font-size:12px}
 
 /* ── categories ── */
-#cat-picker{display:none}
-#cat-picker.visible{display:flex;flex-direction:column;flex:1;overflow:hidden}
-#view-import .cat-toolbar{display:flex;gap:9px;align-items:center;margin-bottom:10px;flex-wrap:wrap;flex-shrink:0}
-#view-import .cat-search-wrap{position:relative;flex:1;min-width:180px}
-#view-import .cat-search-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
-#view-import .cat-select-bar{
+.imp-cat-picker{display:none}
+.imp-cat-picker.visible{display:flex;flex-direction:column;flex:1;overflow:hidden}
+.imp-view .cat-toolbar{display:flex;gap:9px;align-items:center;margin-bottom:10px;flex-wrap:wrap;flex-shrink:0}
+.imp-view .cat-search-wrap{position:relative;flex:1;min-width:180px}
+.imp-view .cat-search-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.imp-view .cat-select-bar{
   display:flex;align-items:center;gap:10px;padding:6px 12px;background:var(--surface-3);
   border:1px solid var(--line-2);border-radius:6px;margin-bottom:10px;font-size:12px;
   color:var(--muted);flex-shrink:0;
 }
-#view-import .cat-select-bar label{cursor:pointer;display:flex;align-items:center;gap:6px}
+.imp-view .cat-select-bar label{cursor:pointer;display:flex;align-items:center;gap:6px}
 
-#cat-list-wrap{
+.imp-cat-list-wrap{
   border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--stage);
   margin-bottom:12px;display:flex;flex-direction:column;flex:1;min-height:0;
 }
-#cat-list-header,#ch-list-header{
+.imp-list-header{
   display:grid;grid-template-columns:30px 1fr 80px;background:var(--surface-3);
   border-bottom:1px solid var(--line-2);padding:7px 12px;font-size:10px;color:var(--muted);
   text-transform:uppercase;letter-spacing:.5px;font-weight:600;flex-shrink:0;
 }
-#cat-scroll,#ch-scroll{flex:1;overflow-y:auto}
-#cat-scroll::-webkit-scrollbar,#ch-scroll::-webkit-scrollbar{width:5px}
-#cat-scroll::-webkit-scrollbar-track,#ch-scroll::-webkit-scrollbar-track{background:var(--stage)}
-#cat-scroll::-webkit-scrollbar-thumb,#ch-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:3px}
-#view-import .cat-row{
+.imp-list-scroll{flex:1;overflow-y:auto}
+.imp-list-scroll::-webkit-scrollbar{width:5px}
+.imp-list-scroll::-webkit-scrollbar-track{background:var(--stage)}
+.imp-list-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:3px}
+.imp-view .cat-row{
   display:grid;grid-template-columns:30px 1fr 70px 50px;align-items:center;padding:8px 12px;
   border-bottom:1px solid var(--line-2);cursor:pointer;transition:background .1s;
 }
-#view-import .cat-row:last-child{border-bottom:none}
-#view-import .cat-row:hover{background:var(--surface)}
-#view-import .cat-row.selected{background:var(--active)}
-#view-import .cat-row.selected .cat-name{color:var(--red)}
-#view-import .cat-check input{width:13px;height:13px;accent-color:var(--red);cursor:pointer}
-#view-import .cat-name{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px}
-#view-import .cat-empty{padding:32px;text-align:center;color:var(--muted);font-size:13px}
-#view-import .cat-fetch-btn{background:none;border:none;padding:2px;display:inline-flex;align-items:center;justify-content:center;color:var(--white);cursor:pointer;transition:all .15s;line-height:1}
-#view-import .cat-fetch-btn:hover:not(.disabled){background:rgba(88,166,255,.12)}
-#view-import .cat-fetch-btn.disabled{opacity:.35;cursor:default;color:var(--white)}
+.imp-view .cat-row:last-child{border-bottom:none}
+.imp-view .cat-row:hover{background:var(--surface)}
+.imp-view .cat-row.selected{background:var(--active)}
+.imp-view .cat-row.selected .cat-name{color:var(--red)}
+.pl-acc{display:none}
+.pl-acc-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;padding:3px 0;font-size:12px;line-height:1.5}
+.pl-acc-label{color:var(--muted);flex-shrink:0}
+.pl-acc-val{font-weight:600;white-space:normal;overflow-wrap:anywhere}
+.imp-view .cat-check input{width:13px;height:13px;accent-color:var(--red);cursor:pointer}
+.imp-view .cat-name{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px}
+.imp-view .cat-empty{padding:32px;text-align:center;color:var(--muted);font-size:13px}
+.imp-view .cat-fetch-btn{background:none;border:none;padding:2px;display:inline-flex;align-items:center;justify-content:center;color:var(--white);cursor:pointer;transition:all .15s;line-height:1}
+.imp-view .cat-fetch-btn:hover:not(.disabled){background:rgba(88,166,255,.12)}
+.imp-view .cat-fetch-btn.disabled{opacity:.35;cursor:default;color:var(--white)}
 
 /* ── dot navigation ── */
-#scroll-nav{position:fixed;right:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:50}
-#view-import .nav-dot{width:8px;height:8px;border-radius:50%;background:var(--line-2);cursor:pointer;transition:background .2s,transform .2s;border:none;padding:0}
-#view-import .nav-dot.active{background:var(--red);transform:scale(1.4)}
-#view-import .nav-dot:hover:not(.active){background:var(--muted)}
+.imp-scroll-nav{position:fixed;right:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:50}
+.imp-view .nav-dot{width:8px;height:8px;border-radius:50%;background:var(--line-2);cursor:pointer;transition:background .2s,transform .2s;border:none;padding:0}
+.imp-view .nav-dot.active{background:var(--red);transform:scale(1.4)}
+.imp-view .nav-dot:hover:not(.active){background:var(--muted)}
 
 /* ── stream modal ── */
-#stream-modal{display:none;position:fixed;inset:0;background:var(--scrim);z-index:var(--z-modal);align-items:center;justify-content:center}
-#stream-modal.visible{display:flex}
-#view-import .stream-box{background:var(--surface);border:1px solid var(--line-2);border-radius:10px;padding:22px;max-width:560px;width:90%;position:relative}
-#view-import .stream-box-title{font-size:14px;font-weight:600;margin-bottom:14px;padding-right:24px}
-#view-import .stream-url-wrap{display:flex;gap:8px;align-items:center;margin-bottom:12px}
-#view-import .stream-url-input{flex:1;background:var(--stage);border:1px solid var(--line-2);color:var(--white);padding:8px 12px;border-radius:6px;font-size:12px;font-family:'JetBrains Mono','Fira Code',Consolas,monospace;outline:none;word-break:break-all}
-#view-import .stream-close{position:absolute;top:14px;right:14px;background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1}
-#view-import .stream-close:hover{color:var(--white)}
-#view-import .stream-spinner{display:none;width:14px;height:14px;border:2px solid var(--line-2);border-top-color:var(--white);border-radius:50%;animation:spin .7s linear infinite}
+.stream-modal{display:none;position:fixed;inset:0;background:var(--scrim);z-index:var(--z-modal);align-items:center;justify-content:center}
+.stream-modal.visible{display:flex}
+.imp-view .stream-box{background:var(--surface);border:1px solid var(--line-2);border-radius:10px;padding:22px;max-width:560px;width:90%;position:relative}
+.imp-view .stream-box-title{font-size:14px;font-weight:600;margin-bottom:14px;padding-right:24px}
+.imp-view .stream-url-wrap{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.imp-view .stream-url-input{flex:1;background:var(--stage);border:1px solid var(--line-2);color:var(--white);padding:8px 12px;border-radius:6px;font-size:12px;font-family:'JetBrains Mono','Fira Code',Consolas,monospace;outline:none;word-break:break-all}
+.imp-view .stream-close{position:absolute;top:14px;right:14px;background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1}
+.imp-view .stream-close:hover{color:var(--white)}
+.imp-view .stream-spinner{display:none;width:14px;height:14px;border:2px solid var(--line-2);border-top-color:var(--white);border-radius:50%;animation:spin .7s linear infinite}
 
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes schSpin{to{transform:rotate(360deg)}}
@@ -606,7 +614,7 @@ button{font:inherit}
       <div class="nav active" onclick="showView('player',this)"><i data-lucide="tv" width="16" height="16"></i><span class="nav-lbl">Live</span><span class="count" id="cnt-live">0</span></div>
       <div class="nav" onclick="showView('vod',this)"><i data-lucide="film" width="16" height="16"></i><span class="nav-lbl">VOD</span><span class="count" id="cnt-vod">0</span></div>
       <div class="nav" onclick="showView('series',this)"><i data-lucide="clapperboard" width="16" height="16"></i><span class="nav-lbl">Series</span><span class="count" id="cnt-series">0</span></div>
-      <div class="nav" onclick="showView('favorites',this)"><i data-lucide="star" width="16" height="16"></i><span class="nav-lbl">Favorites</span><span class="count">12</span></div>
+      <div class="nav" onclick="showView('favorites',this)"><i data-lucide="star" width="16" height="16"></i><span class="nav-lbl">Favorites</span><span class="count" id="cnt-fav">0</span></div>
 
       <div class="divider"></div>
       <div class="sec-label">Manage</div>
@@ -621,7 +629,14 @@ button{font:inherit}
       </div>
       <div id="sb-footer-name" style="font-size:13px;font-weight:700;color:var(--white);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">My Home</div>
       <span id="sb-expiry-label" style="color:var(--faint);font-size:10px">Expires: —</span>
-      <button class="btn-red" style="margin-top:6px" onclick="showView('import')"><i data-lucide="download" width="14" height="14"></i>Import playlist</button>
+      <div style="position:relative;margin-top:6px" id="import-dd">
+        <button class="btn-red" onclick="toggleImportDD(event)"><i data-lucide="download" width="14" height="14"></i>Import playlist <i data-lucide="chevron-down" width="13" height="13"></i></button>
+        <div class="import-dd-menu" id="import-dd-menu" style="display:none">
+          <div class="import-dd-item" onclick="importDDGo('import')"><i data-lucide="download" width="14" height="14"></i>Import playlist</div>
+          <div class="import-dd-item" onclick="importDDGo('load-playlist')"><i data-lucide="folder-open" width="14" height="14"></i>Load playlist</div>
+          <div class="import-dd-item" onclick="importDDGo('checker')"><i data-lucide="shield-check" width="14" height="14"></i>Playlist checker</div>
+        </div>
+      </div>
     </div>
   </aside>
 
@@ -950,18 +965,19 @@ button{font:inherit}
       </div>
     </div>
 
-    <!-- IMPORT VIEW -->
-    <div class="view" id="view-import">
-      <div class="topbar"><div class="view-title">Import</div></div>
+            <!-- IMPORT PLAYLIST VIEW -->
+    <!-- Import Playlist -->
+    <div class="view imp-view" id="view-import">
+      <div class="topbar"><div class="view-title">Import Playlist</div></div>
 
-<div id="scroll-nav">
+<div class="imp-scroll-nav" id="scroll-nav">
   <button class="nav-dot active" data-slide="0" onclick="scrollToSlide(0)" title="Playlists"></button>
   <button class="nav-dot" data-slide="1" onclick="scrollToSlide(1)" title="Categories"></button>
   <button class="nav-dot" data-slide="2" onclick="scrollToSlide(2)" title="Channels"></button>
   <button class="nav-dot" data-slide="3" onclick="scrollToSlide(3)" title="Account Info"></button>
 </div>
 
-<div id="snap-wrapper">
+<div class="imp-snap-wrapper" id="snap-wrapper">
 
   <div class="snap-slide" id="slide-0">
     <div class="snap-section">
@@ -981,8 +997,7 @@ button{font:inherit}
                 <i data-lucide="search" width="13" height="13"></i>
                 <input type="text" id="pl-search" placeholder="Search playlists…" style="padding-left:32px">
               </div>
-              <button class="action primary btn-ico" id="pl-load-btn" onclick="loadAllPlaylists(this)"><i data-lucide="layers" width="14" height="14"></i> Load</button>
-              <button class="action primary btn-ico" onclick="openModal('stalker')"><i data-lucide="plus" width="14" height="14"></i> Import</button>
+              <button class="action primary btn-ico" id="pl-import-btn" onclick="openModal('stalker')"><i data-lucide="plus" width="14" height="14"></i> Import</button>
             </div>
             <div class="cat-select-bar">
               <label><input type="checkbox" id="pl-select-all" onchange="toggleAllPlaylists(this.checked)"> Select all visible &nbsp;<span id="pl-visible-count" style="color:var(--text);font-weight:600">0</span></label>
@@ -1018,20 +1033,12 @@ button{font:inherit}
           </span>
         </div>
         <div class="card-body" style="padding:0;display:flex;flex-direction:column;overflow:hidden">
-        <div id="cat-picker" style="display:flex;flex:1;flex-direction:column;overflow:hidden;padding:12px 20px 10px;min-height:0">
+        <div class="imp-cat-picker" id="cat-picker" style="display:flex;flex:1;flex-direction:column;overflow:hidden;padding:12px 20px 10px;min-height:0">
           <div class="cat-toolbar">
             <div class="cat-search-wrap field" style="margin-bottom:0">
               <i data-lucide="search" width="13" height="13"></i>
               <input type="text" id="cat-search" placeholder="Search categories…" style="padding-left:32px">
             </div>
-            <select id="cat-move-select" class="btn-sec" onchange="moveSelCats(this)" style="padding:var(--s2) var(--s4);border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;height:auto;line-height:normal">
-              <option value="" selected disabled>Move</option>
-              <option value="live">Live</option>
-              <option value="vod">VOD</option>
-              <option value="series">Series</option>
-            </select>
-            <button class="btn-sec" onclick="mergeSelCats()">Merge</button>
-            <button class="btn-sec" onclick="deleteSelCats()">Delete</button>
             <button class="action primary btn-ico" id="fetch-counts-btn" onclick="fetchAllCategoryCounts()" style="margin-left:auto">Fetch</button>
           </div>
           <div class="cat-select-bar">
@@ -1041,11 +1048,11 @@ button{font:inherit}
             </label>
             <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="cat-filter-info"></span>
           </div>
-          <div id="cat-list-wrap" style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--stage);margin-bottom:0">
-            <div id="cat-list-header" style="grid-template-columns:30px 1fr 70px 50px;flex-shrink:0">
+          <div class="imp-cat-list-wrap" id="cat-list-wrap" style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--stage);margin-bottom:0">
+            <div class="imp-list-header" id="cat-list-header" style="grid-template-columns:30px 1fr 70px 50px;flex-shrink:0">
               <div></div><div>Category Name</div><div style="text-align:center">Items</div><div style="text-align:center">Fetch</div>
             </div>
-            <div id="cat-scroll" style="flex:1;overflow-y:auto">
+            <div class="imp-list-scroll" id="cat-scroll" style="flex:1;overflow-y:auto">
               <div id="cat-list-body"></div>
             </div>
           </div>
@@ -1079,7 +1086,6 @@ button{font:inherit}
                 <i data-lucide="search" width="13" height="13"></i>
                 <input type="text" id="ch-search" placeholder="Search channels…" style="padding-left:32px">
               </div>
-              <button class="btn-sec" onclick="deleteSelChannels()">Delete</button>
               <button class="action primary btn-ico" id="ch-fetch-btn" onclick="resolveSelectedChannels(this)" style="margin-left:auto">Fetch</button>
             </div>
             <div class="cat-select-bar">
@@ -1090,10 +1096,10 @@ button{font:inherit}
               <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="ch-filter-info"></span>
             </div>
             <div style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--stage);margin-bottom:0">
-              <div id="ch-list-header" style="grid-template-columns:30px 1fr 70px;flex-shrink:0">
+              <div class="imp-list-header" id="ch-list-header" style="grid-template-columns:30px 1fr 70px;flex-shrink:0">
                 <div></div><div>Channel Name</div><div style="text-align:center">Fetch</div>
               </div>
-              <div id="ch-scroll" style="flex:1;overflow-y:auto">
+              <div class="imp-list-scroll" id="ch-scroll" style="flex:1;overflow-y:auto">
                 <div id="ch-list-body"></div>
                 <div id="ch-empty" style="padding:32px;text-align:center;color:var(--muted);font-size:13px">No channels</div>
               </div>
@@ -1101,7 +1107,7 @@ button{font:inherit}
           </div>
         </div>
         <div class="card-footer" style="display:flex;gap:0 10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
-          <button class="action primary btn-ico" onclick="downloadCategoryList()"><i data-lucide="download" width="14" height="14"></i> Save</button>
+          <button class="action primary btn-ico" id="dl-catlist-btn" onclick="savePlaylistsToFiles()"><i data-lucide="download" width="14" height="14"></i> Save</button>
         </div>
       </div>
     </div>
@@ -1128,8 +1134,7 @@ button{font:inherit}
   </div>
 
 </div>
-
-<div id="stream-modal" onclick="if(event.target===this)closeStreamModal()">
+<div class="stream-modal" id="stream-modal" onclick="if(event.target===this)closeStreamModal()">
   <div class="stream-box">
     <button class="modal-close" onclick="closeStreamModal()">✕</button>
     <div class="dd-name" id="stream-modal-title">Stream URL</div>
@@ -1149,14 +1154,9 @@ button{font:inherit}
     </div>
   </div>
 </div>
-
-  </main>
-</div>
-
-<!-- ══ IMPORT MODAL (M3U / Xtream / Stalker) ══ -->
-<div class="scrim" id="importScrim">
+<div class="scrim import-scrim" id="importScrim">
   <div class="modal">
-    <button class="modal-close" onclick="closeModal('importScrim')"><i data-lucide="x" width="15" height="15"></i></button>
+    <button class="modal-close" onclick="closeImpModal()"><i data-lucide="x" width="15" height="15"></i></button>
     <div class="modal-title">Add Playlist</div>
     <div class="modal-sub" id="importSub">Choose the source type for your IPTV content.</div>
 
@@ -1221,9 +1221,507 @@ button{font:inherit}
 
     <div class="form-actions modal-foot">
       <button class="btn-prim" id="add-playlist-btn" onclick="addPlaylist()">Add Playlist</button>
-      <button class="btn-sec" onclick="closeModal('importScrim')">Cancel</button>
+      <button class="btn-sec" onclick="closeImpModal()">Cancel</button>
     </div>
   </div>
+</div>
+    </div>
+
+    <!-- Load Playlist -->
+    <div class="view imp-view" id="view-load-playlist">
+      <div class="topbar"><div class="view-title">Load Playlist</div></div>
+
+<div class="imp-scroll-nav" id="lp-scroll-nav">
+  <button class="nav-dot active" data-slide="0" onclick="scrollToSlide(0)" title="Playlists"></button>
+  <button class="nav-dot" data-slide="1" onclick="scrollToSlide(1)" title="Categories"></button>
+  <button class="nav-dot" data-slide="2" onclick="scrollToSlide(2)" title="Channels"></button>
+  <button class="nav-dot" data-slide="3" onclick="scrollToSlide(3)" title="Account Info"></button>
+</div>
+
+<div class="imp-snap-wrapper" id="lp-snap-wrapper">
+
+  <div class="snap-slide" id="lp-slide-0">
+    <div class="snap-section">
+      <div class="card-full">
+        <div class="sec-label" style="padding:5px 20px;border-bottom:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center">
+          Playlists
+          <span class="mini-toggle" id="lp-pl-tabs" style="margin:0 0 0 auto">
+            <button class="active" data-pt="live" onclick="switchPlTab('live')"><i data-lucide="tv" width="13" height="13"></i> Live <span class="pane-count" id="lp-plb-live">0</span></button>
+            <button data-pt="vod" onclick="switchPlTab('vod')"><i data-lucide="film" width="13" height="13"></i> VOD <span class="pane-count" id="lp-plb-vod">0</span></button>
+            <button data-pt="series" onclick="switchPlTab('series')"><i data-lucide="clapperboard" width="13" height="13"></i> Series <span class="pane-count" id="lp-plb-series">0</span></button>
+          </span>
+        </div>
+        <div class="card-body" style="padding:0;display:flex;flex-direction:column;overflow:hidden">
+          <div style="display:flex;flex:1;flex-direction:column;overflow:hidden;padding:12px 20px 10px;min-height:0">
+            <div class="cat-toolbar">
+              <div class="cat-search-wrap field" style="margin-bottom:0">
+                <i data-lucide="search" width="13" height="13"></i>
+                <input type="text" id="lp-pl-search" placeholder="Search playlists…" style="padding-left:32px">
+              </div>
+<button class="action primary btn-ico" id="lp-pl-load-btn" onclick="loadAllPlaylists(this)"><i data-lucide="layers" width="14" height="14"></i> Load</button>
+            </div>
+            <div class="cat-select-bar">
+              <label><input type="checkbox" id="lp-pl-select-all" onchange="toggleAllPlaylists(this.checked)"> Select all visible &nbsp;<span id="lp-pl-visible-count" style="color:var(--text);font-weight:600">0</span></label>
+              <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="lp-pl-filter-info"></span>
+            </div>
+            <div style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--stage);margin-bottom:0">
+              <div style="display:grid;grid-template-columns:30px 1fr 70px;background:var(--surface-3);border-bottom:1px solid var(--line-2);padding:7px 12px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;flex-shrink:0">
+                <div></div><div>Playlist Name</div><div style="text-align:center">Categories</div>
+              </div>
+              <div id="lp-pl-scroll" style="flex:1;overflow-y:auto">
+                <div id="lp-playlist-list"></div>
+                <div id="lp-playlist-empty" style="padding:32px;text-align:center;color:var(--muted);font-size:13px">No playlists</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer" style="display:flex;gap:0 10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
+          <button class="action primary btn-ico" id="lp-pl-next-btn" onclick="goNextPlaylists(this)"><i data-lucide="arrow-right" width="14" height="14"></i> Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="snap-slide" id="lp-slide-1">
+    <div class="snap-section">
+      <div class="card-full" id="lp-card-step2" style="display:flex">
+        <div class="sec-label" style="padding:5px 20px;border-bottom:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center">
+          Category Import
+          <span class="mini-toggle" id="lp-ct-tabs" style="margin:0 0 0 auto">
+            <button class="active" data-ct="live" onclick="switchCatTab('live')"><i data-lucide="tv" width="13" height="13"></i> Live <span class="pane-count" id="lp-ctb-live">0</span></button>
+            <button data-ct="vod" onclick="switchCatTab('vod')"><i data-lucide="film" width="13" height="13"></i> VOD <span class="pane-count" id="lp-ctb-vod">0</span></button>
+            <button data-ct="series" onclick="switchCatTab('series')"><i data-lucide="clapperboard" width="13" height="13"></i> Series <span class="pane-count" id="lp-ctb-series">0</span></button>
+          </span>
+        </div>
+        <div class="card-body" style="padding:0;display:flex;flex-direction:column;overflow:hidden">
+        <div class="imp-cat-picker" id="lp-cat-picker" style="display:flex;flex:1;flex-direction:column;overflow:hidden;padding:12px 20px 10px;min-height:0">
+          <div class="cat-toolbar">
+            <div class="cat-search-wrap field" style="margin-bottom:0">
+              <i data-lucide="search" width="13" height="13"></i>
+              <input type="text" id="lp-cat-search" placeholder="Search categories…" style="padding-left:32px">
+            </div>
+            <select id="lp-cat-move-select" class="btn-sec" onchange="moveSelCats(this)" style="padding:var(--s2) var(--s4);border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;height:auto;line-height:normal">
+              <option value="" selected disabled>Move</option>
+              <option value="live">Live</option>
+              <option value="vod">VOD</option>
+              <option value="series">Series</option>
+            </select>
+            <button class="btn-sec" id="lp-cat-merge-btn" onclick="mergeSelCats()">Merge</button>
+            <button class="btn-sec" id="lp-cat-del-btn" onclick="deleteSelCats()">Delete</button>
+            <button class="action primary btn-ico" id="lp-fetch-counts-btn" onclick="fetchAllCategoryCounts()" style="margin-left:auto">Fetch</button>
+          </div>
+          <div class="cat-select-bar">
+            <label>
+              <input type="checkbox" id="lp-cat-select-all" onchange="toggleCatSelectAll(this.checked)">
+              Select all visible &nbsp;<span id="lp-cat-visible-count" style="color:var(--text);font-weight:600">0</span>
+            </label>
+            <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="lp-cat-filter-info"></span>
+          </div>
+          <div class="imp-cat-list-wrap" id="lp-cat-list-wrap" style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--stage);margin-bottom:0">
+            <div class="imp-list-header" id="lp-cat-list-header" style="grid-template-columns:30px 1fr 70px 50px;flex-shrink:0">
+              <div></div><div>Category Name</div><div style="text-align:center">Items</div><div style="text-align:center">Fetch</div>
+            </div>
+            <div class="imp-list-scroll" id="lp-cat-scroll" style="flex:1;overflow-y:auto">
+              <div id="lp-cat-list-body"></div>
+            </div>
+          </div>
+        </div>
+        </div>
+        <div class="card-footer" style="display:flex;gap:0 10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
+          <button class="action primary btn-ico" id="lp-cat-next-btn" onclick="goNextCategories()">
+            <i data-lucide="arrow-right" width="14" height="14"></i>
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="snap-slide" id="lp-slide-2">
+    <div class="snap-section">
+      <div class="card-full">
+        <div class="sec-label" style="padding:5px 20px;border-bottom:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center">
+          Channels
+          <span class="mini-toggle" id="lp-ch-tabs" style="margin:0 0 0 auto">
+            <button class="active" data-ch="live" onclick="switchChTab('live')"><i data-lucide="tv" width="13" height="13"></i> Live <span class="pane-count" id="lp-chb-live">0</span></button>
+            <button data-ch="vod" onclick="switchChTab('vod')"><i data-lucide="film" width="13" height="13"></i> VOD <span class="pane-count" id="lp-chb-vod">0</span></button>
+            <button data-ch="series" onclick="switchChTab('series')"><i data-lucide="clapperboard" width="13" height="13"></i> Series <span class="pane-count" id="lp-chb-series">0</span></button>
+          </span>
+        </div>
+        <div class="card-body" style="padding:0;display:flex;flex-direction:column;overflow:hidden">
+          <div style="display:flex;flex:1;flex-direction:column;overflow:hidden;padding:12px 20px 10px;min-height:0">
+            <div class="cat-toolbar">
+              <div class="cat-search-wrap field" style="margin-bottom:0">
+                <i data-lucide="search" width="13" height="13"></i>
+                <input type="text" id="lp-ch-search" placeholder="Search channels…" style="padding-left:32px">
+              </div>
+              <button class="btn-sec" id="lp-ch-del-btn" onclick="deleteSelChannels()">Delete</button>
+              <button class="action primary btn-ico" id="lp-ch-fetch-btn" onclick="resolveSelectedChannels(this)" style="margin-left:auto">Fetch</button>
+            </div>
+            <div class="cat-select-bar">
+              <label>
+                <input type="checkbox" id="lp-ch-select-all" onchange="toggleChSelectAll(this.checked)">
+                Select all visible &nbsp;<span id="lp-ch-visible-count" style="color:var(--text);font-weight:600">0</span>
+              </label>
+              <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="lp-ch-filter-info"></span>
+            </div>
+            <div style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--stage);margin-bottom:0">
+              <div class="imp-list-header" id="lp-ch-list-header" style="grid-template-columns:30px 1fr 70px;flex-shrink:0">
+                <div></div><div>Channel Name</div><div style="text-align:center">Fetch</div>
+              </div>
+              <div class="imp-list-scroll" id="lp-ch-scroll" style="flex:1;overflow-y:auto">
+                <div id="lp-ch-list-body"></div>
+                <div id="lp-ch-empty" style="padding:32px;text-align:center;color:var(--muted);font-size:13px">No channels</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer" style="display:flex;gap:0 10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
+          <button class="action primary btn-ico" id="lp-dl-catlist-btn" onclick="savePlaylistsToFiles()"><i data-lucide="download" width="14" height="14"></i> Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="snap-slide" id="lp-slide-3">
+    <div class="snap-section">
+      <div class="card-full">
+        <div class="sec-label" style="padding:5px 20px;border-bottom:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center">
+          Account Info
+        </div>
+        <div class="card-body" style="padding-top:20px">
+          <div class="profile-grid" id="lp-profile-grid">
+            <div class="pi"><div class="pi-label">Serial Number</div><div class="pi-value" id="lp-pi-sn">—</div></div>
+            <div class="pi"><div class="pi-label">Device ID</div><div class="pi-value" id="lp-pi-did">—</div></div>
+            <div class="pi"><div class="pi-label">Device ID 2</div><div class="pi-value" id="lp-pi-did2">—</div></div>
+            <div class="pi"><div class="pi-label">Expiry</div><div class="pi-value" id="lp-pi-exp">N/A</div></div>
+            <div class="pi"><div class="pi-label">Max Connections</div><div class="pi-value" id="lp-pi-mc">N/A</div></div>
+            <div class="pi"><div class="pi-label">Status</div><div class="pi-value" id="lp-pi-st">N/A</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div class="stream-modal" id="lp-stream-modal" onclick="if(event.target===this)closeStreamModal()">
+  <div class="stream-box">
+    <button class="modal-close" onclick="closeStreamModal()">✕</button>
+    <div class="dd-name" id="lp-stream-modal-title">Stream URL</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <div class="stream-spinner" id="lp-stream-spinner"></div>
+      <span id="lp-stream-modal-status" style="font-size:12px;color:var(--muted)"></span>
+    </div>
+    <div style="font-size:11px;color:var(--success);margin-bottom:4px">PROXY URL — open this in VLC (handles auth automatically)</div>
+    <div class="stream-url-wrap" style="margin-bottom:12px">
+      <input class="stream-url-input" id="lp-proxy-url-input" readonly placeholder="Resolving…">
+      <button class="btn btn-ghost btn-sm" onclick="copyProxyUrl()">Copy</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:4px">DIRECT URL — raw resolved stream</div>
+    <div class="stream-url-wrap">
+      <input class="stream-url-input" id="lp-stream-url-input" readonly placeholder="Resolving URL…">
+      <button class="btn btn-ghost btn-sm" onclick="copyStreamUrl()">Copy</button>
+    </div>
+  </div>
+</div>
+<div class="scrim import-scrim" id="lp-importScrim">
+  <div class="modal">
+    <button class="modal-close" onclick="closeImpModal()"><i data-lucide="x" width="15" height="15"></i></button>
+    <div class="modal-title">Add Playlist</div>
+    <div class="modal-sub" id="lp-importSub">Choose the source type for your IPTV content.</div>
+
+    <div class="src-tabs">
+      <button class="src-tab active" data-src="stalker" onclick="switchSrc('stalker')"><i data-lucide="satellite-dish" width="13" height="13"></i>Stalker</button>
+      <button class="src-tab" data-src="xtream" onclick="switchSrc('xtream')"><i data-lucide="server" width="13" height="13"></i>Xtream</button>
+      <button class="src-tab" data-src="m3u" onclick="switchSrc('m3u')"><i data-lucide="file-text" width="13" height="13"></i>M3U</button>
+    </div>
+
+    <!-- M3U -->
+    <div class="src-panel" id="lp-src-m3u">
+      <div class="mini-toggle">
+        <button class="active" onclick="m3uMode(this,'url')">M3U URL</button>
+        <button onclick="m3uMode(this,'file')">M3U File</button>
+      </div>
+      <div id="lp-m3u-url">
+        <div class="field"><label>M3U URL</label><input placeholder="http://server:port/get.php?..."></div>
+        <div class="field"><label>Custom User-Agent (optional)</label><input placeholder="VLC/3.0.20 LibVLC/3.0.20"></div>
+      </div>
+      <div id="lp-m3u-file" style="display:none">
+        <div class="field"><label>Playlist Name</label><input placeholder="e.g. My Home"></div>
+        <div class="dropzone"><i data-lucide="upload-cloud" width="30" height="30"></i><p>Click to browse or drag an M3U file here</p></div>
+      </div>
+      <div class="form-actions" style="margin-top:var(--s3);justify-content:space-between;align-items:center">
+        <button class="btn-sec"><i data-lucide="wifi" width="14" height="14"></i> Check Portal</button>
+        <span class="mini-toggle">
+          <button onclick=""><i data-lucide="tv" width="13" height="13"></i> Live <span class="pane-count">0</span></button>
+          <button onclick=""><i data-lucide="film" width="13" height="13"></i> VOD <span class="pane-count">0</span></button>
+          <button onclick=""><i data-lucide="clapperboard" width="13" height="13"></i> Series <span class="pane-count">0</span></button>
+        </span>
+      </div>
+    </div>
+
+    <!-- XTREAM -->
+    <div class="src-panel" id="lp-src-xtream">
+      <div class="field"><label>Server URL</label><input placeholder="http://server:port"></div>
+      <div class="field"><label>Username</label><input placeholder="username"></div>
+      <div class="field"><label>Password</label><input type="password" placeholder="••••••••"></div>
+      <div class="form-actions" style="margin-top:var(--s3);justify-content:space-between;align-items:center">
+        <button class="btn-sec"><i data-lucide="wifi" width="14" height="14"></i> Check Portal</button>
+        <span class="mini-toggle">
+          <button onclick=""><i data-lucide="tv" width="13" height="13"></i> Live <span class="pane-count">0</span></button>
+          <button onclick=""><i data-lucide="film" width="13" height="13"></i> VOD <span class="pane-count">0</span></button>
+          <button onclick=""><i data-lucide="clapperboard" width="13" height="13"></i> Series <span class="pane-count">0</span></button>
+        </span>
+      </div>
+    </div>
+
+    <!-- STALKER -->
+    <div class="src-panel active" id="lp-src-stalker">
+      <div class="field"><label>Portal URL</label><input id="lp-modal-portal-url" placeholder="http://portal:port/c/"></div>
+      <div class="field"><label>MAC Address</label><input id="lp-modal-mac-addr" placeholder="00:1A:79:XX:XX:XX"></div>
+      <div class="form-actions" style="margin-top:var(--s3);justify-content:space-between;align-items:center">
+        <button class="btn-sec" id="lp-check-portal-btn" onclick="startCheckModal()"><i data-lucide="wifi" width="14" height="14"></i> Check Portal</button>
+          <span class="mini-toggle">
+            <button onclick=""><i data-lucide="tv" width="13" height="13"></i> Live <span class="pane-count" id="lp-mtb-live">0</span></button>
+            <button onclick=""><i data-lucide="film" width="13" height="13"></i> VOD <span class="pane-count" id="lp-mtb-vod">0</span></button>
+            <button onclick=""><i data-lucide="clapperboard" width="13" height="13"></i> Series <span class="pane-count" id="lp-mtb-series">0</span></button>
+          </span>
+      </div>
+    </div>
+
+    <div class="form-actions modal-foot">
+      <button class="btn-prim" id="lp-add-playlist-btn" onclick="addPlaylist()">Add Playlist</button>
+      <button class="btn-sec" onclick="closeImpModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+    </div>
+
+    <!-- Playlist Checker -->
+    <div class="view imp-view" id="view-checker">
+      <div class="topbar"><div class="view-title">Playlist Checker</div></div>
+
+<div class="imp-scroll-nav" id="chk-scroll-nav">
+  <button class="nav-dot active" data-slide="0" onclick="scrollToSlide(0)" title="Playlists"></button>
+<button class="nav-dot" data-slide="1" onclick="scrollToSlide(1)" title="Categories"></button>
+  <button class="nav-dot" data-slide="2" onclick="scrollToSlide(2)" title="Channels"></button>
+</div>
+
+<div class="imp-snap-wrapper" id="chk-snap-wrapper">
+
+  <div class="snap-slide" id="chk-slide-0">
+    <div class="snap-section">
+      <div class="card-full">
+        <div class="sec-label" style="padding:5px 20px;border-bottom:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center">
+          Playlists
+<span class="mini-toggle" id="chk-pl-tabs" style="margin:0 0 0 auto">
+            <button class="active" data-pt="live" onclick="switchPlTab('live')"><i data-lucide="tv" width="13" height="13"></i> Playlist</button>
+          </span>
+        </div>
+        <div class="card-body" style="padding:0;display:flex;flex-direction:column;overflow:hidden">
+          <div style="display:flex;flex:1;flex-direction:column;overflow:hidden;padding:12px 20px 10px;min-height:0">
+            <div class="cat-toolbar">
+              <div class="cat-search-wrap field" style="margin-bottom:0">
+                <i data-lucide="search" width="13" height="13"></i>
+                <input type="text" id="chk-pl-search" placeholder="Search playlists…" style="padding-left:32px">
+              </div>
+<button class="btn-sec" id="chk-pl-check-btn" style="margin-left:auto" onclick="checkSelectedPlaylists()"><i data-lucide="wifi" width="14" height="14"></i> Check Portal</button>
+              <button class="action primary btn-ico" id="chk-pl-import-btn" onclick="openModal('stalker')"><i data-lucide="plus" width="14" height="14"></i> Import</button>
+            </div>
+            <div class="cat-select-bar">
+              <label><input type="checkbox" id="chk-pl-select-all" onchange="toggleAllPlaylists(this.checked)"> Select all visible &nbsp;<span id="chk-pl-visible-count" style="color:var(--text);font-weight:600">0</span></label>
+              <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="chk-pl-filter-info"></span>
+            </div>
+            <div style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--stage);margin-bottom:0">
+              <div style="display:grid;grid-template-columns:30px 1fr 150px;background:var(--surface-3);border-bottom:1px solid var(--line-2);padding:7px 12px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;flex-shrink:0">
+                <div></div><div>Playlist Name</div><div style="text-align:center">Expires</div>
+              </div>
+              <div id="chk-pl-scroll" style="flex:1;overflow-y:auto">
+                <div id="chk-playlist-list"></div>
+                <div id="chk-playlist-empty" style="padding:32px;text-align:center;color:var(--muted);font-size:13px">No playlist fetched yet</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer" style="display:flex;gap:0 10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
+          <button class="action primary btn-ico" id="chk-pl-next-btn" onclick="goNextPlaylists(this)"><i data-lucide="arrow-right" width="14" height="14"></i> Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="snap-slide" id="chk-slide-1">
+    <div class="snap-section">
+<div class="card-full" id="chk-card-step2" style="display:flex">
+        <div class="sec-label" style="padding:5px 20px;border-bottom:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center">
+          Playlist Categories
+          <span class="mini-toggle" id="chk-ct-tabs" style="margin:0 0 0 auto">
+            <button class="active" data-ct="live" onclick="switchCatTab('live')"><i data-lucide="tv" width="13" height="13"></i> Live <span class="pane-count" id="chk-ctb-live">0</span></button>
+            <button data-ct="vod" onclick="switchCatTab('vod')"><i data-lucide="film" width="13" height="13"></i> VOD <span class="pane-count" id="chk-ctb-vod">0</span></button>
+            <button data-ct="series" onclick="switchCatTab('series')"><i data-lucide="clapperboard" width="13" height="13"></i> Series <span class="pane-count" id="chk-ctb-series">0</span></button>
+          </span>
+        </div>
+        <div class="card-body" style="padding:0;display:flex;flex-direction:column;overflow:hidden">
+        <div class="imp-cat-picker" id="chk-cat-picker" style="display:flex;flex:1;flex-direction:column;overflow:hidden;padding:12px 20px 10px;min-height:0">
+<div class="cat-toolbar">
+            <div class="cat-search-wrap field" style="margin-bottom:0">
+              <i data-lucide="search" width="13" height="13"></i>
+              <input type="text" id="chk-cat-search" placeholder="Search categories…" style="padding-left:32px">
+            </div>
+            <button class="action primary btn-ico" id="chk-fetch-counts-btn" onclick="fetchAllCategoryCounts()" style="margin-left:auto">Fetch</button>
+          </div>
+          <div class="cat-select-bar">
+            <label>
+              <input type="checkbox" id="chk-cat-select-all" onchange="toggleCatSelectAll(this.checked)">
+              Select all visible &nbsp;<span id="chk-cat-visible-count" style="color:var(--text);font-weight:600">0</span>
+            </label>
+            <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="chk-cat-filter-info"></span>
+          </div>
+          <div class="imp-cat-list-wrap" id="chk-cat-list-wrap" style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--stage);margin-bottom:0">
+            <div class="imp-list-header" id="chk-cat-list-header" style="grid-template-columns:30px 1fr 70px 50px;flex-shrink:0">
+              <div></div><div>Category Name</div><div style="text-align:center">Items</div><div style="text-align:center">Fetch</div>
+            </div>
+            <div class="imp-list-scroll" id="chk-cat-scroll" style="flex:1;overflow-y:auto">
+              <div id="chk-cat-list-body"></div>
+            </div>
+          </div>
+        </div>
+        </div>
+        <div class="card-footer" style="display:flex;gap:0 10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
+          <button class="action primary btn-ico" id="chk-cat-next-btn" onclick="goNextCategories()">
+            <i data-lucide="arrow-right" width="14" height="14"></i>
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="snap-slide" id="chk-slide-2">
+    <div class="snap-section">
+      <div class="card-full">
+        <div class="sec-label" style="padding:5px 20px;border-bottom:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center">
+          Channels
+          <span class="mini-toggle" id="chk-ch-tabs" style="margin:0 0 0 auto">
+            <button class="active" data-ch="live" onclick="switchChTab('live')"><i data-lucide="tv" width="13" height="13"></i> Live <span class="pane-count" id="chk-chb-live">0</span></button>
+            <button data-ch="vod" onclick="switchChTab('vod')"><i data-lucide="film" width="13" height="13"></i> VOD <span class="pane-count" id="chk-chb-vod">0</span></button>
+            <button data-ch="series" onclick="switchChTab('series')"><i data-lucide="clapperboard" width="13" height="13"></i> Series <span class="pane-count" id="chk-chb-series">0</span></button>
+          </span>
+        </div>
+        <div class="card-body" style="padding:0;display:flex;flex-direction:column;overflow:hidden">
+          <div style="display:flex;flex:1;flex-direction:column;overflow:hidden;padding:12px 20px 10px;min-height:0">
+<div class="cat-toolbar">
+              <div class="cat-search-wrap field" style="margin-bottom:0">
+                <i data-lucide="search" width="13" height="13"></i>
+                <input type="text" id="chk-ch-search" placeholder="Search channels…" style="padding-left:32px">
+              </div>
+              <button class="action primary btn-ico" id="chk-ch-fetch-btn" onclick="resolveSelectedChannels(this)" style="margin-left:auto">Fetch</button>
+            </div>
+            <div class="cat-select-bar">
+              <label>
+                <input type="checkbox" id="chk-ch-select-all" onchange="toggleChSelectAll(this.checked)">
+                Select all visible &nbsp;<span id="chk-ch-visible-count" style="color:var(--text);font-weight:600">0</span>
+              </label>
+              <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="chk-ch-filter-info"></span>
+            </div>
+            <div style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--stage);margin-bottom:0">
+              <div class="imp-list-header" id="chk-ch-list-header" style="grid-template-columns:30px 1fr 70px;flex-shrink:0">
+                <div></div><div>Channel Name</div><div style="text-align:center">Fetch</div>
+              </div>
+              <div class="imp-list-scroll" id="chk-ch-scroll" style="flex:1;overflow-y:auto">
+                <div id="chk-ch-list-body"></div>
+                <div id="chk-ch-empty" style="padding:32px;text-align:center;color:var(--muted);font-size:13px">No channel fetched yet</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer" style="display:flex;gap:0 10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
+          <button class="action primary btn-ico" id="chk-dl-catlist-btn" onclick="savePlaylistsToFiles()"><i data-lucide="download" width="14" height="14"></i> Update</button>
+        </div>
+      </div>
+</div>
+  </div>
+
+</div>
+<div class="stream-modal" id="chk-stream-modal" onclick="if(event.target===this)closeStreamModal()">
+  <div class="stream-box">
+    <button class="modal-close" onclick="closeStreamModal()">✕</button>
+    <div class="dd-name" id="chk-stream-modal-title">Stream URL</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <div class="stream-spinner" id="chk-stream-spinner"></div>
+      <span id="chk-stream-modal-status" style="font-size:12px;color:var(--muted)"></span>
+    </div>
+    <div style="font-size:11px;color:var(--success);margin-bottom:4px">PROXY URL — open this in VLC (handles auth automatically)</div>
+    <div class="stream-url-wrap" style="margin-bottom:12px">
+      <input class="stream-url-input" id="chk-proxy-url-input" readonly placeholder="Resolving…">
+      <button class="btn btn-ghost btn-sm" onclick="copyProxyUrl()">Copy</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:4px">DIRECT URL — raw resolved stream</div>
+    <div class="stream-url-wrap">
+      <input class="stream-url-input" id="chk-stream-url-input" readonly placeholder="Resolving URL…">
+      <button class="btn btn-ghost btn-sm" onclick="copyStreamUrl()">Copy</button>
+    </div>
+  </div>
+</div>
+<div class="scrim import-scrim" id="chk-importScrim">
+  <div class="modal">
+    <button class="modal-close" onclick="closeImpModal()"><i data-lucide="x" width="15" height="15"></i></button>
+    <div class="modal-title">Add Playlist</div>
+    <div class="modal-sub" id="chk-importSub">Choose the source type for your IPTV content.</div>
+
+    <div class="src-tabs">
+      <button class="src-tab active" data-src="stalker" onclick="switchSrc('stalker')"><i data-lucide="satellite-dish" width="13" height="13"></i>Stalker</button>
+      <button class="src-tab" data-src="xtream" onclick="switchSrc('xtream')"><i data-lucide="server" width="13" height="13"></i>Xtream</button>
+      <button class="src-tab" data-src="m3u" onclick="switchSrc('m3u')"><i data-lucide="file-text" width="13" height="13"></i>M3U</button>
+    </div>
+
+    <!-- M3U -->
+    <div class="src-panel" id="chk-src-m3u">
+      <div class="mini-toggle">
+        <button class="active" onclick="m3uMode(this,'url')">M3U URL</button>
+        <button onclick="m3uMode(this,'file')">M3U File</button>
+      </div>
+      <div id="chk-m3u-url">
+        <div class="field"><label>M3U URL</label><input placeholder="http://server:port/get.php?..."></div>
+        <div class="field"><label>Custom User-Agent (optional)</label><input placeholder="VLC/3.0.20 LibVLC/3.0.20"></div>
+      </div>
+<div id="chk-m3u-file" style="display:none">
+        <div class="field"><label>Playlist Name</label><input placeholder="e.g. My Home"></div>
+        <div class="dropzone"><i data-lucide="upload-cloud" width="30" height="30"></i><p>Click to browse or drag an M3U file here</p></div>
+      </div>
+    </div>
+
+    <!-- XTREAM -->
+    <div class="src-panel" id="chk-src-xtream">
+      <div class="field"><label>Server URL</label><input placeholder="http://server:port"></div>
+      <div class="field"><label>Username</label><input placeholder="username"></div>
+      <div class="field"><label>Password</label><input type="password" placeholder="••••••••"></div>
+    </div>
+
+    <!-- STALKER -->
+    <div class="src-panel active" id="chk-src-stalker">
+      <div class="mini-toggle">
+        <button class="active" onclick="stalkerSubMode(this,'single')">Single</button>
+        <button onclick="stalkerSubMode(this,'batch')">Batch</button>
+      </div>
+      <div id="chk-stalker-single">
+        <div class="field"><label>Portal URL</label><input id="chk-modal-portal-url" placeholder="http://portal:port/c/"></div>
+        <div class="field"><label>MAC Address</label><input id="chk-modal-mac-addr" placeholder="00:1A:79:XX:XX:XX"></div>
+      </div>
+<div id="chk-stalker-batch" style="display:none">
+        <div class="field"><label>Batch Portals (one per line)</label><textarea placeholder="http://portal:port/c/ 00:1A:79:XX:XX:XX" rows="8" style="width:100%;resize:vertical;background:var(--stage);border:1px solid var(--line-2);color:var(--white);padding:8px 12px;border-radius:6px;font-size:12px;font-family:'JetBrains Mono','Fira Code',Consolas,monospace;outline:none"></textarea></div>
+      </div>
+    </div>
+
+    <div class="form-actions modal-foot">
+      <button class="btn-prim" id="chk-add-playlist-btn" onclick="addPlaylist()">Add Playlist</button>
+      <button class="btn-sec" onclick="closeImpModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+    </div>
+
+  </main>
 </div>
 
 <!-- ══ STREAM URL / SHARE MODAL ══ -->
@@ -1259,7 +1757,54 @@ button{font:inherit}
 <script>
 lucide.createIcons();
 
+/* ── per-page wizard infrastructure: every page owns its own DOM + state ── */
+const IMP_PAGES=['import','load-playlist','checker'];
+const IMP_PREFIX={import:'', 'load-playlist':'lp-', checker:'chk-'};
+let impPage='import';
+function el(id){
+  return document.getElementById(IMP_PREFIX[impPage]+id);
+}
+function freshPageState(){
+  return {
+    playlistCats:{}, cats:{live:[],vod:[],series:[]}, catSel:new Set(), openPlays:new Set(),
+    catFiltered:[], catFilteredByPlaylist:{}, plTab:'live', catTab:'live',
+    chanTab:'live', chSel:new Set(), chFilteredByPlaylist:{}, chFilteredChans:{},
+    chOpenPlays:new Set(), chOpenCats:new Set(),
+    _snap2Imported:new Set(), _snap3Imported:new Set(), _snap2Dirty:new Set(), _snap3Dirty:new Set(),
+    _snap3Store:{}, _loadedPlaylistNames:new Set(), _plMeta:{}, _plCatCounts:{},
+    _activePlaylistName:'', _chUnlocked:false, _plLoadBusy:false
+  };
+}
+const WIZ_STATE={'import':freshPageState(),'load-playlist':freshPageState(),checker:freshPageState()};
+function captureImpState(){
+  const s=WIZ_STATE[impPage];
+  s.playlistCats=playlistCats; s.cats=cats; s.catSel=catSel; s.openPlays=openPlays;
+  s.catFiltered=catFiltered; s.catFilteredByPlaylist=catFilteredByPlaylist;
+  s.plTab=plTab; s.catTab=catTab; s.chanTab=chanTab;
+  s.chSel=chSel; s.chFilteredByPlaylist=chFilteredByPlaylist; s.chFilteredChans=chFilteredChans;
+  s.chOpenPlays=chOpenPlays; s.chOpenCats=chOpenCats;
+  s._snap2Imported=_snap2Imported; s._snap3Imported=_snap3Imported; s._snap2Dirty=_snap2Dirty; s._snap3Dirty=_snap3Dirty;
+  s._snap3Store=_snap3Store; s._loadedPlaylistNames=_loadedPlaylistNames; s._plMeta=_plMeta; s._plCatCounts=_plCatCounts;
+  s._activePlaylistName=_activePlaylistName; s._chUnlocked=_chUnlocked; s._plLoadBusy=_plLoadBusy;
+}
+function restoreImpState(id){
+  impPage=id;
+  const s=WIZ_STATE[id];
+  playlistCats=s.playlistCats; cats=s.cats; catSel=s.catSel; openPlays=s.openPlays;
+  catFiltered=s.catFiltered; catFilteredByPlaylist=s.catFilteredByPlaylist;
+  plTab=s.plTab; catTab=s.catTab; chanTab=s.chanTab;
+  chSel=s.chSel; chFilteredByPlaylist=s.chFilteredByPlaylist; chFilteredChans=s.chFilteredChans;
+  chOpenPlays=s.chOpenPlays; chOpenCats=s.chOpenCats;
+  _snap2Imported=s._snap2Imported; _snap3Imported=s._snap3Imported; _snap2Dirty=s._snap2Dirty; _snap3Dirty=s._snap3Dirty;
+  _snap3Store=s._snap3Store; _loadedPlaylistNames=s._loadedPlaylistNames; _plMeta=s._plMeta; _plCatCounts=s._plCatCounts;
+  _activePlaylistName=s._activePlaylistName; _chUnlocked=s._chUnlocked; _plLoadBusy=s._plLoadBusy;
+}
+
 function showView(id, el){
+  if(id==='import'||id==='load-playlist'||id==='checker'){
+    captureImpState();
+    restoreImpState(id);
+  }
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   const v=document.getElementById('view-'+id); if(v) v.classList.add('active');
   // channel pane only on player view
@@ -1301,7 +1846,7 @@ function chInitials(name){
 function collectPaneChannels(t){
   const out=[];
   const s=pls[t];
-  const pl=s.name?playlistCats[s.name]:null;
+  const pl=s.name?playerCats[s.name]:null;
   if(!pl) return out;
   (pl[t]||[]).forEach(function(c){
     (c._channels||[]).forEach(function(ch){ out.push({ch:ch,group:c.name||'All',catId:c.id||''}); });
@@ -1364,7 +1909,7 @@ function paneGoPage(t,dir){
 function paneCatOptions(t){
   const opts=[{name:'All',cat:'All'}];
   const s=pls[t];
-  const pl=s.name?playlistCats[s.name]:null;
+  const pl=s.name?playerCats[s.name]:null;
   if(pl){
     (pl[t]||[]).forEach(function(c){
       if(!((c._channels||[]).length)) return;
@@ -1464,7 +2009,7 @@ async function playItem(t,idx){
   const item=s.filtered[idx];
   if(!item) return;
   const ch=item.ch;
-  const pl=s.name?playlistCats[s.name]:null;
+  const pl=s.name?playerCats[s.name]:null;
   if(!pl) return;
   s._active=ch;
   renderPane(t);
@@ -1625,6 +2170,24 @@ function toggleUserDD(){
   const dd=document.getElementById('userDD');
   dd.style.display = dd.style.display==='none' ? 'block' : 'none';
 }
+function toggleImportDD(e){
+  if(e) e.stopPropagation();
+  const menu=document.getElementById('import-dd-menu');
+  if(!menu) return;
+  menu.style.display = menu.style.display==='block' ? 'none' : 'block';
+}
+function importDDGo(id){
+  const menu=document.getElementById('import-dd-menu');
+  if(menu) menu.style.display='none';
+  showView(id);
+  if(window.lucide) lucide.createIcons();
+}
+document.addEventListener('click',function(e){
+  const menu=document.getElementById('import-dd-menu');
+  if(menu && menu.style.display==='block' && !e.target.closest('#import-dd')){
+    menu.style.display='none';
+  }
+});
 document.addEventListener('click',e=>{
   const dd=document.getElementById('userDD');
   if(dd.style.display==='block' && !e.target.closest('.user-dd') && !e.target.closest('.brand') && !e.target.closest('.sb-top .icon-btn')){
@@ -1640,10 +2203,10 @@ document.addEventListener('click',e=>{
 
 function openModal(which){
   _existingPlaylist=null;
-  const addBtn=document.getElementById('add-playlist-btn'); if(addBtn) addBtn.disabled=true;
-  const checkBtn=document.getElementById('check-portal-btn'); if(checkBtn) checkBtn.disabled=false;
+  const addBtn=el('add-playlist-btn'); if(addBtn) addBtn.disabled=(impPage==='checker')?false:true;
+  const checkBtn=el('check-portal-btn'); if(checkBtn) checkBtn.disabled=false;
   if(which==='url'){document.getElementById('urlScrim').classList.add('show');}
-  else{switchSrc(which);document.getElementById('importScrim').classList.add('show');}
+  else{switchSrc(which);el('importScrim').classList.add('show');}
   lucide.createIcons();
 }
 function closeModal(id){document.getElementById(id).classList.remove('show');}
@@ -1652,54 +2215,70 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelect
 
 const subs={m3u:'Import from an M3U playlist (file or URL).',xtream:'Enter your Xtream Codes API credentials.',stalker:'Import from a Stalker portal (MAC-based).'};
 function switchSrc(src){
-  document.querySelectorAll('.src-tab').forEach(t=>t.classList.toggle('active',t.dataset.src===src));
-  document.querySelectorAll('.src-panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('src-'+src).classList.add('active');
-  document.getElementById('importSub').textContent=subs[src];
+  const m=el('importScrim');
+  if(!m) return;
+  m.querySelectorAll('.src-tab').forEach(t=>t.classList.toggle('active',t.dataset.src===src));
+  m.querySelectorAll('.src-panel').forEach(p=>p.classList.remove('active'));
+  el('src-'+src).classList.add('active');
+  el('importSub').textContent=subs[src];
 }
 function m3uMode(btn,mode){
   btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('m3u-url').style.display = mode==='url'?'block':'none';
-  document.getElementById('m3u-file').style.display = mode==='file'?'block':'none';
+  el('m3u-url').style.display = mode==='url'?'block':'none';
+  el('m3u-file').style.display = mode==='file'?'block':'none';
+}
+function stalkerSubMode(btn,mode){
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const single=el('stalker-single'); if(single) single.style.display=mode==='single'?'block':'none';
+  const batch=el('stalker-batch'); if(batch) batch.style.display=mode==='batch'?'block':'none';
 }
 let _activePlaylistName='';
 let _existingPlaylist=null;
 async function addPlaylist(){
-  closeModal('importScrim');
-  const btn=document.getElementById('add-playlist-btn'); if(btn) btn.disabled=true;
+  if(impPage==='checker'){ await injectPlaylistRows(); return; }
+  closeImpModal();
+  const btn=el('add-playlist-btn'); if(btn) btn.disabled=true;
+  playlistCats={};
+  cats={live:[],vod:[],series:[]};
+  _snap2Imported=new Set();
+  _snap2Dirty=new Set();
+  catSel.clear();
+  openPlays.clear();
+  const catSearch=el('cat-search'); if(catSearch) catSearch.value='';
   if(_existingPlaylist&&_existingPlaylist.id){
-    const ep=_existingPlaylist;
-    const name=ep.name||portalPlaylistName();
-    _activePlaylistName=name;
-    openPlays.add(name);
-    showToast('loading','Loading playlist…');
-    const ok=await loadPlaylistIntoApp(ep.id,name,ep.portal_url,ep.mac);
-    if(!ok){ showToast('error','✗ Could not load playlist file',5000); if(btn) btn.disabled=false; return; }
-    window._activeFilename=ep.id;
-    rememberActivePlaylist(ep.id,name);
-    setActivePlaylist(name);
-    buildCombinedCats();
-    updatePlaylistCounts();
-    updateCatBadges();
-    updateSidebarCounts();
-    loadPlaylists();
-    if(typeof applyCatFilter==='function') applyCatFilter();
-    updateSaveBtnState();
-    showToast('success','✓ Playlist loaded: '+name,4000);
+    _existingPlaylist=null;
     return;
   }
   const name=portalPlaylistName();
   _activePlaylistName=name;
   openPlays.add(name);
+  _plProfile[name]=Object.assign({},_currentProfile||{});
   addPlaylistNameRow(name);
   showToast('loading','Adding playlist…');
-  loadCategories('modal-portal-url','modal-mac-addr',name).then(()=>{
+  const portalUrl=el('modal-portal-url').value.trim();
+  const macVal=el('modal-mac-addr').value.trim().toUpperCase();
+  try{
+    const res=await fetch('/api/categories',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:portalUrl,mac:macVal,content_types:['live','vod','series']})});
+    const data=await res.json();
+    if(!data.ok){ showToast('error','✗ '+data.error,5000); if(btn) btn.disabled=false; return; }
+    const raw={live:data.categories.live||[],vod:data.categories.vod||[],series:data.categories.series||[]};
+    _plCatCounts[name]={live:raw.live.length,vod:raw.vod.length,series:raw.series.length};
     if(_currentProfile) renderProfile(_currentProfile);
-  });
+    const r=await fetch('/api/playlists/save-new',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:portalUrl,mac:macVal,profile:_currentProfile||null,categories:{live:raw.live||[],vod:raw.vod||[],series:raw.series||[]}})});
+    const d=await r.json();
+    if(d.ok){
+      const fn=d.filename.replace(/\.json$/,'');
+      _plMeta[name]={id:fn,portal_url:portalUrl,mac:macVal};
+    }
+    updatePlaylistCounts();
+    showToast('success','✓ Playlist added: '+name,4000);
+  }catch(e){ showToast('error','✗ '+e.message,5000); }
+  finally{ if(btn) btn.disabled=false; }
 }
 function portalPlaylistName(){
-  const urlEl=document.getElementById('modal-portal-url');
+  const urlEl=el('modal-portal-url');
   const raw=urlEl?urlEl.value.trim():'';
   if(raw){
     let hostname='';
@@ -1708,57 +2287,185 @@ function portalPlaylistName(){
     if(hostname) return hostname;
     return raw;
   }
-  return 'Untitled';
+return 'Untitled';
+}
+async function injectPlaylistRows(){
+  const entries=[];
+  const scrim=el('importScrim');
+  const activeTab=scrim?scrim.querySelector('.src-tab.active'):null;
+  const src=activeTab?activeTab.dataset.src:'stalker';
+  const activePanel=scrim?scrim.querySelector('.src-panel.active'):null;
+  if(src==='stalker'){
+    const batch=el('stalker-batch');
+    const batchVisible=batch&&batch.style.display==='block';
+    if(batchVisible){
+      const ta=batch.querySelector('textarea');
+      const raw=(ta?ta.value:'').split('\n');
+      raw.forEach(function(line){
+        line=line.trim(); if(!line) return;
+        const parts=line.split(/\s+/);
+        entries.push({portal:parts[0],mac:(parts[1]||'').toUpperCase()});
+      });
+    }else{
+      const p=el('modal-portal-url')?el('modal-portal-url').value.trim():'';
+      const m=el('modal-mac-addr')?el('modal-mac-addr').value.trim().toUpperCase():'';
+      if(!p) return showToast('error','Enter a portal URL',3000);
+      entries.push({portal:p,mac:m});
+    }
+  }else if(src==='xtream'){
+    const p=activePanel.querySelector('.field input')?activePanel.querySelector('.field input').value.trim():'';
+    if(!p) return showToast('error','Enter a server URL',3000);
+    entries.push({portal:p,mac:''});
+  }else if(src==='m3u'){
+    const urlPanel=el('m3u-url');
+    if(urlPanel&&urlPanel.style.display!=='none'){
+      const p=urlPanel.querySelector('.field input')?urlPanel.querySelector('.field input').value.trim():'';
+      if(!p) return showToast('error','Enter an M3U URL',3000);
+      entries.push({portal:p,mac:''});
+    }
+  }
+  if(!entries.length){ showToast('error','Nothing to add',3000); return; }
+  const used={};
+  Object.keys(_plMeta).forEach(function(k){ used[k]=true; });
+  const usedKeys={};
+  let added=0, skipped=0;
+  for(const e of entries){
+    const portal=e.portal.trim();
+    let host='';
+    try{ host=new URL(e.portal).hostname; }catch(x){}
+    host=host?host.replace(/[^\w.-]/g,''):e.portal;
+    if(!host) host='Untitled';
+    let name=host, n=2;
+    while(used[name]){ name=host+' #'+n; n++; }
+    const seenKey=e.mac?portal+'|'+e.mac:'portal|'+portal;
+    let already=false;
+    if(e.mac){
+      Object.keys(_plMeta).forEach(function(k){
+        if(_plMeta[k]&&_plMeta[k].portal_url===portal&&_plMeta[k].mac===e.mac) already=true;
+      });
+    }else{
+      Object.keys(_plMeta).forEach(function(k){
+        if(_plMeta[k]&&_plMeta[k].portal_url===portal&&!_plMeta[k].mac) already=true;
+      });
+    }
+    if(e.mac&&!already&&!usedKeys[seenKey]){
+      try{
+        const fr=await fetch('/api/check-playlist-exists',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:portal,mac:e.mac})});
+        const fd=await fr.json();
+        if(fd.ok&&fd.exists) already=true;
+      }catch(fe){}
+    }
+    if(already||usedKeys[seenKey]){ skipped++; used[name]=true; showToast('info','Already exists — not shown: '+name,3000); continue; }
+    usedKeys[seenKey]=true;
+    used[name]=true;
+    _activePlaylistName=name;
+    openPlays.add(name);
+    _plMeta[name]={id:null,portal_url:e.portal,mac:e.mac};
+    _plProfile[name]=null;
+    _plCatCounts[name]=null;
+    _plCats[name]=null;
+    addPlaylistNameRow(name);
+    added++;
+  }
+  closeImpModal();
+  showToast('success','✓ Added '+added+' playlist'+(added>1?'s':'')+(skipped?(' · '+skipped+' already exists'):''),4000);
+}
+function plAccHtml(prof){
+  const details=[['Serial Number',prof&&prof.sn],['Device ID',prof&&prof.device_id],['Device ID 2',prof&&prof.device_id2],['Max Connections',prof&&prof.max_connections],['Status',prof&&prof.status]];
+  return details.map(function(p){
+    const v=(p[1]===undefined||p[1]===null||p[1]==='')?'—':esc(String(p[1]));
+    return '<div class="pl-acc-row"><span class="pl-acc-label">'+p[0]+'</span><span class="pl-acc-val">'+v+'</span></div>';
+  }).join('');
+}
+function refreshPlRow(name){
+  const list=el('playlist-list');
+  if(!list) return;
+  const row=list.querySelector('.cat-row[data-key="'+name+'"]');
+  if(!row) return;
+  const prof=_plProfile[name]||null;
+  const cnt=row.querySelector('.pl-count');
+  if(cnt) cnt.textContent=prof&&prof.expiry?esc(prof.expiry):'—';
+  const acc=row.parentElement?row.parentElement.querySelector('.pl-acc'):null;
+  if(acc){
+    const inner=acc.querySelector('.pl-acc-inner');
+    if(inner) inner.innerHTML=plAccHtml(prof);
+  }
 }
 function addPlaylistNameRow(name){
-  const list=document.getElementById('playlist-list');
-  const empty=document.getElementById('playlist-empty');
+  const list=el('playlist-list');
+  const empty=el('playlist-empty');
   if(!list) return;
   if(list.querySelector('.cat-row[data-key="'+name+'"]')) return;
+  const wrapper=document.createElement('div');
   const row=document.createElement('div');
   row.className='cat-row';
-  row.style.cssText='grid-template-columns:30px 1fr 70px;border-bottom:1px solid var(--line-2)';
+  const cols=impPage==='checker'?'grid-template-columns:30px 1fr 150px;':'grid-template-columns:30px 1fr 70px;';
+  row.style.cssText=cols+'border-bottom:1px solid var(--line-2)';
   row.dataset.key=name;
+  const prof=_plProfile[name]||null;
+  const expCell=impPage==='checker'?(prof&&prof.expiry?esc(prof.expiry):'—'):'–';
   row.innerHTML='<div class="cat-check"><input type="checkbox" class="cat-cb"></div>'
     +'<div class="cat-name">'+esc(name)+'</div>'
-    +'<div style="text-align:center" class="pl-count">–</div>';
+    +'<div style="text-align:center;white-space:nowrap;font-size:12px" class="pl-count">'+expCell+'</div>';
   const cb=row.querySelector('.cat-cb');
   cb.addEventListener('change',()=>{ row.classList.toggle('selected',cb.checked); updatePlSelectAll(); });
-  row.addEventListener('click',e=>{
-    if(e.target.closest('.cat-cb')) return;
-    cb.checked=!cb.checked;
-    row.classList.toggle('selected',cb.checked);
-    updatePlSelectAll();
-  });
-  list.appendChild(row);
+  let acc=null;
+  if(impPage==='checker'){
+acc=document.createElement('div');
+    acc.className='pl-acc';
+    acc.style.cssText='grid-template-columns:30px 1fr 150px;border-bottom:1px solid var(--line-2);background:var(--surface-2)';
+    const accInner=document.createElement('div');
+    accInner.className='pl-acc-inner';
+    accInner.style.cssText='grid-column:2;padding:8px 12px 10px 0';
+    accInner.innerHTML=plAccHtml(prof);
+    acc.appendChild(accInner);
+    row.addEventListener('click',e=>{
+      if(e.target.closest('.cat-cb')) return;
+      acc.style.display=acc.style.display==='none'?'grid':'none';
+    });
+  }else{
+    row.addEventListener('click',e=>{
+      if(e.target.closest('.cat-cb')) return;
+      cb.checked=!cb.checked;
+      row.classList.toggle('selected',cb.checked);
+      updatePlSelectAll();
+    });
+  }
+  wrapper.appendChild(row);
+  if(acc) wrapper.appendChild(acc);
+  list.appendChild(wrapper);
   if(empty) empty.style.display='none';
   updatePlFilter();
 }
 let plTab='live';
 function switchPlTab(tab){
   plTab=tab;
-  document.querySelectorAll('#pl-tabs button').forEach(t=>t.classList.toggle('active',t.dataset.pt===tab));
+  const tabs=el('pl-tabs'); if(tabs) tabs.querySelectorAll('button').forEach(t=>t.classList.toggle('active',t.dataset.pt===tab));
   updatePlFilter();
   updatePlaylistCounts();
 }
 function applyPlSearch(){
-  const raw=(document.getElementById('pl-search').value||'').toLowerCase().trim();
-  const list=document.getElementById('playlist-list');
+  const raw=(el('pl-search').value||'').toLowerCase().trim();
+  const list=el('playlist-list');
   if(!list) return;
   list.querySelectorAll('.cat-row[data-key]').forEach(row=>{
     const name=row.dataset.key;
     const show=!raw||name.toLowerCase().includes(raw);
     row.style.display=show?'grid':'none';
+    const acc=row.parentElement?row.parentElement.querySelector('.pl-acc'):null;
+    if(acc&&!show) acc.style.display='none';
   });
   updatePlSelectAll();
 }
 function updatePlFilter(){
   applyPlSearch();
-  const info=document.getElementById('pl-filter-info');
+  const info=el('pl-filter-info');
   if(info) info.textContent='';
 }
 function toggleAllPlaylists(checked){
-  document.querySelectorAll('#playlist-list .cat-row[data-key]').forEach(row=>{
+  const list=el('playlist-list');
+  if(!list) return;
+  list.querySelectorAll('.cat-row[data-key]').forEach(row=>{
     if(row.style.display==='none') return;
     const cb=row.querySelector('.cat-cb');
     if(cb){ cb.checked=checked; row.classList.toggle('selected',checked); }
@@ -1766,29 +2473,28 @@ function toggleAllPlaylists(checked){
   updatePlSelectAll();
 }
 function updatePlSelectAll(){
-  const box=document.getElementById('pl-select-all');
+  const box=el('pl-select-all');
   if(!box) return;
-  const rows=[...document.querySelectorAll('#playlist-list .cat-row[data-key]')].filter(r=>r.style.display!=='none');
+  const list=el('playlist-list');
+  const rows=list?[...list.querySelectorAll('.cat-row[data-key]')].filter(r=>r.style.display!=='none'):[];
   const checked=rows.filter(r=>r.querySelector('.cat-cb')&&r.querySelector('.cat-cb').checked).length;
-  const cnt=document.getElementById('pl-visible-count');
+  const cnt=el('pl-visible-count');
   if(cnt) cnt.textContent=checked+' of '+rows.length;
   box.checked=rows.length>0&&checked===rows.length;
   box.indeterminate=checked>0&&checked<rows.length;
 }
 function updatePlaylistCounts(){
-  const list=document.getElementById('playlist-list');
+  const list=el('playlist-list');
   if(!list) return;
+  if(impPage==='checker') return;
   const t=plTab||'live';
   list.querySelectorAll('.cat-row[data-key]').forEach(row=>{
     const name=row.dataset.key;
-    const pc=playlistCats[name];
     const cc=_plCatCounts[name];
     const cntEl=row.querySelector('.pl-count');
     if(!cntEl) return;
     let n=null;
-    if(pc){
-      n=(pc[t]||[]).length;
-    }else if(cc){
+    if(cc){
       n=(cc[t]||0);
     }
     cntEl.textContent=(n>0)?n.toLocaleString():'';
@@ -1828,11 +2534,11 @@ function updateActiveToast(msg) {
 }
 let _currentProfile=null;
 async function runCheck(urlId,macId,btnId){
-  const portalUrl=document.getElementById(urlId).value.trim();
-  const mac=document.getElementById(macId).value.trim().toUpperCase();
+  const portalUrl=el(urlId).value.trim();
+  const mac=el(macId).value.trim().toUpperCase();
   if(!portalUrl) return showToast('error','Enter a portal URL',3000);
   if(!mac) return showToast('error','Enter a MAC address',3000);
-  const btn=btnId?document.getElementById(btnId):null;
+  const btn=btnId?el(btnId):null;
   if(btn) btn.disabled=true;
   showToast('loading','Authenticating…');
   try{
@@ -1849,12 +2555,12 @@ async function runCheck(urlId,macId,btnId){
   finally{ if(btn) btn.disabled=false; }
 }
 function startCheckModal(){
-  const portalUrl=document.getElementById('modal-portal-url').value.trim();
-  const mac=document.getElementById('modal-mac-addr').value.trim().toUpperCase();
+  const portalUrl=el('modal-portal-url').value.trim();
+  const mac=el('modal-mac-addr').value.trim().toUpperCase();
   if(!portalUrl) return showToast('error','Enter a portal URL',3000);
   if(!mac) return showToast('error','Enter a MAC address',3000);
   (async()=>{
-    const btn=document.getElementById('check-portal-btn'); if(btn) btn.disabled=true;
+    const btn=el('check-portal-btn'); if(btn) btn.disabled=true;
     try{
       const r=await fetch('/api/check-playlist-exists',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:portalUrl,mac})});
       const d=await r.json();
@@ -1871,7 +2577,7 @@ function startCheckModal(){
           }
         }catch(e){}
         enableAddPlaylist();
-        return showToast('success','✓ Playlist already exists — Add will load it',4000);
+        return showToast('success','✓ Playlist already exists',4000);
       }
       _existingPlaylist=null;
       await runCheck('modal-portal-url','modal-mac-addr');
@@ -1880,12 +2586,60 @@ function startCheckModal(){
   })();
 }
 function enableAddPlaylist(){
-  const btn=document.getElementById('add-playlist-btn');
+  const btn=el('add-playlist-btn');
   if(btn) btn.disabled=false;
 }
+let _chkBusy=false;
+async function checkSelectedPlaylists(){
+  const list=el('playlist-list');
+  if(!list) return;
+  if(_chkBusy){ showToast('info','Already checking…',2000); return; }
+  const rows=[...list.querySelectorAll('.cat-row[data-key]')].filter(function(r){
+    return r.style.display!=='none'&&r.querySelector('.cat-cb')&&r.querySelector('.cat-cb').checked;
+  });
+  if(!rows.length){ showToast('warning','Select at least one playlist to check.',3000); return; }
+  _chkBusy=true;
+  const btn=el('pl-check-btn'); if(btn) btn.disabled=true;
+  playlistCats={};
+  cats={live:[],vod:[],series:[]};
+  _snap2Imported=new Set();
+  _snap2Dirty=new Set();
+  catSel.clear();
+  openPlays.clear();
+  const catSearch=el('cat-search'); if(catSearch) catSearch.value='';
+  let okCount=0, failCount=0;
+  for(const row of rows){
+    const name=row.dataset.key;
+    const meta=_plMeta[name]||{};
+    if(!meta.portal_url||!meta.mac){ failCount++; showToast('error','✗ '+name+': no portal/MAC',4000); continue; }
+    showToast('loading','Checking '+name+'…');
+    try{
+      const r=await fetch('/api/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:meta.portal_url,mac:meta.mac})});
+      const d=await r.json();
+      if(!d.ok){ failCount++; showToast('error','✗ '+name+': '+(d.error||'check failed'),4000); continue; }
+      const prof={sn:d.sn,device_id:d.device_id,device_id2:d.device_id2,expiry:d.expiry,status:d.status,max_connections:d.max_connections};
+      const c=await fetch('/api/categories',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:meta.portal_url,mac:meta.mac,content_types:['live','vod','series']})});
+      const cd=await c.json();
+      if(!cd.ok){ failCount++; showToast('error','✗ '+name+': '+(cd.error||'categories failed'),4000); continue; }
+      _plProfile[name]=prof;
+      _plCats[name]={live:cd.categories.live||[],vod:cd.categories.vod||[],series:cd.categories.series||[]};
+      _plCatCounts[name]={live:_plCats[name].live.length,vod:_plCats[name].vod.length,series:_plCats[name].series.length};
+      _currentProfile=prof;
+      refreshPlRow(name);
+      renderProfile(prof);
+      okCount++;
+    }catch(e){ failCount++; showToast('error','✗ '+name+': '+e.message,4000); }
+  }
+  _chkBusy=false;
+  if(btn) btn.disabled=false;
+  updatePlaylistCounts();
+  updatePlSelectAll();
+  if(okCount){ showToast('success','✓ Checked '+okCount+' playlist'+(okCount>1?'s':'')+(failCount?(' · failed '+failCount):''),4500); }
+  else{ showToast('error','✗ Nothing checked'+(failCount?(' ('+failCount+' failed)'):''),4500); }
+}
 async function loadCategoryCounts(urlId,macId){
-  const portalUrl=document.getElementById(urlId).value.trim();
-  const mac=document.getElementById(macId).value.trim().toUpperCase();
+  const portalUrl=el(urlId).value.trim();
+  const mac=el(macId).value.trim().toUpperCase();
   try{
     const res=await fetch('/api/categories',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:portalUrl,mac,content_types:['live','vod','series']})});
     const data=await res.json();
@@ -1896,25 +2650,31 @@ async function loadCategoryCounts(urlId,macId){
   }catch(e){ showToast('error','✗ '+e.message,5000); return false; }
 }
 function updateModalCounts(){
-  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  const set=(id,v)=>{const el2=el(id);if(el2)el2.textContent=v;};
   set('mtb-live',cats.live.length);
   set('mtb-vod',cats.vod.length);
   set('mtb-series',cats.series.length);
 }
 function renderProfile(d){
-  const set=(id,v)=>{const el=document.getElementById(id);if(el) el.textContent=v;};
+  const set=(id,v)=>{const el2=el(id);if(el2) el2.textContent=v;};
   set('pi-sn',d.sn||'—');
   set('pi-did',d.device_id||'—');
   set('pi-did2',d.device_id2||'—');
   set('pi-mc',d.max_connections||'N/A');
-  const exp=document.getElementById('pi-exp');
+  const exp=el('pi-exp');
   if(exp){ exp.textContent=d.expiry||'N/A'; exp.classList.toggle('yellow',!!d.expiry); }
-  const st=document.getElementById('pi-st');
+  const st=el('pi-st');
   if(st){ st.textContent=d.status||'N/A'; st.classList.toggle('green',!!d.status); }
 }
-['modal-portal-url','modal-mac-addr'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('keydown',e=>{if(e.key==='Enter')startCheckModal();});});
+IMP_PAGES.forEach(function(pg){
+  ['modal-portal-url','modal-mac-addr'].forEach(function(id){
+    const f=document.getElementById(IMP_PREFIX[pg]+id);
+    if(f) f.addEventListener('keydown',e=>{ if(e.key==='Enter'){ if(impPage==='checker') addPlaylist(); else startCheckModal(); } });
+  });
+});
 let cats={live:[],vod:[],series:[]};
 let playlistCats={};
+let playerCats={};
 let catTab='live';
 function catKey(c){ return (c._playlist||'')+'\u0001'+c.type+'_'+c.id; }
 function buildCombinedCats(){
@@ -1929,61 +2689,23 @@ function buildCombinedCats(){
 }
 function updatePlBadges(){
   let tc={live:0,vod:0,series:0};
-  document.querySelectorAll('#playlist-list .cat-row[data-key]').forEach(row=>{
+  const list=el('playlist-list');
+  list&&list.querySelectorAll('.cat-row[data-key]').forEach(row=>{
     const n=row.dataset.key;
-    const pc=playlistCats[n];
-    const cc=_plCatCounts[n];
-    if(pc){
-      tc.live+=(pc.live||[]).length;
-      tc.vod+=(pc.vod||[]).length;
-      tc.series+=(pc.series||[]).length;
-    }else if(cc){
-      tc.live+=(cc.live||0);
-      tc.vod+=(cc.vod||0);
-      tc.series+=(cc.series||0);
-    }
+    const cc=_plCatCounts[n]||{};
+    tc.live+=(cc.live||0);
+    tc.vod+=(cc.vod||0);
+    tc.series+=(cc.series||0);
   });
   [['plb-live','live'],['plb-vod','vod'],['plb-series','series']].forEach(function(p){
-    const el=document.getElementById(p[0]);
-    if(el) el.textContent=tc[p[1]];
+    const e=el(p[0]);
+    if(e) e.textContent=tc[p[1]];
   });
-}
-async function loadCategories(urlId='modal-portal-url',macId='modal-mac-addr',playlistName){
-  const portalUrl=document.getElementById(urlId).value.trim();
-  const mac=document.getElementById(macId).value.trim().toUpperCase();
-  showToast('loading','Fetching category lists…');
-  try{
-    const res=await fetch('/api/categories',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:portalUrl,mac,content_types:['live','vod','series']})});
-    const data=await res.json();
-    if(!data.ok){ showToast('error','✗ '+data.error,5000); return false; }
-    const name=playlistName||portalPlaylistName();
-    const raw={live:data.categories.live||[],vod:data.categories.vod||[],series:data.categories.series||[]};
-    raw.portal_url=portalUrl;
-    raw.mac=mac;
-    ['live','vod','series'].forEach(function(t){
-      raw[t].forEach(function(c){ c.type=t; c._playlist=name; c._portal_url=portalUrl; c._mac=mac; c._channels=[]; c._fetched=false; });
-    });
-    playlistCats[name]=raw;
-    window._activeFilename=name;
-    setActivePlaylist(name);
-    buildCombinedCats();
-    updatePlaylistCounts();
-    loadPlaylists();
-    updateCatBadges();
-    document.getElementById('card-step2').style.display='flex';
-    document.getElementById('cat-picker').style.display='flex';
-    updateSaveBtnState();
-    updateSidebarCounts();
-    switchCatTab('live');
-    applyChFilter();
-    showToast('success','✓ Found '+cats.live.length+' live, '+cats.vod.length+' VOD, '+cats.series.length+' series',4000);
-    return true;
-  }catch(err){ showToast('error','✗ '+err.message,5000); return false; }
 }
 function switchCatTab(tab){
   catTab=tab;
-  document.querySelectorAll('#ct-tabs button').forEach(t=>t.classList.toggle('active',t.dataset.ct===tab));
-  const s=document.getElementById('cat-search'); if(s) s.value='';
+  const tabs=el('ct-tabs'); if(tabs) tabs.querySelectorAll('button').forEach(t=>t.classList.toggle('active',t.dataset.ct===tab));
+  const s=el('cat-search'); if(s) s.value='';
   applyCatFilter();
 }
 
@@ -2014,15 +2736,31 @@ async function loadPlaylistIntoApp(id,name,portal_url,mac){
     playlistCats[name]=pl;
     addPlaylistNameRow(name);
     _loadedPlaylistNames.add(name);
+    _snap2Imported.add(name);
+    _snap2Dirty.delete(name);
+    _snap3Dirty.delete(name);
     return true;
   }catch(e){ return false; }
+}
+function cloneCategory(c){
+  return {
+    id:c.id||'',name:c.name||'',count:c.count||0,cached:!!c.cached,
+    _channels:(c._channels||[]).map(function(ch){ return Object.assign({},ch); }),
+    _fetched:!!c._fetched,type:c.type,_playlist:c._playlist,
+    _portal_url:c._portal_url||'',_mac:c._mac||''
+  };
 }
 let _plLoadBusy=false;
 let _loadedPlaylistNames=new Set();
 let _plMeta={};
+let _plProfile={};
+let _plCats={};
 let _plCatCounts={};
 let _snap2Imported=new Set();
 let _snap3Imported=new Set();
+let _snap2Dirty=new Set();
+let _snap3Dirty=new Set();
+let _snap3Store={};
 async function loadAllPlaylists(btnEl){
   if(_plLoadBusy){ showToast('info','Already loading…',2000); return; }
   if(btnEl) btnEl.disabled=true;
@@ -2035,7 +2773,7 @@ async function loadAllPlaylists(btnEl){
     const loadable=list.filter(function(p){
       return (p.portal_url&&p.mac)||p.name==='Favorites';
     });
-    if(!loadable.length){ showToast('info','No loadable playlists found',3000); return; }
+    if(!loadable.length){ showToast('info','No loadable playlists found',3000); applyCatFilter(); applyChFilter(); return; }
     const chosen=[];
     loadable.forEach(function(p){
       const name=p.name||p.id;
@@ -2046,8 +2784,8 @@ async function loadAllPlaylists(btnEl){
       }
       chosen.push({name:name,p:p,id:p.id});
     });
-    const rows=document.querySelectorAll('#playlist-list .cat-row[data-key]');
-    rows.forEach(function(row){ row.remove(); });
+    const rows=el('playlist-list');
+    rows&&rows.querySelectorAll('.cat-row[data-key]').forEach(function(row){ row.remove(); });
     _plMeta={};
     _plCatCounts={};
     chosen.forEach(function(e){
@@ -2061,8 +2799,8 @@ async function loadAllPlaylists(btnEl){
     updatePlaylistCounts();
     updateCatBadges();
     updatePlBadges();
-    updateSidebarCounts();
-    if(typeof applyCatFilter==='function') applyCatFilter();
+    applyCatFilter();
+    applyChFilter();
     updateSaveBtnState();
     updatePlSelectAll();
     showToast('success','✓ Loaded '+shown+' playlist'+(shown>1?'s':''),4000);
@@ -2070,84 +2808,129 @@ async function loadAllPlaylists(btnEl){
   finally{ _plLoadBusy=false; if(btnEl) btnEl.disabled=false; }
 }
 async function goNextPlaylists(btnEl){
-  const rows=[...document.querySelectorAll('#playlist-list .cat-row[data-key]')].filter(function(r){ return r.style.display!=='none'; });
-  let targets=[];
-  if(rows.length===1){
-    targets=[rows[0].dataset.key];
-  }else if(rows.length>1){
-    targets=rows.filter(function(r){ const cb=r.querySelector('.cat-cb'); return cb&&cb.checked; }).map(function(r){ return r.dataset.key; });
-    if(!targets.length) showToast('warning','Nothing selected — nothing imported',3000);
-  }else{
-    showToast('info','Nothing loaded yet',2500);
+  const list=el('playlist-list');
+  const rows=list?[...list.querySelectorAll('.cat-row[data-key]')].filter(function(r){ return r.style.display!=='none'; }):[];
+let targets=rows.filter(function(r){
+    const cb=r.querySelector('.cat-cb');
+    return cb&&cb.checked;
+  }).map(function(r){ return r.dataset.key; });
+  if(!targets.length){
+    showToast('warning','Must select at least one playlist.',3000);
+    return;
   }
-  targets.forEach(function(n){ _snap2Imported.add(n); });
-  const fresh=targets.filter(function(n){ return !playlistCats[n]; });
-  if(fresh.length){
-    if(btnEl) btnEl.disabled=true;
-    showToast('loading','Importing playlists…');
-    try{
-      let imported=0;
-      for(const name of fresh){
-        const meta=_plMeta[name]||{};
-        const ok=await loadPlaylistIntoApp(meta.id||name,name,meta.portal_url||'',meta.mac||'');
-        if(ok) imported++;
-      }
-      const first=fresh[0];
-      const meta=_plMeta[first]||{};
-      window._activeFilename=meta.id||first;
-      rememberActivePlaylist(meta.id||first,first);
-      setActivePlaylist(first);
-      loadPlaylists();
-      showToast('success','✓ Imported '+imported+' playlist'+(imported>1?'s':''),4000);
-    }catch(e){ showToast('error','✗ '+e.message,5000); }
-    finally{ if(btnEl) btnEl.disabled=false; }
-  }else if(targets.length){
-    showToast('success','✓ Already imported',2500);
-  }
-  buildCombinedCats();
-  updatePlaylistCounts();
-  updateCatBadges();
-  updateSidebarCounts();
-  if(typeof applyCatFilter==='function') applyCatFilter();
-  updateSaveBtnState();
-  scrollToSlide(1);
-}
-function goNextCategories(){
-  const names=Object.keys(catFilteredByPlaylist||{});
-  let picks=[];
-  if(names.length===1){
-    picks=[names[0]];
-  }else if(names.length>1){
-    picks=names.filter(function(name){
-      return (catFilteredByPlaylist[name]||[]).some(function(c){ return catSel.has(catKey(c)); });
+  if(impPage==='checker'){
+    targets=targets.filter(function(name){
+      const c=_plCats[name];
+      return c&&((c.live&&c.live.length)||(c.vod&&c.vod.length)||(c.series&&c.series.length));
     });
-    if(!picks.length) showToast('warning','Nothing selected — nothing moved',3000);
-  }else{
-    showToast('info','Nothing here yet',2500);
+    if(!targets.length){
+      showToast('warning','No categories found, check a playlist first',3500);
+      return;
+    }
   }
-  const warmed=picks.filter(function(n){ return !_snap3Imported.has(n); });
-  if(warmed.length) showToast('loading','Preparing channels…',0);
-  picks.forEach(function(n){ _snap3Imported.add(n); });
-  _chUnlocked=true;
-  if(typeof applyChFilter==='function') applyChFilter();
+  /* Snap 2 (Category Import) gets a completely fresh memory copied from Snap 1's ticked playlists */
+  playlistCats={};
+  cats={live:[],vod:[],series:[]};
+  _snap2Imported=new Set();
+  _snap2Dirty=new Set();
+  catSel.clear();
+  openPlays.clear();
+  const catSearch=el('cat-search'); if(catSearch) catSearch.value='';
+  if(btnEl) btnEl.disabled=true;
+  showToast('loading','Copying playlists to Categories…');
+try{
+    let imported=0;
+    for(const name of targets){
+      if(playlistCats[name]) continue;
+      const meta=_plMeta[name]||{};
+      if(impPage==='checker'){
+        try{
+          const sr=await fetch('/api/playlists/save-new',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:meta.portal_url||'',mac:meta.mac||'',profile:_plProfile[name]||null,categories:_plCats[name]||{live:[],vod:[],series:[]}})});
+          const sd=await sr.json();
+          if(sd.ok){ meta.id=sd.filename.replace(/\.json$/,''); }
+          else{ showToast('error','✗ Save failed for '+name,4000); continue; }
+        }catch(e){ showToast('error','✗ Save failed for '+name+': '+e.message,4000); continue; }
+      }
+      const ok=await loadPlaylistIntoApp(meta.id||name,name,meta.portal_url||'',meta.mac||'');
+      if(ok) imported++;
+    }
+    if(impPage==='checker'&&imported===0){
+      showToast('warning','No categories found, check a playlist first',3500);
+    }else{
+      showToast('success','✓ Copied '+imported+' playlist'+(imported>1?'s':'')+' to Categories',4000);
+    }
+  }catch(e){ showToast('error','✗ '+e.message,5000); }
+  finally{
+    if(btnEl) btnEl.disabled=false;
+    buildCombinedCats();
+    updatePlaylistCounts();
+    updateCatBadges();
+    applyCatFilter();
+    applyChFilter();
+updateSaveBtnState();
+    updateChCounts();
+    updateCatSelCount();
+    updatePlSelectAll();
+    scrollToSlide(1);
+  }
+}
+async function goNextCategories(){
+  const selected=[];
+  Object.keys(playlistCats).forEach(function(name){
+    const pl=playlistCats[name];
+    ['live','vod','series'].forEach(function(t){
+      (pl[t]||[]).forEach(function(c){
+        if(catSel.has(catKey(c))) selected.push({name:name,pl:pl,t:t,c:c});
+      });
+    });
+  });
+if(!selected.length){
+    showToast('warning','Must select at least one category.',3000);
+    return;
+  }
+  if(impPage==='checker'){
+    const hasCh=selected.some(function(s){
+      const real=(s.c._previewCount!==undefined)?s.c._previewCount:s.c.count;
+      return Number(real)>0;
+    });
+    if(!hasCh){
+      showToast('warning','No category fetched yet',3500);
+      return;
+    }
+  }
+  /* Snap 3 (Channels) gets a completely fresh memory copied from Snap 2's selected categories */
+  _snap3Store={};
+  chSel.clear();
+  chOpenPlays.clear();
+  chOpenCats.clear();
+  const chSearch=el('ch-search'); if(chSearch) chSearch.value='';
+  selected.forEach(function(s){
+    const entry=_snap3Store[s.name]||{portal_url:s.pl.portal_url||'',mac:s.pl.mac||'',filename:s.pl.filename||'',name:s.name,live:[],vod:[],series:[]};
+    entry[s.t].push(cloneCategory(s.c));
+    _snap3Store[s.name]=entry;
+  });
+_chUnlocked=true;
+  applyChFilter();
+  updateChCounts();
+  updateSaveBtnState();
   scrollToSlide(2);
-  if(warmed.length) showToast('success','✓ Moved '+warmed.length+' playlist'+(warmed.length>1?'s':''),4000);
-  else if(picks.length) showToast('success','✓ Already moved',2500);
+  showToast('success','✓ Copied '+selected.length+' categor'+(selected.length===1?'y':'ies')+' to Channels',4000);
 }
 
 /* ── category list ── */
 let catSel=new Set();
 let catFiltered=[];
 let catFilteredByPlaylist={};
-const openPlays=new Set();
+let openPlays=new Set();
 let catSearchTimer=null;
 let catSavedPos=0;
 let catIsSearching=false;
 function esc(s){return(String(s==null?'':s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function onCatSearch(){
-  const q=document.getElementById('cat-search').value;
+  const q=el('cat-search').value;
   clearTimeout(catSearchTimer);
-  const catScroll=document.getElementById('cat-scroll');
+  const catScroll=el('cat-scroll');
+  if(!catScroll) return;
   if(q.trim()&&!catIsSearching){ catSavedPos=catScroll.scrollTop; catIsSearching=true; }
   if(!q.trim()&&catIsSearching) catIsSearching=false;
   catSearchTimer=setTimeout(()=>{
@@ -2157,17 +2940,21 @@ function onCatSearch(){
   },120);
 }
 function attachCatSearchListeners(){
-  const el=document.getElementById('cat-search');
-  if(!el) return;
-  ['input','cut','paste'].forEach(evt=>{ el.addEventListener(evt,()=>setTimeout(onCatSearch,0)); });
+  IMP_PAGES.forEach(function(pg){
+    const f=document.getElementById(IMP_PREFIX[pg]+'cat-search');
+    if(!f) return;
+    ['input','cut','paste'].forEach(evt=>{ f.addEventListener(evt,()=>setTimeout(onCatSearch,0)); });
+  });
 }
 function attachPlSearchListeners(){
-  const el=document.getElementById('pl-search');
-  if(!el) return;
-  ['input','cut','paste'].forEach(evt=>{ el.addEventListener(evt,()=>setTimeout(applyPlSearch,0)); });
+  IMP_PAGES.forEach(function(pg){
+    const f=document.getElementById(IMP_PREFIX[pg]+'pl-search');
+    if(!f) return;
+    ['input','cut','paste'].forEach(evt=>{ f.addEventListener(evt,()=>setTimeout(applyPlSearch,0)); });
+  });
 }
 function applyCatFilter(){
-  const raw=(document.getElementById('cat-search').value||'').toLowerCase().trim();
+  const raw=(el('cat-search').value||'').toLowerCase().trim();
   const words=raw.split(/\s+/).filter(Boolean);
   catFilteredByPlaylist={};
   catFiltered=[];
@@ -2184,29 +2971,30 @@ function applyCatFilter(){
     catFilteredByPlaylist[name]=filtered;
     catFiltered=catFiltered.concat(filtered);
   });
-  const vis=document.getElementById('cat-visible-count');
+  const vis=el('cat-visible-count');
   if(vis) vis.textContent=catFiltered.length;
-  const info=document.getElementById('cat-filter-info');
+  const info=el('cat-filter-info');
   if(info) info.textContent=raw?(catTab.charAt(0).toUpperCase()+catTab.slice(1))+' preview · '+catFiltered.length+' of '+cats[catTab].length: (catTab.charAt(0).toUpperCase()+catTab.slice(1))+' preview';
   renderCatList();
   updateCatSelectAll();
 }
 function renderCatList(){
-  const body=document.getElementById('cat-list-body');
+  const body=el('cat-list-body');
   if(!body) return;
   const allNames=Object.keys(catFilteredByPlaylist);
   const pendingList=[], doneList=[];
   allNames.forEach(function(name){
     const arr=(playlistCats[name]&&playlistCats[name][catTab])||[];
-    const allDone=arr.length>0&&arr.every(function(c){ return c._fetched; });
+    if(!arr.length) return;
+    const allDone=arr.every(function(c){ return c._fetched; });
     (allDone?doneList:pendingList).push(name);
   });
   const names=pendingList.concat(doneList);
-  if(!names.length||!catFiltered.length){
-    body.innerHTML='<div class="cat-empty">'+(names.length?'No categories found':'Import a playlist to see categories')+'</div>';
+if(!names.length||!catFiltered.length){
+    body.innerHTML='<div class="cat-empty">'+(impPage==='checker'?'No category fetched yet':(allNames.length?'No categories found':'Import a playlist to see categories'))+'</div>';
     return;
   }
-  const q=(document.getElementById('cat-search').value||'').toLowerCase().trim();
+  const q=(el('cat-search').value||'').toLowerCase().trim();
   var html='';
   names.forEach(function(name){
     const filtered=catFilteredByPlaylist[name]||[];
@@ -2276,7 +3064,7 @@ function toggleGroupCats(name,checked){
   renderCatList(); updateCatSelectAll(); updateCatSelCount();
 }
 function updateGroupCheckboxStates(){
-  const body=document.getElementById('cat-list-body');
+  const body=el('cat-list-body');
   if(!body) return;
   body.querySelectorAll('.chan-group').forEach(row=>{
     const name=row.dataset.playlist;
@@ -2290,7 +3078,8 @@ function updateGroupCheckboxStates(){
 }
 function toggleCat(key,checked){
   if(checked) catSel.add(key); else catSel.delete(key);
-  const row=document.querySelector('.cat-row[data-key="'+key+'"]');
+  const body=el('cat-list-body');
+  const row=body?body.querySelector('.cat-row[data-key="'+key+'"]'):null;
   if(row){ row.classList.toggle('selected',checked); const cb=row.querySelector('input'); if(cb) cb.checked=checked; }
   updateCatSelectAll(); updateCatSelCount(); updateGroupCheckboxStates();
 }
@@ -2300,17 +3089,17 @@ function toggleCatSelectAll(checked){
 }
 function clearCatSelection(){ catSel.clear(); renderCatList(); updateCatSelectAll(); updateCatSelCount(); }
 function updateCatSelectAll(){
-  const cb=document.getElementById('cat-select-all');
+  const cb=el('cat-select-all');
   if(!cb) return;
   const sel=catFiltered.filter(c=>catSel.has(catKey(c))).length;
-  const cnt=document.getElementById('cat-visible-count');
-  if(cnt) cnt.textContent=sel+' / '+catFiltered.length;
+const cnt=el('cat-visible-count');
+  if(cnt) cnt.textContent=sel+(impPage==='checker'?' of ':' / ')+catFiltered.length;
   cb.indeterminate=sel>0&&sel<catFiltered.length;
   cb.checked=catFiltered.length>0&&sel===catFiltered.length;
 }
 function updateCatSelCount(){
-  const el=document.getElementById('cat-sel-count');
-  if(el) el.textContent=catSel.size;
+  const e=el('cat-sel-count');
+  if(e) e.textContent=catSel.size;
 }
 function finishCatMutation(msg){
   catSel.clear();
@@ -2327,6 +3116,7 @@ function deleteSelCats(){
     const list=playlistCats[c._playlist]&&playlistCats[c._playlist][c.type];
     if(list){ const i=list.indexOf(c); if(i>=0) list.splice(i,1); }
     catSel.delete(catKey(c));
+    if(c._playlist) _snap2Dirty.add(c._playlist);
   });
   finishCatMutation('✓ Deleted '+sel.length+' categor'+(sel.length===1?'y':'ies'));
 }
@@ -2378,8 +3168,8 @@ async function fetchSingleCategoryCount(type,catId,playlistName,btnEl){
   let portalUrl=pl.portal_url||'';
   let mac=pl.mac||'';
   if(!portalUrl||!mac){
-    portalUrl=document.getElementById('modal-portal-url').value.trim();
-    mac=document.getElementById('modal-mac-addr').value.trim().toUpperCase();
+    portalUrl=el('modal-portal-url').value.trim();
+    mac=el('modal-mac-addr').value.trim().toUpperCase();
   }
   const cat=(pl[type]||[]).find(c=>String(c.id)===String(catId));
   if(!cat){ showToast('error','Category not found',4000); return; }
@@ -2403,7 +3193,7 @@ async function fetchSingleCategoryCount(type,catId,playlistName,btnEl){
 let _catFetchBusy=false;
 async function fetchAllCategoryCounts(btnEl){
   if(_catFetchBusy){ showToast('info','Already fetching…',2000); return; }
-  const btn=btnEl||document.getElementById('fetch-counts-btn');
+  const btn=btnEl||el('fetch-counts-btn');
   var groups=[];
   var totalJobs=0;
   Object.keys(playlistCats).forEach(function(name){
@@ -2469,73 +3259,98 @@ async function fetchAllCategoryCounts(btnEl){
   }
 }
 function updateCatBadges(){
-  let tc={live:cats.live.length,vod:cats.vod.length,series:cats.series.length};
-  Object.keys(_plCatCounts||{}).forEach(function(name){
-    const inCats=cats.live.some(c=>c._playlist===name)||cats.vod.some(c=>c._playlist===name)||cats.series.some(c=>c._playlist===name);
-    if(inCats) return;
-    const cc=_plCatCounts[name];
-    tc.live+=(cc.live||0);
-    tc.vod+=(cc.vod||0);
-    tc.series+=(cc.series||0);
-  });
-  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
-  set('ctb-live',tc.live);
-  set('ctb-vod',tc.vod);
-  set('ctb-series',tc.series);
+  const set=(id,v)=>{ const e=el(id); if(e) e.textContent=v; };
+  set('ctb-live',cats.live.length);
+  set('ctb-vod',cats.vod.length);
+  set('ctb-series',cats.series.length);
 }
 function allCategoriesFetched(){
-  var all=cats.live.concat(cats.vod,cats.series);
-  return all.some(function(c){ return c._fetched || (c.count!==undefined && c.count>0); });
+  let any=false;
+  Object.keys(_snap3Store).forEach(function(name){
+    ['live','vod','series'].forEach(function(t){
+      (_snap3Store[name][t]||[]).forEach(function(c){
+        if((c._channels||[]).length) any=true;
+      });
+    });
+  });
+  return any;
 }
 function updateSaveBtnState(){
-  const btn=document.getElementById('dl-catlist-btn');
+  const btn=el('dl-catlist-btn');
   if(!btn) return;
   btn.disabled=!allCategoriesFetched();
 }
-async function downloadCategoryList(){
-  const btn=document.getElementById('dl-catlist-btn');
+function restoreSaveBtn(){
+  const btn=el('dl-catlist-btn');
   if(!btn) return;
-  btn.disabled=true; btn.textContent='Saving…';
-  try{
-    const names=Object.keys(playlistCats).filter(function(name){
-      var pl=playlistCats[name];
-      return (pl.portal_url&&pl.mac)&&(pl.live.length+pl.vod.length+pl.series.length)>0;
-    });
-    if(!names.length){ showToast('error','✗ Nothing to save',5000); btn.disabled=false; updateSaveBtnState(); btn.innerHTML='<i data-lucide="download" width="14" height="14"></i> Save'; if(window.lucide) lucide.createIcons(); return; }
-    var saved=[]
-    for(const name of names){
-      const pl=playlistCats[name];
-      const r=await fetch('/api/save-categories',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:pl.portal_url,mac:pl.mac,cats:{live:pl.live,vod:pl.vod,series:pl.series}})});
-      const d=await r.json();
-      if(d.ok) saved.push(d.filename);
-      else showToast('error','✗ '+d.error,5000);
-    }
-    if(saved.length){
-      saved.forEach(function(fn,i){
-        const n=names[i];
-        if(n&&playlistCats[n]) playlistCats[n].filename=fn.replace(/\.json$/,'');
-      });
-      showToast('success','✓ Saved '+saved.length+' playlist'+(saved.length>1?'s':'')+' ('+saved.join(', ')+')',4000);
-      window._activeFilename=saved[0].replace(/\.json$/,'');
-      rememberActivePlaylist(window._activeFilename,names[0]);
-      setActivePlaylist(names[0]);
-      names.forEach(function(n){ if(playlistCats[n]&&playlistCats[n].filename) loadChanFromFile(n,playlistCats[n].filename); });
-      updateSidebarCounts();
-      loadPlaylists();
-    }
-    else if(names.length) showToast('error','✗ Failed to save categories',5000);
-  }catch(e){ showToast('error','✗ Failed to save categories',5000); }
   btn.disabled=false; updateSaveBtnState();
   btn.innerHTML='<i data-lucide="download" width="14" height="14"></i> Save';
   if(window.lucide) lucide.createIcons();
 }
+function movedPlaylistNames(){
+  return Object.keys(_snap3Store);
+}
+async function savePlaylistsToFiles(){
+  const btn=el('dl-catlist-btn');
+  if(!btn) return;
+  btn.disabled=true; btn.innerHTML='Saving…';
+  try{
+    const names=movedPlaylistNames();
+    if(!names.length){ showToast('error','✗ Nothing to save — select categories and press Next on the Category step first',5000); restoreSaveBtn(); return; }
+    var savedCnt=0, firstTarget='';
+    for(const name of names){
+      const pl=_snap3Store[name];
+      if(!pl) continue;
+      let target=pl.filename||'';
+      if(!target) target=await ensurePlaylistSaved(name);
+      if(!target){ showToast('error','✗ Cannot save "'+name+'" — no source file found',5000); continue; }
+      const payload={
+        name:pl.name||name,
+        portal_url:pl.portal_url||'',
+        mac:pl.mac||'',
+        categories:{live:[],vod:[],series:[]}
+      };
+      ['live','vod','series'].forEach(function(t){
+        (pl[t]||[]).forEach(function(c){
+          payload.categories[t].push({
+            id:c.id||'',name:c.name||'',count:c.count||0,cached:!!c._fetched,
+            channels:(c._channels||[]).filter(function(ch){ return !!ch.url; }).map(function(ch){
+              return {id:ch.id||'',name:ch.name||'',cmd:ch.cmd||'',url:ch.url||'',content_type:ch.content_type||t,
+                series_id:ch.series_id||'',season_num:ch.season_num||0,episode_num:ch.episode_num||0};
+            })
+          });
+        });
+      });
+      const r=await fetch('/api/playlists/'+encodeURIComponent(target)+'/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const d=await r.json();
+      if(d.ok){
+        savedCnt++;
+        if(!firstTarget) firstTarget=target;
+        pl.filename=target;
+        if(playlistCats[name]) playlistCats[name].filename=target;
+      }else if(d.error) showToast('error','✗ '+d.error,5000);
+    }
+    if(savedCnt>0){
+      showToast('success','✓ Saved '+(savedCnt===1?names[0]:savedCnt+' playlists')+' to their own files',4500);
+      window._activeFilename=firstTarget.replace(/\.json$/,'');
+      rememberActivePlaylist(window._activeFilename,names[0]);
+      if(names[0]&&_snap3Store[names[0]]) playerCats[names[0]]=_snap3Store[names[0]];
+      setActivePlaylist(names[0]);
+      updateSidebarCounts();
+      loadPlaylists();
+    }
+    else showToast('warning','Nothing to save — no resolved channels yet',4500);
+  }catch(e){ showToast('error','✗ Failed to save playlists to files',5000); }
+  restoreSaveBtn();
+}
 
 function resolvedCount(t){
+  const name=pls.live?pls.live.name:null;
+  const pl=name?playerCats[name]:null;
+  if(!pl) return 0;
   let n=0;
-  Object.keys(playlistCats).forEach(function(name){
-    (playlistCats[name][t]||[]).forEach(function(c){
-      (c._channels||[]).forEach(function(ch){ if(ch.url) n++; });
-    });
+  (pl[t]||[]).forEach(function(c){
+    (c._channels||[]).forEach(function(ch){ if(ch.url) n++; });
   });
   return n;
 }
@@ -2558,8 +3373,8 @@ let _chUnlocked=false;
 function chKey(c,i){ return catKey(c)+'\u0003'+i; }
 function switchChTab(tab){
   chanTab=tab;
-  document.querySelectorAll('#ch-tabs button').forEach(t=>t.classList.toggle('active',t.dataset.ch===tab));
-  const s=document.getElementById('ch-search'); if(s) s.value='';
+  const tabs=el('ch-tabs'); if(tabs) tabs.querySelectorAll('button').forEach(t=>t.classList.toggle('active',t.dataset.ch===tab));
+  const s=el('ch-search'); if(s) s.value='';
   applyChFilter();
 }
 function onChSearch(){
@@ -2567,33 +3382,34 @@ function onChSearch(){
   chSearchTimer=setTimeout(applyChFilter,120);
 }
 function attachChSearchListeners(){
-  const el=document.getElementById('ch-search');
-  if(!el) return;
-  ['input','cut','paste'].forEach(evt=>{ el.addEventListener(evt,()=>setTimeout(onChSearch,0)); });
+  IMP_PAGES.forEach(function(pg){
+    const f=document.getElementById(IMP_PREFIX[pg]+'ch-search');
+    if(!f) return;
+    ['input','cut','paste'].forEach(evt=>{ f.addEventListener(evt,()=>setTimeout(onChSearch,0)); });
+  });
 }
 function applyChFilter(){
   if(!_chUnlocked){
     chFilteredByPlaylist={};
     chFilteredChans={};
-    const vis=document.getElementById('ch-visible-count');
+    const vis=el('ch-visible-count');
     if(vis) vis.textContent='0';
     renderChanList();
     updateChSelectAll();
     updateChCounts();
     return;
   }
-  const raw=(document.getElementById('ch-search').value||'').toLowerCase().trim();
+  const raw=(el('ch-search').value||'').toLowerCase().trim();
   const words=raw.split(/\s+/).filter(Boolean);
   chFilteredByPlaylist={};
   chFilteredChans={};
   let totalCh=0;
-  Object.keys(playlistCats).forEach(function(name){
-    if(!_snap3Imported.has(name)) return;
-    const arr=playlistCats[name][chanTab]||[];
+  Object.keys(_snap3Store).forEach(function(name){
+    const arr=(_snap3Store[name]&&_snap3Store[name][chanTab])||[];
     const filtered=[];
     arr.forEach(function(c){
-      if(!c._fetched) return;
       const chs=c._channels||[];
+      if(!chs.length) return;
       const catMatch=!words.length||words.every(w=>(c.name||'').toLowerCase().includes(w));
       const chMatch=chs.some(ch=>words.every(w=>(ch.name||'').toLowerCase().includes(w)));
       if(!catMatch&&!chMatch) return;
@@ -2601,19 +3417,20 @@ function applyChFilter(){
       chFilteredChans[catKey(c)]=chs.filter(ch=>!words.length||words.every(w=>(ch.name||'').toLowerCase().includes(w)));
       totalCh+=chFilteredChans[catKey(c)].length;
     });
-    chFilteredByPlaylist[name]=filtered;
+    if(filtered.length) chFilteredByPlaylist[name]=filtered;
+    else delete chFilteredByPlaylist[name];
   });
-  const vis=document.getElementById('ch-visible-count');
+  const vis=el('ch-visible-count');
   if(vis) vis.textContent=totalCh.toLocaleString();
-  const info=document.getElementById('ch-filter-info');
+  const info=el('ch-filter-info');
   if(info) info.textContent=raw?(chanTab==='live'?'Live':chanTab.toUpperCase())+' · '+totalCh.toLocaleString()+' channels':(chanTab==='live'?'Live':chanTab.toUpperCase());
   renderChanList();
   updateChSelectAll();
   updateChCounts();
 }
 function renderChanList(){
-  const body=document.getElementById('ch-list-body');
-  const empty=document.getElementById('ch-empty');
+  const body=el('ch-list-body');
+  const empty=el('ch-empty');
   if(!body) return;
   const names=Object.keys(chFilteredByPlaylist);
   let anyFetched=false;
@@ -2623,15 +3440,15 @@ function renderChanList(){
   });
   if(!names.length||!anyFetched){
     body.innerHTML='';
-    if(empty){ empty.style.display='block'; empty.textContent='No fetched channels — fetch categories in the Category Import step first'; }
+    if(empty){ empty.style.display='block'; empty.textContent=(impPage==='checker'?(_chUnlocked?'No channels found, fetch a category first':'No channel fetched yet'):'Nothing here yet — pick categories on the Category Import step and press Next'); }
     updateChCounts();
     return;
   }
   if(empty) empty.style.display='none';
-  const q=(document.getElementById('ch-search').value||'').toLowerCase().trim();
+  const q=(el('ch-search').value||'').toLowerCase().trim();
   let html='';
   names.forEach(function(name){
-    const pl=playlistCats[name];
+    const pl=_snap3Store[name];
     const cats=chFilteredByPlaylist[name]||[];
     if(!cats.length) return;
     const open=q?true:chOpenPlays.has(name);
@@ -2648,8 +3465,6 @@ function renderChanList(){
         const subOpen=q?true:chOpenCats.has(ck);
         const chs=c._channels||[];
         const visChs=(chFilteredChans[ck]||chs).slice().sort(function(a,b){ return (a.url?1:0)-(b.url?1:0); });
-        const fetched=!!c._fetched;
-        const catAllRes=chs.length>0&&chs.every(function(ch){ return !!ch.url; });
         var chRows='';
         if(subOpen){
           chRows=visChs.map(function(ch,i){
@@ -2658,9 +3473,9 @@ function renderChanList(){
             const sel=chSel.has(key);
             var badgeHtml;
             if(ch.url){
-              badgeHtml='<button class="cat-fetch-btn disabled" disabled title="Resolved"><i data-lucide="badge-check" width="13" height="13"></i></button>';
+              badgeHtml='<button class="cat-fetch-btn disabled" disabled title="Ready"><i data-lucide="database-check" width="13" height="13"></i></button>';
             }else{
-              badgeHtml='<button class="cat-fetch-btn" title="Resolve" onclick="event.stopPropagation();resolveSingleChannel(\''+esc(name)+'\',\''+esc(String(c.id))+'\',\''+ci+'\',this)"><i data-lucide="badge-plus" width="13" height="13"></i></button>';
+              badgeHtml='<button class="cat-fetch-btn" title="Fetch" onclick="event.stopPropagation();resolveSingleChannel(\''+esc(name)+'\',\''+esc(String(c.id))+'\',\''+ci+'\',this)"><i data-lucide="database-arrow-down" width="13" height="13"></i></button>';
             }
             return '<div class="cat-row ed-ch-row'+(sel?' selected':'')+'" data-pl="'+esc(name)+'" data-catid="'+esc(String(c.id))+'" data-ci="'+ci+'" style="grid-template-columns:24px 30px 1fr 50px;padding-left:70px">'
               +'<div style="text-align:center"><input type="checkbox" class="cat-cb"'+(sel?' checked':'')+'></div>'
@@ -2676,11 +3491,7 @@ function renderChanList(){
           +'<div style="text-align:center"></div>'
           +'<div class="cat-name" style="display:flex;align-items:center;gap:6px;min-width:0">'
           +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.name)+'</span></div>'
-          +'<div style="text-align:center">'
-          +(catAllRes
-            ?'<button class="cat-fetch-btn disabled" disabled title="All resolved"><i data-lucide="badge-check" width="13" height="13"></i></button>'
-            :'<button class="cat-fetch-btn disabled" disabled title="Pending"><i data-lucide="badge-plus" width="13" height="13"></i></button>')
-          +'</div>'
+          +'<div style="text-align:center"></div>'
           +'</div>'
           +chRows;
       });
@@ -2707,7 +3518,7 @@ function renderChanList(){
       if(q) return;
       const pl=row.dataset.pl;
       const cid=row.dataset.catid;
-      const c=(playlistCats[pl]&&playlistCats[pl][chanTab]||[]).find(function(x){ return String(x.id)===String(cid); });
+      const c=(_snap3Store[pl]&&_snap3Store[pl][chanTab]||[]).find(function(x){ return String(x.id)===String(cid); });
       if(!c) return;
       const ck=catKey(c);
       if(chOpenCats.has(ck)) chOpenCats.delete(ck); else chOpenCats.add(ck);
@@ -2723,7 +3534,7 @@ function renderChanList(){
       const pl=row.dataset.pl;
       const cid=row.dataset.catid;
       const ci=+row.dataset.ci;
-      const c=(playlistCats[pl]&&playlistCats[pl][chanTab]||[]).find(function(x){ return String(x.id)===String(cid); });
+      const c=(_snap3Store[pl]&&_snap3Store[pl][chanTab]||[]).find(function(x){ return String(x.id)===String(cid); });
       if(!c) return;
       const on=!chSel.has(chKey(c,ci));
       toggleCh(c,ci,on);
@@ -2734,7 +3545,7 @@ function renderChanList(){
       const pl=row.dataset.pl;
       const cid=row.dataset.catid;
       const ci=+row.dataset.ci;
-      const c=(playlistCats[pl]&&playlistCats[pl][chanTab]||[]).find(function(x){ return String(x.id)===String(cid); });
+      const c=(_snap3Store[pl]&&_snap3Store[pl][chanTab]||[]).find(function(x){ return String(x.id)===String(cid); });
       if(!c) return;
       toggleCh(c,ci,e.target.checked);
     });
@@ -2749,7 +3560,7 @@ function toggleCh(c,ci,checked){
   renderChanList(); updateChSelectAll();
 }
 function toggleChCat(plName,catId,checked){
-  const c=(playlistCats[plName]&&playlistCats[plName][chanTab]||[]).find(function(x){ return String(x.id)===String(catId); });
+  const c=(_snap3Store[plName]&&_snap3Store[plName][chanTab]||[]).find(function(x){ return String(x.id)===String(catId); });
   if(!c) return;
   (c._channels||[]).forEach(function(ch,i){
     const key=chKey(c,i);
@@ -2767,7 +3578,7 @@ function toggleChGroup(name,checked){
   renderChanList(); updateChSelectAll();
 }
 function updateChGroupStates(){
-  const body=document.getElementById('ch-list-body');
+  const body=el('ch-list-body');
   if(!body) return;
   body.querySelectorAll('.chan-group[data-playlist]').forEach(row=>{
     const name=row.dataset.playlist;
@@ -2786,12 +3597,12 @@ function updateChGroupStates(){
   });
 }
 function updateChCatStates(){
-  const body=document.getElementById('ch-list-body');
+  const body=el('ch-list-body');
   if(!body) return;
   body.querySelectorAll('.ch-gcb').forEach(cb=>{
     const plName=cb.dataset.pl;
     const catId=cb.dataset.catid;
-    const c=(playlistCats[plName]&&playlistCats[plName][chanTab]||[]).find(function(x){ return String(x.id)===String(catId); });
+    const c=(_snap3Store[plName]&&_snap3Store[plName][chanTab]||[]).find(function(x){ return String(x.id)===String(catId); });
     const chs=c?(c._channels||[]):[];
     let sel=0;
     chs.forEach(function(ch,i){ if(c&&chSel.has(chKey(c,i))) sel++; });
@@ -2815,7 +3626,7 @@ function toggleChSelectAll(checked){
 }
 function clearChSelection(){ chSel.clear(); renderChanList(); updateChSelectAll(); }
 function updateChSelectAll(){
-  const cb=document.getElementById('ch-select-all');
+  const cb=el('ch-select-all');
   if(!cb) return;
   const keys=[];
   Object.keys(chFilteredByPlaylist).forEach(function(name){
@@ -2825,20 +3636,20 @@ function updateChSelectAll(){
     });
   });
   const sel=keys.filter(k=>chSel.has(k)).length;
-  const cnt=document.getElementById('ch-visible-count');
-  if(cnt) cnt.textContent=sel+' / '+keys.length;
+const cnt=el('ch-visible-count');
+  if(cnt) cnt.textContent=sel+(impPage==='checker'?' of ':' / ')+keys.length;
   cb.indeterminate=sel>0&&sel<keys.length;
   cb.checked=keys.length>0&&sel===keys.length;
 }
 let _chResolveBusy=false;
 async function resolveSelectedChannels(btnEl){
   if(_chResolveBusy){ showToast('info','Already resolving…',2000); return; }
-  const btn=btnEl||document.getElementById('ch-fetch-btn');
+  const btn=btnEl||el('ch-fetch-btn');
   if(!chSel.size){ showToast('info','Select channels to resolve',3000); return; }
   const groups=[];
   let totalJobs=0;
-  Object.keys(playlistCats).forEach(function(name){
-    const pl=playlistCats[name];
+  Object.keys(_snap3Store).forEach(function(name){
+    const pl=_snap3Store[name];
     const jobs=[];
     (pl[chanTab]||[]).forEach(function(c){
       (c._channels||[]).forEach(function(ch,i){
@@ -2881,9 +3692,9 @@ async function resolveSelectedChannels(btnEl){
   buildCombinedCats();
   applyChFilter(); updateSaveBtnState(); updateChCounts(); updateSidebarCounts();
   let allResolved=true;
-  Object.keys(playlistCats).forEach(function(name){
+  Object.keys(_snap3Store).forEach(function(name){
     ['live','vod','series'].forEach(function(type){
-      (playlistCats[name][type]||[]).forEach(function(c){
+      (_snap3Store[name][type]||[]).forEach(function(c){
         (c._channels||[]).forEach(function(ch){ if(!ch.url) allResolved=false; });
       });
     });
@@ -2893,13 +3704,13 @@ async function resolveSelectedChannels(btnEl){
   else showToast('success','✓ '+succeeded+' channel'+(succeeded===1?'':'s')+' resolved',4000);
 }
 async function resolveSingleChannel(name,catId,ci,btnEl){
-  const c=(playlistCats[name]&&playlistCats[name][chanTab]||[]).find(function(x){ return String(x.id)===String(catId); });
+  const c=(_snap3Store[name]&&_snap3Store[name][chanTab]||[]).find(function(x){ return String(x.id)===String(catId); });
   if(!c||!c._channels) return;
   const ch=c._channels[+ci];
   if(!ch||ch.url) return;
   if(btnEl){ btnEl.disabled=true; btnEl.innerHTML='<i data-lucide="loader" width="13" height="13"></i>'; if(window.lucide) lucide.createIcons(); }
   showToast('loading','Resolving '+ch.name+'…',0);
-  const pl=playlistCats[name];
+  const pl=_snap3Store[name];
   try{
     const r=await fetch('/api/resolve-channels',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:pl.portal_url||'',mac:pl.mac||'',channels:[{id:ch.id||'',name:ch.name||'',cmd:ch.cmd||'',content_type:ch.content_type||chanTab,cat_id:c.id||'',cat_name:c.name||'',series_id:ch.series_id||'',season_num:ch.season_num||0,episode_num:ch.episode_num||0}]})});
     const d=await r.json();
@@ -2915,9 +3726,10 @@ function deleteSelChannels(){
   if(!total){ showToast('info','Select channels to delete',3000); return; }
   if(!confirm('Delete '+total+' selected channel'+(total===1?'':'s')+'?')) return;
   let removed=0;
-  Object.keys(playlistCats).forEach(function(name){
+  Object.keys(_snap3Store).forEach(function(name){
+    let rm=0;
     ['live','vod','series'].forEach(function(type){
-      (playlistCats[name][type]||[]).forEach(function(c){
+      (_snap3Store[name][type]||[]).forEach(function(c){
         const chs=c._channels||[];
         if(!chs.length) return;
         const kept=chs.filter(function(ch,i){ return !chSel.has(chKey(c,i)); });
@@ -2925,9 +3737,11 @@ function deleteSelChannels(){
           c._channels=kept;
           c.count=kept.length;
           removed+=chs.length-kept.length;
+          rm+=chs.length-kept.length;
         }
       });
     });
+    if(rm>0) _snap3Dirty.add(name);
   });
   chSel.clear();
   buildCombinedCats();
@@ -2936,19 +3750,20 @@ function deleteSelChannels(){
 }
 function updateChCounts(){
   const tot={live:0,vod:0,series:0};
-  Object.keys(playlistCats).forEach(function(name){
-    if(!_snap3Imported.has(name)) return;
+  Object.keys(_snap3Store).forEach(function(name){
     ['live','vod','series'].forEach(function(t){
-      (playlistCats[name][t]||[]).forEach(function(c){ tot[t]+=(c._channels||[]).length; });
+      (_snap3Store[name][t]||[]).forEach(function(c){
+        tot[t]+=(c._channels||[]).length;
+      });
     });
   });
   [['chb-live','live'],['chb-vod','vod'],['chb-series','series']].forEach(function(p){
-    const el=document.getElementById(p[0]);
-    if(el) el.textContent=tot[p[1]].toLocaleString();
+    const e=el(p[0]);
+    if(e) e.textContent=tot[p[1]].toLocaleString();
   });
 }
 async function ensurePlaylistSaved(name){
-  const pl=playlistCats[name];
+  const pl=_snap3Store[name];
   if(!pl) return '';
   if(pl.filename) return pl.filename;
   if(!pl.portal_url||!pl.mac) return '';
@@ -2960,7 +3775,7 @@ async function ensurePlaylistSaved(name){
   return '';
 }
 async function loadChanFromFile(name,filename){
-  const pl=playlistCats[name];
+  const pl=_snap3Store[name];
   if(!pl) return;
   try{
     const r=await fetch('/api/playlists/'+encodeURIComponent(filename)+'/channels');
@@ -3000,7 +3815,7 @@ async function loadPlaylists(){
       name=p.list_name||p.name||id;
       expiry=(p.profile&&p.profile.expiry)?'Expires: '+p.profile.expiry:expiry;
     }else{
-      const pl=playlistCats[id];
+      const pl=playerCats[id];
       if(pl&&pl.portal_url){
         let host='';
         try{ host=new URL(pl.portal_url).hostname; }catch(e){}
@@ -3046,7 +3861,7 @@ async function restoreActivePlaylist(){
     window._activeFilename=p.id;
     const name=rec&&rec.name?rec.name:(p.list_name||p.name||p.id);
     rememberActivePlaylist(p.id,name);
-    if(!playlistCats[name]){
+    if(!playerCats[name]){
       const jr=await fetch('/api/playlists/'+encodeURIComponent(p.id)+'/channels');
       const jd=await jr.json();
       if(jd&&jd.channels){
@@ -3075,11 +3890,8 @@ async function restoreActivePlaylist(){
             if(cat._channels.length>cat.count) cat.count=cat._channels.length;
           });
         });
-        playlistCats[name]=pl;
-        buildCombinedCats();
-        updatePlaylistCounts();
+        playerCats[name]=pl;
         updateSidebarCounts();
-        applyChFilter();
       }
     }
     setActivePlaylist(name);
@@ -3088,9 +3900,9 @@ async function restoreActivePlaylist(){
 }
 
 /* ── stream modal copy ── */
-function closeStreamModal(){ document.getElementById('stream-modal').classList.remove('visible'); }
+function closeStreamModal(){ const m=el('stream-modal'); if(m) m.classList.remove('visible'); }
 function copyProxyUrl(){
-  const input=document.getElementById('proxy-url-input');
+  const input=el('proxy-url-input');
   if(!input||!input.value) return;
   navigator.clipboard.writeText(input.value).then(()=>{
     const btn=input.nextElementSibling; btn.textContent='✓ Copied';
@@ -3098,13 +3910,14 @@ function copyProxyUrl(){
   });
 }
 function copyStreamUrl(){
-  const input=document.getElementById('stream-url-input');
+  const input=el('stream-url-input');
   if(!input||!input.value) return;
   navigator.clipboard.writeText(input.value).then(()=>{
     const btn=input.nextElementSibling; btn.textContent='✓ Copied';
     setTimeout(()=>{ btn.textContent='Copy'; },1500);
   });
 }
+function closeImpModal(){ const m=el('importScrim'); if(m) m.classList.remove('show'); }
 
 /* ── init ── */
 const macField=document.getElementById('mac-addr');
@@ -3123,33 +3936,50 @@ restoreActivePlaylist();
 renderPane('live');
 
 function scrollToSlide(idx){
-  const slide=document.getElementById('slide-'+idx);
+  const slide=el('slide-'+idx);
   if(slide) slide.scrollIntoView({behavior:'smooth'});
 }
+let _snapArrowEl=null;
+document.addEventListener('click',function(e){
+  const hit=e.target&&e.target.closest?e.target.closest('[id$="pl-scroll"],[id$="cat-scroll"],[id$="ch-scroll"]'):null;
+  _snapArrowEl=hit||null;
+});
 document.addEventListener('keydown',function(e){
-  const v=document.getElementById('view-import');
-  if(!v||!v.classList.contains('active')) return;
+  const v=document.querySelector('.imp-view.active');
+  if(!v) return;
   const tag=(document.activeElement&&document.activeElement.tagName||'').toUpperCase();
   if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
   if(e.key==='ArrowUp'||e.key==='ArrowDown'){
     e.preventDefault();
-    const sw=document.getElementById('snap-wrapper');
-    const idx=Math.round((sw?sw.scrollTop:0)/Math.max(sw?sw.clientHeight:1,1));
-    const map={0:'pl-scroll',1:'cat-scroll',2:'ch-scroll'};
-    const sc=map[idx]?document.getElementById(map[idx]):null;
-    if(sc) sc.scrollBy({top:e.key==='ArrowDown'?60:-60,behavior:'smooth'});
+    const listEl=(_snapArrowEl&&_snapArrowEl.offsetParent)?_snapArrowEl:null;
+    if(listEl){
+      listEl.scrollBy({top:e.key==='ArrowDown'?60:-60,behavior:'smooth'});
+    }else{
+const sw=el('snap-wrapper');
+      const idx=Math.round((sw?sw.scrollTop:0)/Math.max(sw?sw.clientHeight:1,1));
+      const maxIdx=v?v.querySelectorAll('.nav-dot').length-1:3;
+      const next=Math.max(0,Math.min(maxIdx,idx+(e.key==='ArrowDown'?1:-1)));
+      if(next!==idx) scrollToSlide(next);
+    }
     return;
   }
   if(e.key==='PageUp'||e.key==='PageDown'||e.key==='Home'||e.key==='End'){ e.preventDefault(); return; }
   if(e.key===' '){ if(!document.activeElement||document.activeElement===document.body) e.preventDefault(); }
 });
-const snapWrapper=document.getElementById('snap-wrapper');
-if(snapWrapper){
-  snapWrapper.addEventListener('scroll',()=>{
-    const idx=Math.round(snapWrapper.scrollTop/Math.max(snapWrapper.clientHeight,1));
-    document.querySelectorAll('.nav-dot').forEach(d=>d.classList.toggle('active',parseInt(d.dataset.slide,10)===idx));
+IMP_PAGES.forEach(function(pg){
+  const sw=document.getElementById(IMP_PREFIX[pg]+'snap-wrapper');
+  if(!sw) return;
+  sw.addEventListener('scroll',()=>{
+    const idx=Math.round(sw.scrollTop/Math.max(sw.clientHeight,1));
+    const host=document.getElementById('view-'+pg);
+    if(!host) return;
+    host.querySelectorAll('.nav-dot').forEach(d=>d.classList.toggle('active',parseInt(d.dataset.slide,10)===idx));
+    if(pg==='checker'&&idx===1){
+      const cb=document.getElementById('chk-cat-list-body');
+      if(cb&&!cb.innerHTML&&!Object.keys(playlistCats).length) applyCatFilter();
+    }
   },{passive:true});
-}
+});
 </script>
 </body>
 </html>
