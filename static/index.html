@@ -155,7 +155,7 @@ button{font:inherit}
   font-weight:600;background:transparent;color:var(--muted);border:1px solid var(--line-2);
   transition:all .14s var(--ease)}
 .tag:hover{color:var(--white);border-color:var(--red)}
-.pl-cat-dd{position:absolute;top:calc(100% + 6px);left:0;min-width:190px;max-width:280px;max-height:280px;
+.pl-cat-dd{position:absolute;top:100%;left:0;min-width:190px;max-width:280px;max-height:280px;padding-top:6px;
   overflow-y:auto;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-lg);
   z-index:var(--z-dropdown);box-shadow:0 12px 40px rgba(0,0,0,.6);
   transform-origin:top left;animation:pop .16s var(--ease)}
@@ -163,6 +163,7 @@ button{font:inherit}
   overflow:hidden;text-overflow:ellipsis;transition:background .12s var(--ease),color .12s var(--ease)}
 .pl-cat-item:hover{background:var(--hover);color:var(--white)}
 .pl-cat-item.sel{color:var(--white);background:rgba(229,9,20,.14)}
+.pl-cat-item+.pl-cat-item{border-top:1px solid var(--line-2)}
 .tag.active{background:var(--red-grad);color:var(--white);border-color:var(--red);
   box-shadow:0 2px 10px rgba(229,9,20,.35)}
 .ch-list{flex:1;overflow-y:auto}
@@ -606,11 +607,9 @@ button{font:inherit}
           <div class="dd-email">slimk@iptvsuite.app</div>
         </div>
       </div>
-      <div class="dd-item" onclick="showView('import');toggleUserDD()"><i data-lucide="download" width="15" height="15"></i>Import</div>
-      <div class="dd-item" onclick="showView('settings');toggleUserDD()"><i data-lucide="settings" width="15" height="15"></i>Settings</div>
+<div class="dd-item" onclick="showView('settings');toggleUserDD()"><i data-lucide="settings" width="15" height="15"></i>Settings</div>
       <div class="dd-item" onclick="showView('changelog');toggleUserDD()"><i data-lucide="scroll-text" width="15" height="15"></i>Changelog <span class="dd-right">v1.0.0</span></div>
-      <div class="dd-item"><i data-lucide="palette" width="15" height="15"></i>Theme <span class="dd-right">Dark</span></div>
-      <div class="dd-item"><i data-lucide="log-out" width="15" height="15"></i>Sign out</div>
+<div class="dd-item"><i data-lucide="palette" width="15" height="15"></i>Theme <span class="dd-right">Dark</span></div>
     </div>
 
     <div class="search">
@@ -620,14 +619,14 @@ button{font:inherit}
 
     <nav class="nav-scroll">
       <div class="sec-label">Library</div>
-      <div class="nav active" onclick="showView('player',this)"><i data-lucide="tv" width="16" height="16"></i><span class="nav-lbl">Live</span><span class="count" id="cnt-live">0</span></div>
+      <div class="nav" onclick="showView('player',this)"><i data-lucide="tv" width="16" height="16"></i><span class="nav-lbl">Live</span><span class="count" id="cnt-live">0</span></div>
       <div class="nav" onclick="showView('vod',this)"><i data-lucide="film" width="16" height="16"></i><span class="nav-lbl">VOD</span><span class="count" id="cnt-vod">0</span></div>
       <div class="nav" onclick="showView('series',this)"><i data-lucide="clapperboard" width="16" height="16"></i><span class="nav-lbl">Series</span><span class="count" id="cnt-series">0</span></div>
       <div class="nav" onclick="showView('favorites',this)"><i data-lucide="star" width="16" height="16"></i><span class="nav-lbl">Favorites</span><span class="count" id="cnt-fav">0</span></div>
 
       <div class="divider"></div>
       <div class="sec-label">Manage</div>
-      <div class="nav" onclick="showView('home',this)"><i data-lucide="home" width="16" height="16"></i><span class="nav-lbl">Home</span></div>
+      <div class="nav active" onclick="showView('home',this)"><i data-lucide="home" width="16" height="16"></i><span class="nav-lbl">Home</span></div>
       <div class="nav" onclick="showView('trash',this)"><i data-lucide="list" width="16" height="16"></i><span class="nav-lbl">Playlists</span></div>
       <div class="nav" onclick="showView('empty',this)"><i data-lucide="file-plus-2" width="16" height="16"></i><span class="nav-lbl">Empty</span></div>
     </nav>
@@ -639,13 +638,13 @@ button{font:inherit}
       <div id="sb-footer-name" style="font-size:13px;font-weight:700;color:var(--white);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">My Home</div>
       <span id="sb-expiry-label" style="color:var(--faint);font-size:10px">Expires: —</span>
       <div style="position:relative;margin-top:6px" id="import-dd">
-        <button class="btn-red" onclick="toggleImportDD(event)"><i data-lucide="download" width="14" height="14"></i>Import playlist <i data-lucide="chevron-down" width="13" height="13"></i></button>
+        <button class="btn-red" onclick="toggleImportDD(event)"><i data-lucide="download" width="14" height="14"></i>Import playlist <i data-lucide="chevron-up" width="13" height="13"></i></button>
         <div class="import-dd-menu" id="import-dd-menu" style="display:none">
-<div class="import-dd-item" onclick="importDDGo('import')"><i data-lucide="download" width="14" height="14"></i>M3U Merge</div>
-          <div class="import-dd-item" onclick="importDDGo('checker')"><i data-lucide="shield-check" width="14" height="14"></i>Playlist checker</div>
+<div class="import-dd-item" onclick="importDDGo('import')"><i data-lucide="download" width="14" height="14"></i>M3U Merger</div>
+          <div class="import-dd-item" onclick="importDDGo('checker')"><i data-lucide="shield-check" width="14" height="14"></i>Playlist Checker</div>
           <div class="import-dd-sep"></div>
-          <div class="import-dd-item" id="import-dd-edit" onclick="editPlaylistGo()"><i data-lucide="pencil" width="14" height="14"></i><span id="import-dd-edit-label">edit playlist</span></div>
-          <div class="import-dd-item chooser" id="import-dd-chooser"><i data-lucide="list-check" width="14" height="14"></i>choose a playlist <i data-lucide="chevron-right" width="12" height="12" style="margin-left:auto"></i>
+          <div class="import-dd-item" id="import-dd-edit" onclick="editPlaylistGo()"><i data-lucide="pencil" width="14" height="14"></i><span id="import-dd-edit-label">Edit Playlist</span></div>
+          <div class="import-dd-item chooser" id="import-dd-chooser"><i data-lucide="list-check" width="14" height="14"></i>Choose A Playlist <i data-lucide="chevron-right" width="12" height="12" style="margin-left:auto"></i>
             <div class="choose-menu" id="choose-pl-menu"></div>
           </div>
         </div>
@@ -657,13 +656,13 @@ button{font:inherit}
   <main class="stage">
 
     <!-- PLAYER VIEW -->
-    <div class="view active" id="view-player">
+    <div class="view" id="view-player">
       <div class="topbar">
         <div style="display:flex;align-items:center;gap:10px">
           <span class="view-title">Live</span>
           <span style="color:var(--faint);font-weight:700">/</span>
-          <span class="tag" id="pl-cat-sel" onclick="toggleTypeCatDD('live',event)" style="display:inline-flex;align-items:center;gap:6px;position:relative">
-            <i data-lucide="list" width="14" height="14"></i>
+<span class="tag" id="pl-cat-sel" style="display:inline-flex;align-items:center;gap:6px;position:relative">
+            <i data-lucide="folder-closed" width="14" height="14"></i>
             <span id="pl-cat-label">All</span>
             <i data-lucide="chevron-down" width="12" height="12"></i>
             <div class="pl-cat-dd" id="pl-cat-menu" style="display:none"></div>
@@ -695,7 +694,7 @@ button{font:inherit}
             <button class="ctrl ctrl-vol" onclick="toggleVolPop('live')"><i data-lucide="volume-2" width="18" height="18"></i></button>
             <div class="vol-pop"><input type="range" class="vol-range" min="0" max="100" value="100" oninput="setVol('live',this.value)"></div>
             <button class="ctrl"><i data-lucide="captions" width="18" height="18"></i></button>
-            <button class="ctrl"><i data-lucide="settings" width="18" height="18"></i></button>
+<button class="ctrl" onclick="openUrlModal('live')"><i data-lucide="settings" width="18" height="18"></i></button>
             <button class="ctrl ctrl-max" onclick="toggleMax('live')"><i data-lucide="maximize" width="18" height="18"></i></button>
           </div>
           <div class="player-bar">
@@ -705,7 +704,7 @@ button{font:inherit}
               <div class="now-sub" id="pl-now-sub">—</div>
             </div>
             <div class="now-actions">
-              <button class="action" onclick="openModal('url')"><i data-lucide="link" width="14" height="14"></i>Share URL</button>
+<button class="action" onclick="openUrlModal('live')"><i data-lucide="link" width="14" height="14"></i>Share URL</button>
               <button class="action" onclick="openVlcFor('live')"><i data-lucide="external-link" width="14" height="14"></i>Open in VLC</button>
               <button class="action primary"><i data-lucide="star" width="14" height="14"></i>Favorite</button>
             </div>
@@ -720,8 +719,8 @@ button{font:inherit}
         <div style="display:flex;align-items:center;gap:10px">
           <span class="view-title">VOD</span>
           <span style="color:var(--faint);font-weight:700">/</span>
-          <span class="tag" id="vo-cat-sel" onclick="toggleTypeCatDD('vod',event)" style="display:inline-flex;align-items:center;gap:6px;position:relative">
-            <i data-lucide="list" width="14" height="14"></i>
+<span class="tag" id="vo-cat-sel" style="display:inline-flex;align-items:center;gap:6px;position:relative">
+            <i data-lucide="folder-closed" width="14" height="14"></i>
             <span id="vo-cat-label">All</span>
             <i data-lucide="chevron-down" width="12" height="12"></i>
             <div class="pl-cat-dd" id="vo-cat-menu" style="display:none"></div>
@@ -753,7 +752,7 @@ button{font:inherit}
             <button class="ctrl ctrl-vol" onclick="toggleVolPop('vod')"><i data-lucide="volume-2" width="18" height="18"></i></button>
             <div class="vol-pop"><input type="range" class="vol-range" min="0" max="100" value="100" oninput="setVol('vod',this.value)"></div>
             <button class="ctrl"><i data-lucide="captions" width="18" height="18"></i></button>
-            <button class="ctrl"><i data-lucide="settings" width="18" height="18"></i></button>
+<button class="ctrl" onclick="openUrlModal('vod')"><i data-lucide="settings" width="18" height="18"></i></button>
             <button class="ctrl ctrl-max" onclick="toggleMax('vod')"><i data-lucide="maximize" width="18" height="18"></i></button>
           </div>
           <div class="player-bar">
@@ -763,7 +762,7 @@ button{font:inherit}
               <div class="now-sub" id="vo-now-sub">—</div>
             </div>
             <div class="now-actions">
-              <button class="action" onclick="openModal('url')"><i data-lucide="link" width="14" height="14"></i>Share URL</button>
+<button class="action" onclick="openUrlModal('vod')"><i data-lucide="link" width="14" height="14"></i>Share URL</button>
               <button class="action" onclick="openVlcFor('vod')"><i data-lucide="external-link" width="14" height="14"></i>Open in VLC</button>
               <button class="action primary"><i data-lucide="star" width="14" height="14"></i>Favorite</button>
             </div>
@@ -778,11 +777,18 @@ button{font:inherit}
         <div style="display:flex;align-items:center;gap:10px">
           <span class="view-title">Series</span>
           <span style="color:var(--faint);font-weight:700">/</span>
-          <span class="tag" id="se-cat-sel" onclick="toggleTypeCatDD('series',event)" style="display:inline-flex;align-items:center;gap:6px;position:relative">
-            <i data-lucide="list" width="14" height="14"></i>
+<span class="tag" id="se-cat-sel" style="display:inline-flex;align-items:center;gap:6px;position:relative">
+            <i data-lucide="folder-closed" width="14" height="14"></i>
             <span id="se-cat-label">All</span>
-            <i data-lucide="chevron-down" width="12" height="12"></i>
+<i data-lucide="chevron-down" width="12" height="12"></i>
             <div class="pl-cat-dd" id="se-cat-menu" style="display:none"></div>
+          </span>
+          <span style="color:var(--faint);font-weight:700">/</span>
+          <span class="tag" id="se-se-sel" style="display:inline-flex;align-items:center;gap:6px;position:relative">
+            <i data-lucide="folder-closed" width="14" height="14"></i>
+            <span id="se-se-label">All Series</span>
+            <i data-lucide="chevron-down" width="12" height="12"></i>
+            <div class="pl-cat-dd" id="se-se-menu" style="display:none"></div>
           </span>
           <span style="color:var(--faint);font-weight:700">/</span>
           <span class="pane-count" id="se-panel-count">0 episodes</span>
@@ -811,7 +817,7 @@ button{font:inherit}
             <button class="ctrl ctrl-vol" onclick="toggleVolPop('series')"><i data-lucide="volume-2" width="18" height="18"></i></button>
             <div class="vol-pop"><input type="range" class="vol-range" min="0" max="100" value="100" oninput="setVol('series',this.value)"></div>
             <button class="ctrl"><i data-lucide="captions" width="18" height="18"></i></button>
-            <button class="ctrl"><i data-lucide="settings" width="18" height="18"></i></button>
+<button class="ctrl" onclick="openUrlModal('series')"><i data-lucide="settings" width="18" height="18"></i></button>
             <button class="ctrl ctrl-max" onclick="toggleMax('series')"><i data-lucide="maximize" width="18" height="18"></i></button>
           </div>
           <div class="player-bar">
@@ -821,7 +827,7 @@ button{font:inherit}
               <div class="now-sub" id="se-now-sub">—</div>
             </div>
             <div class="now-actions">
-              <button class="action" onclick="openModal('url')"><i data-lucide="link" width="14" height="14"></i>Share URL</button>
+<button class="action" onclick="openUrlModal('series')"><i data-lucide="link" width="14" height="14"></i>Share URL</button>
               <button class="action" onclick="openVlcFor('series')"><i data-lucide="external-link" width="14" height="14"></i>Open in VLC</button>
               <button class="action primary"><i data-lucide="star" width="14" height="14"></i>Favorite</button>
             </div>
@@ -831,7 +837,7 @@ button{font:inherit}
     </div>
 
     <!-- HOME VIEW -->
-    <div class="view" id="view-home">
+    <div class="view active" id="view-home">
       <div class="topbar">
         <div class="view-title">Home</div>
       </div>
@@ -1657,25 +1663,31 @@ button{font:inherit}
 <div class="scrim" id="urlScrim">
   <div class="modal" style="width:480px">
     <button class="modal-close" onclick="closeModal('urlScrim')"><i data-lucide="x" width="15" height="15"></i></button>
-    <div class="modal-title">Stream URL</div>
-    <div class="modal-sub">beIN Sports 1 HD · copy or open in an external player.</div>
+<div class="modal-title">Stream URL</div>
+    <div class="modal-sub" id="url-modal-sub">beIN Sports 1 HD</div>
 
     <div class="url-block">
-      <div class="url-label"><i data-lucide="shield" width="13" height="13"></i>Proxy URL</div>
+      <div class="url-label"><i data-lucide="shield" width="13" height="13"></i>Proxy URL <span style="font-size:11px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">— handles auth automatically.</span></div>
       <div class="url-row">
-        <input readonly value="http://127.0.0.1:8409/proxy/bein-sports-1-hd.m3u8">
-        <button class="btn-prim" onclick="copyToast()">Copy</button>
+        <input readonly id="url-proxy-input" value="">
+        <button class="btn-sec" onclick="openVlcUrl('url-proxy-input')">Open In VLC</button>
       </div>
-      <div class="url-hint">Open this in VLC — handles auth automatically.</div>
     </div>
 
     <div class="url-block">
       <div class="url-label"><i data-lucide="radio" width="13" height="13"></i>Direct URL</div>
       <div class="url-row">
-        <input readonly value="http://server:port/live/user/pass/1201.ts">
-        <button class="btn-sec" onclick="copyToast()">Copy</button>
+        <input readonly id="url-direct-input" value="">
+        <button class="btn-sec" onclick="openVlcUrl('url-direct-input')">Open In VLC</button>
       </div>
-      <div class="url-hint">Raw resolved stream.</div>
+    </div>
+
+    <div class="url-block">
+      <div class="url-label"><i data-lucide="download" width="13" height="13"></i>Download URL</div>
+      <div class="url-row">
+        <input readonly id="url-download-input" value="">
+        <button class="btn-sec" onclick="downloadActiveUrl()">Download</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1753,14 +1765,15 @@ const TYPE_META={live:{view:'player',px:'pl',label:'channels',cap:'Select a chan
 const TYPE_META_VIEWS={player:'live',vod:'vod',series:'series'};
 const TYPE_KEYS=['live','vod','series'];
 const pls={};
-TYPE_KEYS.forEach(function(t){ pls[t]={name:null,list:[],filtered:[],page:1,perPage:8,group:'All',_active:null}; });
+TYPE_KEYS.forEach(function(t){ pls[t]={name:null,list:[],filtered:[],page:1,perPage:8,group:'All',seriesName:'All',_active:null}; });
 let activePaneType='live';
 function tEl(t,id){ return document.getElementById(TYPE_META[t].px+'-'+id); }
 function setActivePlaylist(name){
   TYPE_KEYS.forEach(function(t){
     const s=pls[t];
-    s.name=name||null; s.page=1; s.group='All'; s._active=null;
+    s.name=name||null; s.page=1; s.group='All'; s.seriesName='All'; s._active=null;
     const lbl=tEl(t,'cat-label'); if(lbl) lbl.textContent='All';
+    const slbl=tEl(t,'se-label'); if(slbl) slbl.textContent='All Series';
   });
   renderPane('live'); renderPane('vod'); renderPane('series');
 }
@@ -1801,10 +1814,13 @@ function renderPane(t){
     updatePanePager(t,0);
     return;
   }
-  s.list=collectPaneChannels(t);
+s.list=collectPaneChannels(t);
   s.filtered=(s.group&&s.group!=='All')
     ?s.list.filter(function(x){ return x.group===s.group; })
     :s.list.slice();
+  if(t==='series'&&s.seriesName&&s.seriesName!=='All'){
+    s.filtered=s.filtered.filter(function(x){ return deriveSeriesName(x.ch)===s.seriesName; });
+  }
   const total=s.filtered.length;
   const pages=Math.max(1,Math.ceil(total/s.perPage));
   if(s.page>pages) s.page=pages;
@@ -1864,6 +1880,7 @@ function selectTypeCat(t,group){
   const s=pls[t];
   s.group=group||'All';
   s.page=1;
+  if(t==='series'){ s.seriesName='All'; const slbl=el('se-se-label'); if(slbl) slbl.textContent='All Series'; }
   const lbl=tEl(t,'cat-label');
   if(lbl){
     const o=paneCatOptions(t).find(function(x){ return x.cat===s.group; });
@@ -1871,6 +1888,45 @@ function selectTypeCat(t,group){
   }
   const menu=tEl(t,'cat-menu'); if(menu) menu.style.display='none';
   renderPane(t);
+}
+function seriesNameOptions(t){
+  const opts={};
+  const out=[];
+  const s=pls[t];
+  const pl=s.name?playerCats[s.name]:null;
+  if(pl){
+    (pl[t]||[]).forEach(function(c){
+      (c._channels||[]).forEach(function(ch){
+        if(s.group&&s.group!=='All'&&(c.name||'All')!==s.group) return;
+        const nm=deriveSeriesName(ch);
+        if(!opts[nm]){ opts[nm]=1; out.push({name:nm}); }
+      });
+    });
+  }
+  out.sort(function(a,b){ return String(a.name).localeCompare(String(b.name)); });
+  return out;
+}
+function toggleSeriesNameDD(e){
+  if(e) e.stopPropagation();
+  const menu=el('se-se-menu');
+  if(!menu) return;
+  if(menu.style.display==='block'){ menu.style.display='none'; return; }
+  const opts=seriesNameOptions('series');
+  if(!opts.length){ menu.innerHTML='<div class="pl-cat-item">No series</div>'; menu.style.display='block'; return; }
+  menu.innerHTML=opts.map(function(o){
+    const v=String(o.name).replace(/'/g,"\\'");
+    return '<div class="pl-cat-item'+(pls.series.seriesName===o.name?' sel':'')+'" onclick="selectSeriesName(\''+v+'\')">'+esc(o.name)+'</div>';
+  }).join('');
+  menu.style.display='block';
+}
+function selectSeriesName(name){
+  const s=pls.series;
+  s.seriesName=name||'All';
+  s.page=1;
+  const slbl=el('se-se-label');
+  if(slbl) slbl.textContent=s.seriesName==='All'?'All Series':s.seriesName;
+  const menu=el('se-se-menu'); if(menu) menu.style.display='none';
+  renderPane('series');
 }
 function stopPlayback(t){
   if(window._mpegts){ try{ window._mpegts.destroy(); }catch(e){} window._mpegts=null; }
@@ -2092,7 +2148,59 @@ async function openVlcFor(t){
   try{
     const r=await fetch('/api/open-vlc?url='+encodeURIComponent(ch.url));
     const d=await r.json();
-    showToast(d.ok?'Opening in VLC…':'✗ '+(d.error||'Failed'),d.ok?2500:5000);
+showToast(d.ok?'success':'error',d.ok?'Opening in VLC…':'✗ '+(d.error||'Failed'),d.ok?2500:5000);
+  }catch(e){ showToast('error','✗ '+e.message,5000); }
+}
+async function openUrlModal(t){
+  const sub=document.getElementById('url-modal-sub');
+  const prox=document.getElementById('url-proxy-input');
+  const dir=document.getElementById('url-direct-input');
+  const dl=document.getElementById('url-download-input');
+  let name='—', proxy='', direct='';
+  const s=pls[t];
+  if(s&&s.name&&s._active){
+    const item=s.filtered.find(function(x){ return x.ch===s._active; });
+    const ch=item?item.ch:null;
+    const pl=s.name?playerCats[s.name]:null;
+    if(ch&&pl){
+      name=ch.name||'—';
+      let url=ch.url||'';
+      if(!url&&(ch.cmd||ch.series_cmd)) url=await resolveForPlay(t,item,pl);
+      direct=url||'';
+      const ctype=ch.content_type||(t==='live'?'live':t);
+      const cmd=String(ch.cmd||ch.series_cmd||'');
+      proxy=location.origin+'/api/proxy_stream?portal_url='+encodeURIComponent(String(pl.portal_url||''))+'&mac='+encodeURIComponent(String(pl.mac||''))+'&cmd='+encodeURIComponent(cmd)+'&type='+encodeURIComponent(ctype);
+    }
+  }
+  if(sub) sub.textContent=name;
+  if(prox) prox.value=proxy;
+  if(dir) dir.value=direct;
+  if(dl) dl.value=direct;
+  const scrim=document.getElementById('urlScrim');
+  if(scrim) scrim.classList.add('show');
+}
+function downloadActiveUrl(){
+  const input=document.getElementById('url-download-input');
+  if(!input||!input.value){ showToast('info','No link yet',3000); return; }
+  const sub=document.getElementById('url-modal-sub');
+  const rawName=(sub&&sub.textContent)||'';
+  const name=(rawName&&rawName!=='—')?rawName:'channel';
+  const a=document.createElement('a');
+  a.href=input.value;
+  a.download=name;
+  a.style.display='none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('success','Download started',2500);
+}
+async function openVlcUrl(inputId){
+  const input=document.getElementById(inputId);
+  if(!input||!input.value){ showToast('info','No link yet',3000); return; }
+  try{
+    const r=await fetch('/api/open-vlc?url='+encodeURIComponent(input.value));
+    const d=await r.json();
+    showToast(d.ok?'success':'error',d.ok?'Opening in VLC…':'✗ '+(d.error||'Failed'),d.ok?2500:5000);
   }catch(e){ showToast('error','✗ '+e.message,5000); }
 }
 function toggleUserDD(){
@@ -2135,9 +2243,8 @@ async function loadChoosePlaylists(){
   host.classList.toggle('gray',!items.length);
   box.innerHTML=items.map(function(p){
     const name=p.name||p.id||'';
-    const sub=(p.portal_url||'').replace(/^https?:\/\//,'').replace(/\/+$/,'');
-    return '<div class="choose-item" data-name="'+esc(name)+'" data-id="'+esc(p.id)+'" title="'+esc(name)+'"><i data-lucide="play-list" width="13" height="13"></i><span>'+esc(name)+'</span><span class="sub">'+esc(sub)+'</span></div>';
-  }).join('');
+    return '<div class="choose-item" data-name="'+esc(name)+'" data-id="'+esc(p.id)+'" title="'+esc(name)+'"><i data-lucide="list-video" width="13" height="13"></i><span>'+esc(name)+'</span></div>';
+  }).join('<div class="import-dd-sep"></div>');
   if(window.lucide) lucide.createIcons();
 }
 async function choosePlaylistActivate(name,id){
@@ -2182,7 +2289,8 @@ async function choosePlaylistActivate(name,id){
   updateSidebarCounts();
   loadPlaylists();
   refreshEditEntry();
-  showView('player');
+  const liveNav=[...document.querySelectorAll('.nav')].find(function(n){ return (n.getAttribute('onclick')||'').indexOf("showView('player'")!==-1; });
+  showView('player',liveNav);
 }
 (function(){
   const box=document.getElementById('choose-pl-menu');
@@ -2217,9 +2325,9 @@ async function refreshEditEntry(){
   const label=document.getElementById('import-dd-edit-label');
   if(!item||!label) return;
   const id=window._activeFilename;
-  if(!id){ label.textContent='edit playlist'; item.classList.add('gray'); return; }
+  if(!id){ label.textContent='Edit Playlist'; item.classList.add('gray'); return; }
   const name=await resolveActivePlaylistName()||id;
-  label.textContent='edit '+name;
+  label.textContent='Edit '+name;
   item.classList.remove('gray');
 }
 async function editPlaylistGo(){
@@ -2276,6 +2384,56 @@ document.addEventListener('click',e=>{
     }
   });
 });
+function paneCatOpen(t){
+  const menu=tEl(t,'cat-menu');
+  if(!menu||menu.style.display==='block') return;
+  const s=pls[t];
+  const opts=paneCatOptions(t);
+  menu.innerHTML=opts.map(function(o){
+    const v=String(o.cat||'All').replace(/'/g,"\\'");
+    return '<div class="pl-cat-item'+(s.group===o.cat?' sel':'')+'" onclick="selectTypeCat(\''+t+'\',\''+v+'\')">'+esc(o.name)+'</div>';
+  }).join('');
+  menu.style.display='block';
+}
+function paneSeriesOpen(){
+  const menu=el('se-se-menu');
+  if(!menu||menu.style.display==='block') return;
+  const opts=seriesNameOptions('series');
+  if(!opts.length){ menu.innerHTML='<div class="pl-cat-item">No series</div>'; menu.style.display='block'; return; }
+  menu.innerHTML=opts.map(function(o){
+    const v=String(o.name).replace(/'/g,"\\'");
+    return '<div class="pl-cat-item'+(pls.series.seriesName===o.name?' sel':'')+'" onclick="selectSeriesName(\''+v+'\')">'+esc(o.name)+'</div>';
+  }).join('');
+  menu.style.display='block';
+}
+function closeCatMenus(exceptPx){
+  [['pl','pl-cat-menu'],['vo','vo-cat-menu'],['se','se-cat-menu'],['se-se','se-se-menu']].forEach(function(p){
+    if(p[0]===exceptPx) return;
+    const m=document.getElementById(p[1]); if(m) m.style.display='none';
+  });
+}
+[['pl','live'],['vo','vod'],['se','series']].forEach(function(pair){
+  const host=document.getElementById(pair[0]+'-cat-sel');
+  if(!host) return;
+  host.addEventListener('mouseenter',function(){
+    closeCatMenus(pair[0]);
+    paneCatOpen(pair[1]);
+  });
+  host.addEventListener('mouseleave',function(){
+    const m=document.getElementById(pair[0]+'-cat-menu'); if(m) m.style.display='none';
+  });
+});
+(function(){
+  const host=document.getElementById('se-se-sel');
+  if(!host) return;
+  host.addEventListener('mouseenter',function(){
+    closeCatMenus('se-se');
+    paneSeriesOpen();
+  });
+  host.addEventListener('mouseleave',function(){
+    const m=document.getElementById('se-se-menu'); if(m) m.style.display='none';
+  });
+})();
 
 function openModal(which){
   _existingPlaylist=null;
@@ -3641,6 +3799,7 @@ let chFilteredByPlaylist={};
 let chFilteredChans={};
 let chOpenPlays=new Set();
 let chOpenCats=new Set();
+let chOpenShows=new Set();
 let chSearchTimer=null;
 let _chUnlocked=false;
 function chKey(c,i){ return catKey(c)+'\u0003'+i; }
@@ -3738,27 +3897,15 @@ function renderChanList(){
         const subOpen=q?true:chOpenCats.has(ck);
         const chs=c._channels||[];
         const visChs=(chFilteredChans[ck]||chs).slice().sort(function(a,b){ return (a.url?1:0)-(b.url?1:0); });
-        var chRows='';
+var chRows='';
         if(subOpen){
-          chRows=visChs.map(function(ch,i){
-            const ci=(c._channels||[]).indexOf(ch);
-            const key=chKey(c,ci);
-            const sel=chSel.has(key);
-var badgeHtml='';
-            if(impPage!=='import'){
-              if(ch.url){
-                badgeHtml='<button class="cat-fetch-btn disabled" disabled title="Ready"><i data-lucide="database-check" width="13" height="13"></i></button>';
-              }else{
-                badgeHtml='<button class="cat-fetch-btn" title="Fetch" onclick="event.stopPropagation();resolveSingleChannel(\''+esc(name)+'\',\''+esc(String(c.id))+'\',\''+ci+'\',this)"><i data-lucide="database-arrow-down" width="13" height="13"></i></button>';
-              }
-            }
-            return '<div class="cat-row ed-ch-row'+(sel?' selected':'')+'" data-pl="'+esc(name)+'" data-catid="'+esc(String(c.id))+'" data-ci="'+ci+'" style="grid-template-columns:24px 30px 1fr 50px;padding-left:70px">'
-              +'<div style="text-align:center"><input type="checkbox" class="cat-cb"'+(sel?' checked':'')+'></div>'
-              +'<div style="text-align:center;color:var(--muted);font-size:11px">'+(ci+1)+'</div>'
-              +'<div class="cat-name">'+esc(ch.name)+'</div>'
-              +'<div style="text-align:center">'+badgeHtml+'</div>'
-              +'</div>';
-          }).join('');
+          if(chanTab==='series'){
+            chRows=buildSeriesRows(name,c,visChs,q);
+          }else{
+            chRows=visChs.map(function(ch,i){
+              return plainChannelRow(name,c,ch);
+            }).join('');
+          }
           if(!visChs.length) chRows='<div style="padding:10px 24px 10px 70px;color:var(--muted);font-size:12px">No channels</div>';
         }
         html+='<div class="cat-row chan-group ch-cat-group" data-pl="'+esc(name)+'" data-catid="'+esc(String(c.id))+'" style="grid-template-columns:24px 30px 1fr 70px;padding-left:36px;border-top:1px solid var(--surface-3)">'
@@ -3825,9 +3972,91 @@ var badgeHtml='';
       toggleCh(c,ci,e.target.checked);
     });
   });
+  body.querySelectorAll('.ed-series-grp').forEach(row=>{
+    row.addEventListener('click',e=>{
+      if(e.target.classList.contains('cat-cb')||e.target.closest('.cat-fetch-btn')) return;
+      if(q) return;
+      const pl=row.dataset.pl;
+      const cid=row.dataset.catid;
+      const sid=row.dataset.sid;
+      const c=(_snap3Store[pl]&&_snap3Store[pl][chanTab]||[]).find(function(x){ return String(x.id)===String(cid); });
+      if(!c) return;
+      const gkey=catKey(c)+'\u0002'+sid;
+      if(chOpenShows.has(gkey)) chOpenShows.delete(gkey); else chOpenShows.add(gkey);
+      renderChanList();
+    });
+  });
+  body.querySelectorAll('.series-cb').forEach(cb=>{
+    cb.addEventListener('change',function(){ toggleSeriesShow(cb.dataset.pl,cb.dataset.catid,cb.dataset.sid,cb.checked); });
+  });
   updateChGroupStates();
   updateChCatStates();
   if(window.lucide) lucide.createIcons();
+}
+function deriveSeriesName(ch){
+  if(ch&&ch.series_name&&String(ch.series_name).trim()) return String(ch.series_name).trim();
+  const nm=String((ch&&ch.name)||'Unknown');
+  return nm.replace(/\s+S\d{1,2}\s+E\d{1,2}\s*$/i,'')||'Unknown';
+}
+function plainChannelRow(name,c,ch){
+  const ci=(c._channels||[]).indexOf(ch);
+  const key=chKey(c,ci);
+  const sel=chSel.has(key);
+  var badgeHtml='';
+  if(impPage!=='import'){
+    if(ch.url){
+      badgeHtml='<button class="cat-fetch-btn disabled" disabled title="Ready"><i data-lucide="database-check" width="13" height="13"></i></button>';
+    }else{
+      badgeHtml='<button class="cat-fetch-btn" title="Fetch" onclick="event.stopPropagation();resolveSingleChannel(\''+esc(name)+'\',\''+esc(String(c.id))+'\',\''+ci+'\',this)"><i data-lucide="database-arrow-down" width="13" height="13"></i></button>';
+    }
+  }
+  return '<div class="cat-row ed-ch-row'+(sel?' selected':'')+'" data-pl="'+esc(name)+'" data-catid="'+esc(String(c.id))+'" data-ci="'+ci+'" style="grid-template-columns:24px 30px 1fr 50px;padding-left:70px">'
+    +'<div style="text-align:center"><input type="checkbox" class="cat-cb"'+(sel?' checked':'')+'></div>'
+    +'<div style="text-align:center;color:var(--muted);font-size:11px">'+(ci+1)+'</div>'
+    +'<div class="cat-name">'+esc(ch.name)+'</div>'
+    +'<div style="text-align:center">'+badgeHtml+'</div>'
+    +'</div>';
+}
+function buildSeriesRows(name,c,visChs,forceOpen){
+  const groups=[];
+  const map={};
+  visChs.forEach(function(ch){
+    const sname=deriveSeriesName(ch);
+    let g=map[sname];
+    if(!g){ g={name:sname,chs:[]}; map[sname]=g; groups.push(g); }
+    g.chs.push(ch);
+  });
+  let html='';
+  groups.forEach(function(g){
+    const first=g.chs[0];
+    const sid=String((first&&(first.series_id||first.id))||'');
+    if(g.chs.length===1&&!first.season_num){
+      html+=plainChannelRow(name,c,first);
+      return;
+    }
+    const gkey=catKey(c)+'\u0002'+sid;
+    const open=forceOpen?true:chOpenShows.has(gkey);
+    const sorted=g.chs.slice().sort(function(a,b){ return (a.season_num||1)-(b.season_num||1)||(a.episode_num||1)-(b.episode_num||1); });
+    const resolved=sorted.filter(function(x){ return x.url; }).length;
+    html+='<div class="cat-row chan-group ed-series-grp'+(open?' open':'')+'" data-pl="'+esc(name)+'" data-catid="'+esc(String(c.id))+'" data-sid="'+esc(sid)+'" style="grid-template-columns:24px 30px 1fr 80px;padding-left:70px;border-top:1px solid var(--surface-3)">'
+      +'<div class="cat-check"><input type="checkbox" class="cat-cb series-cb" data-pl="'+esc(name)+'" data-catid="'+esc(String(c.id))+'" data-sid="'+esc(sid)+'"></div>'
+      +'<div style="text-align:center;color:var(--muted)"><i data-lucide="'+(open?'chevron-down':'chevron-right')+'" width="13" height="13" style="pointer-events:none"></i></div>'
+      +'<div class="cat-name" style="display:flex;align-items:center;gap:6px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(g.name)+'</span><span style="color:var(--faint);font-size:11px;flex:none">'+g.chs.length+' ep</span></div>'
+      +'<div style="text-align:center">'+(resolved?'<span style="color:#22c55e;font-size:11px">✓&nbsp;'+resolved+'</span>':'')+'</div>'
+      +'</div>';
+    if(open){
+      sorted.forEach(function(ch){ html+=plainChannelRow(name,c,ch); });
+    }
+  });
+  return html;
+}
+function toggleSeriesShow(name,catId,sid,on){
+  const c=(_snap3Store[name]&&_snap3Store[name][chanTab]||[]).find(function(x){ return String(x.id)===String(catId); });
+  if(!c||!c._channels) return;
+  (c._channels||[]).forEach(function(ch,i){
+    if(String(ch.series_id||ch.id||'')===String(sid)) toggleCh(c,i,on);
+  });
+  renderChanList(); updateChSelectAll();
 }
 function toggleCh(c,ci,checked){
   const key=chKey(c,ci);
@@ -3937,7 +4166,8 @@ async function resolveSelectedChannels(btnEl){
     });
     if(jobs.length){ groups.push({pl:pl,jobs:jobs}); totalJobs+=jobs.length; }
   });
-  if(!totalJobs){ showToast('success','✓ All selected channels already resolved',4000); return; }
+if(!totalJobs){ showToast('success','✓ All selected channels already resolved',4000); return; }
+  if(chanTab==='series') return await resolveSeriesShows(groups,totalJobs,btn);
   let succeeded=0,failed=0;
   showToast('loading','Resolving '+totalJobs+' channel'+(totalJobs===1?'':'s')+'…',0);
   _chResolveBusy=true;
@@ -3985,16 +4215,94 @@ async function resolveSingleChannel(name,catId,ci,btnEl){
   if(!ch||ch.url) return;
   if(btnEl){ btnEl.disabled=true; btnEl.innerHTML='<i data-lucide="loader" width="13" height="13"></i>'; if(window.lucide) lucide.createIcons(); }
   showToast('loading','Resolving '+ch.name+'…',0);
-  const pl=_snap3Store[name];
+const pl=_snap3Store[name];
   try{
-    const r=await fetch('/api/resolve-channels',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:pl.portal_url||'',mac:pl.mac||'',channels:[{id:ch.id||'',name:ch.name||'',cmd:ch.cmd||'',content_type:ch.content_type||chanTab,cat_id:c.id||'',cat_name:c.name||'',series_id:ch.series_id||'',season_num:ch.season_num||0,episode_num:ch.episode_num||0}]})});
-    const d=await r.json();
-    const res=d&&d.ok&&d.results?d.results[0]:null;
-    if(res&&res.ok){ ch.url=res.url; ch.needsResolve=false; showToast('success','✓ Resolved',2500); }
-    else showToast('error','✗ Could not resolve',4000);
+    if(chanTab==='series'){
+      const sid=String(ch.series_id||ch.id||'');
+      const r=await fetch('/api/fetch-series-episodes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:pl.portal_url||'',mac:pl.mac||'',series_id:sid,series_name:ch.name||sid,category_name:c.name||'',filename:pl.filename||''})});
+      const d=await r.json();
+      if(d&&d.ok&&Array.isArray(d.items)){
+        c._channels=(c._channels||[]).filter(function(x){ return String(x.series_id||x.id||'')!==sid; });
+        d.items.forEach(function(ep){
+          c._channels.push({id:ep.id||sid,name:ep.name||ch.name||sid,cmd:ep.cmd||'',url:ep.url||'',series_id:ep.series_id||sid,series_name:ch.name||sid,season_num:ep.season_num||1,episode_num:ep.episode_num||1,content_type:'series',needsResolve:!ep.url,_resolvePending:false});
+        });
+        c.count=c._channels.length;
+        c._fetched=true;
+        const pfx=catKey(c)+'\u0003';
+        [...chSel].forEach(function(k){ if(k.indexOf(pfx)===0) chSel.delete(k); });
+        if(d.resolved) showToast('success','✓ Resolved',2500);
+        else showToast('error','✗ Could not resolve',4000);
+      }else showToast('error','✗ Could not resolve',4000);
+    }else{
+      const r=await fetch('/api/resolve-channels',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:pl.portal_url||'',mac:pl.mac||'',channels:[{id:ch.id||'',name:ch.name||'',cmd:ch.cmd||'',content_type:ch.content_type||chanTab,cat_id:c.id||'',cat_name:c.name||'',series_id:ch.series_id||'',season_num:ch.season_num||0,episode_num:ch.episode_num||0}]})});
+      const d=await r.json();
+      const res=d&&d.ok&&d.results?d.results[0]:null;
+      if(res&&res.ok){ ch.url=res.url; ch.needsResolve=false; showToast('success','✓ Resolved',2500); }
+      else showToast('error','✗ Could not resolve',4000);
+    }
   }catch(e){ showToast('error','✗ '+e.message,5000); }
   buildCombinedCats();
   applyChFilter(); updateSaveBtnState(); updateChCounts(); updateSidebarCounts();
+  if(window.renderPane) renderPane('series');
+}
+async function resolveSeriesShows(groups,totalJobs,btn){
+  _chResolveBusy=true;
+  if(btn) btn.disabled=true;
+  let succeeded=0,failed=0,expanded=0;
+  const catPfx=[];
+  showToast('loading','Resolving series…',0);
+  try{
+    for(const g of groups){
+      const pl=g.pl;
+      const bySeries={};
+      g.jobs.forEach(function(j){
+        const sid=String(j.ch.series_id||j.ch.id||'');
+        if(!sid) return;
+        const prev=bySeries[sid];
+        if(prev){ if(!prev.name&&j.ch.name) prev.name=j.ch.name; }
+        else bySeries[sid]={name:j.ch.name||sid,cat:j.c};
+      });
+      for(const sid of Object.keys(bySeries)){
+        const info=bySeries[sid];
+        const cat=info.cat;
+        catPfx.push(catKey(cat)+'\u0003');
+        try{
+          const r=await fetch('/api/fetch-series-episodes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({portal_url:pl.portal_url||'',mac:pl.mac||'',series_id:sid,series_name:info.name,category_name:cat.name||'',filename:pl.filename||''})});
+          const d=await r.json();
+          if(d&&d.ok&&Array.isArray(d.items)){
+            cat._channels=(cat._channels||[]).filter(function(x){ return String(x.series_id||x.id||'')!==sid; });
+            d.items.forEach(function(ep){
+              cat._channels.push({id:ep.id||sid,name:ep.name||info.name,cmd:ep.cmd||'',url:ep.url||'',series_id:ep.series_id||sid,series_name:info.name,season_num:ep.season_num||1,episode_num:ep.episode_num||1,content_type:'series',needsResolve:!ep.url,_resolvePending:false});
+            });
+            cat.count=cat._channels.length;
+            cat._fetched=true;
+            succeeded+=d.resolved||0;
+            failed+=d.failed||0;
+            expanded++;
+          }
+        }catch(e){ failed++; }
+      }
+    }
+  }catch(e){ showToast('error','✗ '+e.message,5000); }
+  catPfx.forEach(function(pfx){
+    [...chSel].forEach(function(k){ if(k.indexOf(pfx)===0) chSel.delete(k); });
+  });
+  _chResolveBusy=false;
+  if(btn) btn.disabled=false;
+  buildCombinedCats();
+  applyChFilter(); updateSaveBtnState(); updateChCounts(); updateSidebarCounts();
+  let allResolved=true;
+  Object.keys(_snap3Store).forEach(function(name){
+    ['live','vod','series'].forEach(function(type){
+      (_snap3Store[name][type]||[]).forEach(function(c){
+        (c._channels||[]).forEach(function(ch){ if(!ch.url) allResolved=false; });
+      });
+    });
+  });
+  if(allResolved) showToast('success','✓ All series episodes resolved',4000);
+  else if(failed) showToast('error','✓ '+succeeded+' resolved, '+failed+' failed — click Fetch to retry',5000);
+  else showToast('success','✓ '+succeeded+' episode'+(succeeded===1?'':'s')+' resolved',4000);
+  if(window.renderPane) renderPane('series');
 }
 function deleteSelChannels(){
   const total=chSel.size;
