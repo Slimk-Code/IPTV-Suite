@@ -655,6 +655,42 @@ def check():
     })
 
 
+@app.route("/api/check-stream", methods=["POST"])
+def check_stream():
+    """Probe a stream URL and return the HTTP status the source replies with
+    (e.g. 200 = reachable, 404/403/500 = broken). Does not download the body."""
+    data = request.json or {}
+    url = (data.get("url") or "").strip()
+    if not url:
+        return jsonify({"ok": False, "status": 0})
+    if url.startswith("//"):
+        url = "http:" + url
+    if not url.lower().startswith(("http://", "https://")):
+        return jsonify({"ok": False, "status": 0})
+
+    headers = {"User-Agent": MAG_UA, "Accept": "*/*"}
+
+    # Fast path: HEAD. A non-2xx answer is re-verified with a ranged GET because
+    # some servers refuse HEAD even though GET streaming works fine.
+    try:
+        r = requests.head(url, headers=headers, timeout=8, allow_redirects=True)
+        if r.status_code < 300:
+            return jsonify({"ok": True, "status": r.status_code})
+    except Exception:
+        pass
+
+    # Read only the response headers then close, so large streams are not
+    # downloaded.
+    try:
+        h = dict(headers)
+        h["Range"] = "bytes=0-0"
+        with requests.get(url, headers=h, timeout=12, stream=True, allow_redirects=True) as r:
+            status = r.status_code
+        return jsonify({"ok": True, "status": status})
+    except Exception:
+        return jsonify({"ok": False, "status": 0})
+
+
 @app.route("/api/playlists/save-new", methods=["POST"])
 def save_new_playlist():
     """Write the playlist file ONLY when the user confirms Add Playlist, after
@@ -809,66 +845,7 @@ def enrich_counts():
     return jsonify({"ok":True,"counts":counts})
 
 
-@app.route("/api/fetch-preview", methods=["POST"])
-def fetch_preview():
-    """Quick preview: fetches ONLY page 1 of each requested category.
-    No stream URL resolution, no file writes — returns items + portal total
-    so the UI can show counts instantly without a full fetch."""
-    data = request.json
-    portal_url = (data.get("portal_url","") or "").strip()
-    mac = (data.get("mac","") or "").strip().upper()
-    cats = data.get("cats", [])
-    if not portal_url or not mac or not cats:
-        return jsonify({"ok":False,"error":"Missing params"}),400
-    ctx = get_token(portal_url, mac)
-    if not ctx: return jsonify({"ok":False,"error":"Auth failed"}),400
-    auth_session(ctx)
 
-    def fetch_one(cat):
-        ct  = cat.get("type","live")
-        cid = cat.get("id","")
-        cname = cat.get("name","")
-        for attempt in range(3):
-            try:
-                if ct == "live":
-                    url = (f"{ctx['base_url']}{ctx['portal_type']}?type=itv&action=get_ordered_list"
-                           f"&genre={cid}&force_ch_link_check=&fav=0&sortby=number&hd=0"
-                           f"&p=1&JsHttpRequest=1-xml")
-                else:
-                    pt = "series" if ct == "series" else "vod"
-                    url = (f"{ctx['base_url']}{ctx['portal_type']}?type={pt}&action=get_ordered_list"
-                           f"&category={cid}&fav=0&sortby=added&hd=0"
-                           f"&p=1&JsHttpRequest=1-xml")
-                r = ctx["session"].get(url, timeout=30)
-                js = r.json().get("js", {})
-                pdata = js.get("data", [])
-                total = int(js.get("total_items", len(pdata)))
-                items = []
-                for item in pdata:
-                    cmd = (item.get("cmd","")
-                        or item.get("series_cmd","")
-                        or item.get("url","")
-                        or item.get("link",""))
-                    if ct == "series":
-                        items.append({"id": str(item.get("id","")),
-                                      "name": item.get("name", item.get("title","Unknown")),
-                                      "series_id": str(item.get("id","")),
-                                      "cmd": cmd, "content_type": ct})
-                    else:
-                        items.append({"id": str(item.get("id","")),
-                                      "name": item.get("name", item.get("title","Unknown")),
-                                      "number": item.get("number",""),
-                                      "cmd": cmd, "content_type": ct})
-                return {"ok":True,"type":ct,"id":cid,"name":cname,"count":total,"items":items}
-            except Exception:
-                pass
-            if attempt < 2:
-                time.sleep(1)
-        return {"ok":False,"type":ct,"id":cid,"name":cname,"count":0,"items":[]}
-
-    with ThreadPoolExecutor(max_workers=8) as ex:
-        results = list(ex.map(fetch_one, cats))
-    return jsonify({"ok":True,"results":results})
 
 
 @app.route("/api/fetch-full-category", methods=["POST"])
@@ -1134,179 +1111,7 @@ def fetch_series_episodes():
                     "resolved":resolve_count,"failed":failed_count,"items":items})
 
 
-@app.route("/api/recover-categories", methods=["POST"])
-def recover_categories():
-    """Sequential retry of category pages that may have failed on first pass."""
-    data = request.json
-    portal_url = (data.get("portal_url","") or "").strip()
-    mac = (data.get("mac","") or "").strip().upper()
-    categories = data.get("categories", [])
-    if not portal_url or not mac or not categories:
-        return jsonify({"ok":False,"error":"Missing params"}),400
-    ctx = get_token(portal_url, mac)
-    if not ctx: return jsonify({"ok":False,"error":"Auth failed"}),400
-    auth_session(ctx)
-    results = []
 
-    for cat_def in categories:
-        cat_type = cat_def.get("type", "live")
-        cat_id = cat_def.get("category_id", "")
-        cat_name = cat_def.get("category_name", "")
-        filename = cat_def.get("filename", "")
-        portal_total = cat_def.get("portal_total", 0)
-        if not cat_id or not filename:
-            results.append({"category_name":cat_name,"error":"Missing category_id or filename","ok":False})
-            continue
-
-        # Step 1: fetch page 1 to get max_page_items
-        try:
-            if cat_type == "live":
-                p1_url = f"{ctx['base_url']}{ctx['portal_type']}?type=itv&action=get_ordered_list&genre={cat_id}&force_ch_link_check=&fav=0&sortby=number&hd=0&p=1&JsHttpRequest=1-xml"
-                ctype_param = "genre"
-                ctype_val = cat_id
-                content_type_label = "live"
-            else:
-                pt = "series" if cat_type == "series" else "vod"
-                p1_url = f"{ctx['base_url']}{ctx['portal_type']}?type={pt}&action=get_ordered_list&category={cat_id}&fav=0&sortby=added&hd=0&p=1&JsHttpRequest=1-xml"
-                ctype_param = "category"
-                ctype_val = cat_id
-                content_type_label = cat_type
-
-            for attempt in range(3):
-                try:
-                    r = ctx["session"].get(p1_url, timeout=30)
-                    js = r.json().get("js", {})
-                    p1_data = js.get("data", [])
-                    actual_total = int(js.get("total_items", 0))
-                    max_page_items = int(js.get("max_page_items", len(p1_data) or 1))
-                    if max_page_items > 0:
-                        break
-                except:
-                    pass
-                if attempt < 2: time.sleep(1)
-            else:
-                results.append({"category_name":cat_name,"error":"Failed to fetch page 1","ok":False})
-                continue
-        except:
-            results.append({"category_name":cat_name,"error":"Page 1 error","ok":False})
-            continue
-
-        expected_total = max(portal_total, actual_total)
-        pages = math.ceil(expected_total / max_page_items) if max_page_items else 1
-
-        # Build page 1 items
-        def parse_item(raw):
-            iid = str(raw.get("id", ""))
-            if cat_type == "live":
-                item = {"id": iid, "name": raw.get("name", "Unknown"), "cmd": raw.get("cmd", "")}
-            else:
-                cmd = raw.get("cmd", "") or raw.get("series_cmd", "") or raw.get("url", "") or raw.get("link", "")
-                item = {"id": iid, "name": raw.get("name", raw.get("title", "Unknown")), "cmd": cmd}
-            item["content_type"] = content_type_label
-            if item.get("cmd"):
-                item["needsResolve"] = True
-            return item
-
-        all_items = [parse_item(x) for x in p1_data]
-        recovered_count = 0
-        failed_recovery = []
-
-        # Sequential retry of pages 2..N
-        for p in range(2, pages + 1):
-            p_url = (f"{ctx['base_url']}{ctx['portal_type']}?type={'itv' if cat_type=='live' else ('series' if cat_type=='series' else 'vod')}&action=get_ordered_list&{ctype_param}={ctype_val}&fav=0&sortby={'number' if cat_type=='live' else 'added'}&hd=0&p={p}&JsHttpRequest=1-xml")
-            page_data = None
-            for attempt in range(3):
-                try:
-                    pr = ctx["session"].get(p_url, timeout=30)
-                    pd = pr.json().get("js", {}).get("data", [])
-                    if pd or attempt == 2:
-                        page_data = pd
-                        break
-                except:
-                    pass
-                if attempt < 2: time.sleep(1)
-            if page_data:
-                new_items = [parse_item(x) for x in page_data]
-                # Dedup by id
-                existing_ids = {it["id"] for it in all_items}
-                for ni in new_items:
-                    if ni["id"] not in existing_ids:
-                        all_items.append(ni)
-                        existing_ids.add(ni["id"])
-                        recovered_count += 1
-            else:
-                failed_recovery.append(p)
-
-        # Resolve every channel's stream url now (reusing the authenticated session)
-        resolve_count = 0
-        failed_count = 0
-        if cat_type != "series" and all_items:
-            progress_key = f"fetch:{filename}:{cat_id}"
-            _set_progress(progress_key, done=0, total=len(all_items), resolved=0, failed=0, running=True)
-            try:
-                resolve_count, failed_count = _resolve_items_batch(ctx, all_items, progress_key=progress_key)
-            except Exception:
-                resolve_count, failed_count = 0, len(all_items)
-            finally:
-                if failed_count == 0:
-                    _clear_progress(progress_key)
-
-        # Save to JSON
-        fp = _playlist_filepath(filename)
-        if os.path.isfile(fp):
-            with open(fp, "r") as f:
-                jdata = json.load(f)
-        else:
-            jdata = {"categories": {}}
-        jdata.pop("channels", None)
-        jdata.setdefault("categories", {})
-        for ct in ("live","vod","series"):
-            jdata["categories"].setdefault(ct, [])
-
-        if cat_type in jdata["categories"]:
-            for cat in jdata["categories"][cat_type]:
-                if str(cat.get("id")) == str(cat_id):
-                    cat["cached"] = True
-                    if cat_type == "series":
-                        existing = {str(s.get("id")): s for s in cat.get("series", [])}
-                        for it in all_items:
-                            sid = it.get("id", "")
-                            if not sid: continue
-                            key = str(sid)
-                            if key in existing:
-                                existing[key].setdefault("episode", [])
-                            else:
-                                existing[key] = {"id": key, "name": it.get("name", ""), "episode": []}
-                        cat["series"] = list(existing.values())
-                        cat["count"] = len(all_items)
-                    elif cat_type == "live":
-                        cat["Channel"] = all_items
-                        cat["count"] = len(all_items)
-                    elif cat_type == "vod":
-                        cat["Movie"] = all_items
-                        cat["count"] = len(all_items)
-                    break
-
-        jdata["updated"] = time.time()
-        with open(fp, "w") as f:
-            json.dump(jdata, f, indent=2)
-
-        missing = expected_total - len(all_items)
-        results.append({
-            "category_name":cat_name,
-            "ok":True,
-            "had_items":len(p1_data),
-            "portal_total":expected_total,
-            "total":len(all_items),
-            "recovered":recovered_count,
-            "missing":max(0, missing),
-            "failed_pages":failed_recovery,
-            "complete": missing <= 0 and not failed_recovery,
-            "resolved":resolve_count,
-            "failed":failed_count,
-        })
-
-    return jsonify({"ok":True,"results":results})
 
 
 # ─── Convert control state (pause/stop per convert_id) ────────────────────────
@@ -1351,14 +1156,6 @@ def convert():
     portal_url = data.get("portal_url","").strip()
     mac        = data.get("mac","").strip().upper()
     channels   = data.get("channels",[])
-    fmt        = data.get("format", "m3u")
-
-    if not portal_url or not mac or not channels:
-        return jsonify({"ok":False,"error":"Missing required fields"}),400
-
-    if fmt == "json":
-        return _convert_to_json(portal_url, mac, channels)
-
     resolve    = data.get("resolve_urls", True)
     ctx = get_token(portal_url, mac)
     if not ctx:
@@ -1816,22 +1613,6 @@ def _merge_m3u_into(pl_data, new_chs):
     pl_data.setdefault("mac", "")
     return pl_data, added, replaced
 
-@app.route("/api/add/m3u-file", methods=["POST"])
-def add_m3u_file():
-    f = request.files.get("file")
-    name = request.form.get("name", "My Playlist")
-    if not f:
-        return jsonify({"ok": False, "error": "No file provided"}), 400
-    safe = re.sub(r'[^\w\s-]', "", name).strip() or "unnamed"
-    path = os.path.join("PlayLists", "M3U", f"{safe}.m3u")
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    f.save(path)
-    count = 0
-    with open(path, "r", encoding="utf-8", errors="replace") as fh:
-        for line in fh:
-            if line.strip() and not line.startswith("#"):
-                count += 1
-    return jsonify({"ok": True, "count": count, "name": safe})
 
 @app.route("/api/m3u/parse", methods=["POST"])
 def m3u_parse():
@@ -2316,63 +2097,7 @@ def api_put_settings():
         json.dump(existing, f, indent=2)
     return jsonify(existing)
 
-def _convert_to_json(portal_url, mac, channels):
-    hostname = urlparse(portal_url).hostname or "unknown"
-    safe_host = re.sub(r'[^\w.-]', '', hostname)
-    safe_mac = mac.replace(':', '')[:12]
-    filename = f"{safe_host}_{safe_mac}.json"
-    filepath = _playlist_filepath(filename)
 
-    new_entries = []
-    for ch in channels:
-        cmd = ch.get("cmd", "")
-        if cmd.startswith("ffmpeg "):
-            cmd = cmd[7:]
-        entry = {
-            "name": ch.get("name", "Unknown"),
-            "cmd": cmd,
-            "group": ch.get("genre", "All"),
-            "content_type": ch.get("content_type", "live"),
-        }
-        if ch.get("content_type") == "series":
-            entry["series_id"] = ch.get("id", "")
-            entry["episodes"] = ch.get("episodes", [])
-        new_entries.append(entry)
-
-    existing = []
-    if os.path.isfile(filepath):
-        try:
-            with open(filepath, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                existing = data.get("channels", [])
-        except Exception:
-            pass
-
-    existing_cmds = {e["cmd"] for e in existing if e.get("cmd")}
-    merged = existing + [e for e in new_entries if e["cmd"] not in existing_cmds]
-
-    os.makedirs(PLAYLIST_DIR, exist_ok=True)
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump({
-            "name": safe_host,
-            "source": "portal",
-            "portal_url": portal_url,
-            "mac": mac,
-            "updated": time.time(),
-            "channels": merged,
-        }, f, indent=2, ensure_ascii=False)
-
-    def gen():
-        yield f"data: {json.dumps({'_start': True, 'total': len(new_entries), 'filename': filename})}\n\n"
-        for i, e in enumerate(new_entries):
-            yield f"data: {json.dumps({'_lines': True, 'lines': [e], 'done': i+1, 'total': len(new_entries)})}\n\n"
-        yield f"data: {json.dumps({'_done': True, 'filename': filename})}\n\n"
-
-    return Response(
-        stream_with_context(gen()),
-        mimetype="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-    )
 
 @app.route("/api/save-categories", methods=["POST"])
 def save_categories():
