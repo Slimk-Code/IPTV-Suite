@@ -160,8 +160,11 @@ button{font:inherit}
   z-index:var(--z-dropdown);box-shadow:0 12px 40px rgba(0,0,0,.6);
   transform-origin:top left;animation:pop .16s var(--ease)}
 .pl-cat-item{padding:8px 12px;color:var(--muted);cursor:pointer;font-size:12px;white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis;transition:background .12s var(--ease),color .12s var(--ease)}
+  overflow:hidden;text-overflow:ellipsis;transition:background .12s var(--ease),color .12s var(--ease);
+  display:flex;align-items:center;gap:8px}
+.pl-cat-item .pen{margin-left:auto;flex:none;opacity:.55;color:var(--faint)}
 .pl-cat-item:hover{background:var(--hover);color:var(--white)}
+.pl-cat-item:hover .pen{opacity:1;color:var(--gray)}
 .pl-cat-item.sel{color:var(--white);background:rgba(229,9,20,.14)}
 .pl-cat-item+.pl-cat-item{border-top:1px solid var(--line-2)}
 .tag.active{background:var(--red-grad);color:var(--white);border-color:var(--red);
@@ -350,6 +353,8 @@ button{font:inherit}
 .btn-sec{background:var(--stage);color:var(--gray);border:1px solid var(--line-2);border-radius:var(--r-sm);
   padding:var(--s2) var(--s4);font-weight:600;cursor:pointer;transition:all .14s var(--ease)}
 .btn-sec:hover{color:var(--white);border-color:var(--gray)}
+.btn-sec:disabled{opacity:.35;cursor:default;pointer-events:none;color:var(--gray)}
+.url-block.gray{opacity:.45}
 .btn-ico{display:inline-flex;align-items:center;gap:6px;font-size:13px}
 .btn-ico svg{flex-shrink:0;transform:translateY(1px)}
 
@@ -555,6 +560,7 @@ button{font:inherit}
 .pl-acc-label{color:var(--muted);flex-shrink:0}
 .pl-acc-val{font-weight:600;white-space:normal;overflow-wrap:anywhere}
 .imp-view .cat-check input{width:13px;height:13px;accent-color:var(--red);cursor:pointer}
+.imp-view .cat-row input[type=checkbox],.imp-view .cat-select-bar input[type=checkbox]{accent-color:var(--red)}
 .imp-view .cat-name{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px}
 .imp-view .cat-empty{padding:32px;text-align:center;color:var(--muted);font-size:13px}
 .imp-view .cat-fetch-btn{background:none;border:none;padding:2px;display:inline-flex;align-items:center;justify-content:center;color:var(--white);cursor:pointer;transition:all .15s;line-height:1}
@@ -703,9 +709,7 @@ button{font:inherit}
               <div class="now-title" id="pl-now-title">Select a channel</div>
               <div class="now-sub" id="pl-now-sub">—</div>
             </div>
-            <div class="now-actions">
-<button class="action" onclick="openUrlModal('live')"><i data-lucide="link" width="14" height="14"></i>Share URL</button>
-              <button class="action" onclick="openVlcFor('live')"><i data-lucide="external-link" width="14" height="14"></i>Open in VLC</button>
+<div class="now-actions">
               <button class="action primary"><i data-lucide="star" width="14" height="14"></i>Favorite</button>
             </div>
           </div>
@@ -761,9 +765,7 @@ button{font:inherit}
               <div class="now-title" id="vo-now-title">Select a movie</div>
               <div class="now-sub" id="vo-now-sub">—</div>
             </div>
-            <div class="now-actions">
-<button class="action" onclick="openUrlModal('vod')"><i data-lucide="link" width="14" height="14"></i>Share URL</button>
-              <button class="action" onclick="openVlcFor('vod')"><i data-lucide="external-link" width="14" height="14"></i>Open in VLC</button>
+<div class="now-actions">
               <button class="action primary"><i data-lucide="star" width="14" height="14"></i>Favorite</button>
             </div>
           </div>
@@ -826,9 +828,7 @@ button{font:inherit}
               <div class="now-title" id="se-now-title">Select an episode</div>
               <div class="now-sub" id="se-now-sub">—</div>
             </div>
-            <div class="now-actions">
-<button class="action" onclick="openUrlModal('series')"><i data-lucide="link" width="14" height="14"></i>Share URL</button>
-              <button class="action" onclick="openVlcFor('series')"><i data-lucide="external-link" width="14" height="14"></i>Open in VLC</button>
+<div class="now-actions">
               <button class="action primary"><i data-lucide="star" width="14" height="14"></i>Favorite</button>
             </div>
           </div>
@@ -1682,11 +1682,11 @@ button{font:inherit}
       </div>
     </div>
 
-    <div class="url-block">
+    <div class="url-block" id="url-download-block">
       <div class="url-label"><i data-lucide="download" width="13" height="13"></i>Download URL</div>
       <div class="url-row">
         <input readonly id="url-download-input" value="">
-        <button class="btn-sec" onclick="downloadActiveUrl()">Download</button>
+        <button class="btn-sec" id="url-download-btn" onclick="downloadActiveUrl()">Download</button>
       </div>
     </div>
   </div>
@@ -1697,6 +1697,68 @@ button{font:inherit}
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
 lucide.createIcons();
+
+/* ── virtual list helper: render only the rows inside the view ── */
+let _VSEQ=0;
+const _VIRT={};
+function virtOpen(key, scroller, body, list, rowH, makeRow){
+  const k=key+'#'+(_VSEQ++);
+  const prevTop=scroller?scroller.scrollTop:0;
+  body.innerHTML='';
+  if(body!==scroller) body.style.position='relative';
+  const sp=document.createElement('div');
+  sp.style.position='relative';
+  body.appendChild(sp);
+  const n=list.length;
+  const tops=new Array(n);
+  let total=0;
+  for(let i=0;i<n;i++){ tops[i]=total; total+=(typeof rowH==='function'?rowH(i):rowH); }
+  const state={k:k,scroller:scroller,sp:sp,tops:tops,total:total,n:n,makeRow:makeRow};
+  state.render=function(){
+    if(scroller&&scroller._virtKey!==k) return;
+    if(!sp.isConnected) return;
+    const top=scroller?scroller.scrollTop:0;
+    const viewH=(scroller?scroller.clientHeight:1)||1;
+    let lo=0;
+    while(lo<n && tops[lo]+(typeof rowH==='function'?rowH(lo):rowH)<top) lo++;
+    const start=Math.max(0,lo-2);
+    let hi=lo;
+    while(hi<n && tops[hi]<top+viewH) hi++;
+    const end=Math.min(n,hi+2);
+    const existing={};
+    for(let r=sp.children.length-1;r>=0;r--){
+      const el=sp.children[r];
+      const id=+el.dataset.vidx;
+      if(id<start||id>=end) el.remove(); else existing[id]=el;
+    }
+    for(let j=start;j<end;j++){
+      if(existing[j]) continue;
+      const row=makeRow(j,list[j]);
+      row.dataset.vidx=j;
+      row.style.position='absolute';
+      row.style.top=tops[j]+'px';
+      row.style.left='0'; row.style.right='0';
+      sp.appendChild(row);
+    }
+    if(window.lucide) window.lucide.createIcons(sp);
+  };
+  sp.style.height=total+'px';
+  _VIRT[k]=state;
+  if(scroller){
+    scroller._virtKey=k;
+    if(!scroller._virtBound){
+      scroller._virtBound=true;
+      scroller.addEventListener('scroll',function(){
+        const st=_VIRT[scroller._virtKey];
+        if(st) st.render();
+      },{passive:true});
+    }
+    scroller.scrollTop=0;
+  }
+  state.render();
+  if(scroller) scroller.scrollTop=prevTop;
+  return state;
+}
 
 /* ── per-page wizard infrastructure: every page owns its own DOM + state ── */
 const IMP_PAGES=['import','load-playlist','checker'];
@@ -1863,6 +1925,83 @@ function paneCatOptions(t){
   }
   return opts;
 }
+const ROW_DD=34;const ROW_WIZ=36;
+function ddMakeRow(t,s,opts){
+  return function(i){
+    const o=opts[i];
+    const row=document.createElement('div');
+    row.className='pl-cat-item'+(s.group===o.cat?' sel':'');
+    if(i>0) row.style.borderTop='1px solid var(--line-2)';
+    const v=String(o.cat||'All').replace(/'/g,"\\'");
+    const nameEl=document.createElement('span');
+    nameEl.style.cssText='flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis';
+    nameEl.textContent=o.name;
+    row.appendChild(nameEl);
+    if(o.cat!=='All'){
+      const pen=document.createElement('i');
+      pen.className='pen';
+      pen.dataset.lucide='square-pen';
+      pen.setAttribute('width','13');
+      pen.setAttribute('height','13');
+      row.appendChild(pen);
+    }
+    row.addEventListener('click',function(e){
+      if(o.cat!=='All'&&e.target&&e.target.closest&&e.target.closest('.pen')){ e.stopPropagation(); beginCatRename(t,row,o.cat); return; }
+      selectTypeCat(t,v);
+    });
+    return row;
+  };
+}
+function beginCatRename(t,row,oldName){
+  const cur=row.querySelector('span');
+  const input=document.createElement('input');
+  input.type='text';
+  input.value=oldName;
+  input.style.cssText='flex:1;min-width:0;background:var(--stage);border:1px solid var(--line-2);color:var(--white);border-radius:4px;padding:2px 6px;font-size:12px;outline:none';
+  if(cur) cur.replaceWith(input);
+  const restore=function(){
+    const back=document.createElement('span');
+    back.style.cssText='flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis';
+    back.textContent=oldName;
+    input.replaceWith(back);
+  };
+  ['click','mousedown','keydown'].forEach(function(evt){
+    input.addEventListener(evt,function(e){ e.stopPropagation(); });
+  });
+  input.addEventListener('keydown',function(e){
+    if(e.key==='Enter') saveRename(t,input,oldName,restore);
+    else if(e.key==='Escape'){ e.stopPropagation(); restore(); }
+  });
+  input.focus(); input.select();
+}
+async function saveRename(t,input,oldName,restore){
+  const newName=input.value.trim();
+  if(!newName||newName===oldName){ restore(); return; }
+  const plName=pls[t].name;
+  const fileId=window._activeFilename;
+  if(!fileId){ restore(); showToast('error','✗ No active playlist file',4000); return; }
+  const menu=tEl(t,'cat-menu'); if(menu) menu.style.display='none';
+  try{
+    const r=await fetch('/api/playlists/'+encodeURIComponent(fileId)+'/rename-category',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:t,old_name:oldName,new_name:newName})});
+    const d=await r.json();
+    if(d.ok){
+      const pl=playerCats[plName];
+      if(pl){
+        const cat=(pl[t]||[]).find(function(c){ return c.name===oldName; });
+        if(cat) cat.name=newName;
+      }
+      if(pls[t].group===oldName) pls[t].group=newName;
+      showToast('success','✓ Category renamed',2500);
+      selectTypeCat(t,newName);
+    }else{
+      showToast('error','✗ '+(d.error||'Rename failed'),4000);
+      restore();
+    }
+  }catch(e){
+    showToast('error','✗ Rename failed',4000);
+    restore();
+  }
+}
 function toggleTypeCatDD(t,e){
   if(e) e.stopPropagation();
   const menu=tEl(t,'cat-menu');
@@ -1870,11 +2009,8 @@ function toggleTypeCatDD(t,e){
   if(menu.style.display==='block'){ menu.style.display='none'; return; }
   const s=pls[t];
   const opts=paneCatOptions(t);
-  menu.innerHTML=opts.map(function(o){
-    const v=String(o.cat||'All').replace(/'/g,"\\'");
-    return '<div class="pl-cat-item'+(s.group===o.cat?' sel':'')+'" onclick="selectTypeCat(\''+t+'\',\''+v+'\')">'+esc(o.name)+'</div>';
-  }).join('');
   menu.style.display='block';
+  virtOpen('dd-'+t, menu, menu, opts, ROW_DD, ddMakeRow(t,s,opts));
 }
 function selectTypeCat(t,group){
   const s=pls[t];
@@ -1963,8 +2099,8 @@ function playUrl(t,item,ch,url){
   vid.style.display='block';
   const isTS=/[=.]ts(&|$)/.test(url)||url.indexOf('extension=ts')!==-1;
   const isHLS=/\.m3u8($|[?&])/.test(url);
-  if(isTS&&typeof mpegts!=='undefined'){
-    window._mpegts=mpegts.createPlayer({type:'mpegts',url:url,isLive:true},{enableWorker:false,lazyLoad:true});
+if(isTS&&typeof mpegts!=='undefined'){
+    window._mpegts=mpegts.createPlayer({type:'mpegts',url:url,isLive:(t==='live')},{enableWorker:false,lazyLoad:true});
     window._mpegts.attachMediaElement(vid);
     window._mpegts.load();
     window._mpegts.play();
@@ -1972,7 +2108,7 @@ function playUrl(t,item,ch,url){
     vid.src=url;
     vid.play().catch(function(){});
   }
-  vid.__live=!!isTS;
+  vid.__live=(t==='live');
   vid.volume=VID_STATE[t].vol;
   vid.muted=(VID_STATE[t].vol===0);
   resetSeekBar(t);
@@ -2156,6 +2292,12 @@ async function openUrlModal(t){
   const prox=document.getElementById('url-proxy-input');
   const dir=document.getElementById('url-direct-input');
   const dl=document.getElementById('url-download-input');
+  const dlBlock=document.getElementById('url-download-block');
+  const dlBtn=document.getElementById('url-download-btn');
+  const isLive=(t==='live');
+  if(dlBlock) dlBlock.classList.toggle('gray',isLive);
+  if(dlBtn) dlBtn.disabled=isLive;
+  if(dl) dl.readOnly=isLive;
   let name='—', proxy='', direct='';
   const s=pls[t];
   if(s&&s.name&&s._active){
@@ -2389,11 +2531,9 @@ function paneCatOpen(t){
   if(!menu||menu.style.display==='block') return;
   const s=pls[t];
   const opts=paneCatOptions(t);
-  menu.innerHTML=opts.map(function(o){
-    const v=String(o.cat||'All').replace(/'/g,"\\'");
-    return '<div class="pl-cat-item'+(s.group===o.cat?' sel':'')+'" onclick="selectTypeCat(\''+t+'\',\''+v+'\')">'+esc(o.name)+'</div>';
-  }).join('');
   menu.style.display='block';
+  menu.scrollTop=0;
+  virtOpen('dd-'+t, menu, menu, opts, ROW_DD, ddMakeRow(t,s,opts));
 }
 function paneSeriesOpen(){
   const menu=el('se-se-menu');
@@ -3382,6 +3522,7 @@ function applyCatFilter(){
 }
 function renderCatList(){
   const body=el('cat-list-body');
+  const scroller=el('cat-scroll');
   if(!body) return;
   const allNames=Object.keys(catFilteredByPlaylist);
   const pendingList=[], doneList=[];
@@ -3392,74 +3533,72 @@ function renderCatList(){
     (allDone?doneList:pendingList).push(name);
   });
   const names=pendingList.concat(doneList);
-if(!names.length||!catFiltered.length){
+  if(!names.length||!catFiltered.length){
     body.innerHTML='<div class="cat-empty">'+(impPage==='checker'||impPage==='load-playlist'?'No category fetched yet':(allNames.length?'No categories found':'Import a playlist to see categories'))+'</div>';
+    body.style.position='';
     return;
   }
   const q=(el('cat-search').value||'').toLowerCase().trim();
-  var html='';
+  const rows=[];
   names.forEach(function(name){
     const filtered=catFilteredByPlaylist[name]||[];
     const open=q?true:openPlays.has(name);
-    var countStr='';
-    var childRows='';
+    rows.push({kind:'pl',name:name});
     if(open){
-      childRows=filtered.map((c,ci)=>{
-        const key=catKey(c);
-        const sel=catSel.has(key);
-var isFetched=!!c._fetched;
-        var fetchBtnHtml='';
-        if(impPage!=='import'){
-          fetchBtnHtml='<button class="cat-fetch-btn'+(isFetched?' disabled':'')+'" '+(isFetched?'disabled':'')+' title="'+(isFetched?'Fetched':'Fetch channels')+'" onclick="event.stopPropagation();fetchSingleCategoryCount(\''+c.type+'\',\''+c.id+'\',\''+name+'\',this)"><i data-lucide="'+(isFetched?'database-check':'database-arrow-down')+'" width="13" height="13"></i></button>';
-        }
-        var realCount=(c._previewCount!==undefined)?c._previewCount:c.count;
-        var cntHtml='<span style="color:var(--muted);font-size:11px">'+(realCount!==undefined&&realCount>0?realCount.toLocaleString():'–')+'</span>';
-        return '<div class="cat-row ed-ch-row'+(sel?' selected':'')+'" data-key="'+key+'" style="grid-template-columns:24px 30px 1fr 70px 50px;padding-left:34px">'
-          +'<div style="text-align:center"><input type="checkbox" class="cat-cb"'+(sel?' checked':'')+' data-key="'+key+'"></div>'
-          +'<div style="text-align:center;color:var(--muted);font-size:11px">'+(ci+1)+'</div>'
-          +'<div class="cat-name">'+esc(c.name)+(c.censored?' 🔞':'')+'</div>'
-          +'<div style="text-align:center">'+cntHtml+'</div>'
-          +'<div style="text-align:center">'+fetchBtnHtml+'</div></div>';
-      }).join('');
+      filtered.forEach(function(c,ci){ rows.push({kind:'cat',name:name,c:c,ci:ci}); });
     }
-    html+='<div class="ed-cat-acc">'
-      +'<div class="cat-row chan-group" data-idx="0" data-playlist="'+esc(name)+'" style="grid-template-columns:30px 1fr 70px 50px">'
-      +'<div class="cat-check"><input type="checkbox" class="cat-cb group-cb" data-playlist="'+esc(name)+'"></div>'
-      +'<div class="cat-name" style="display:flex;align-items:center;gap:6px;min-width:0">'
-      +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(name)+'</span></div>'
-      +'<div style="text-align:center">'+countStr+'</div>'
-      +'<div></div>'
-      +'</div>'
-      +childRows
-      +'</div>';
   });
-  body.innerHTML=html;
-  body.querySelectorAll('.chan-group').forEach(row=>{
-    row.addEventListener('click',e=>{
+  virtOpen('catlist', scroller, body, rows, ROW_WIZ, function(i,r){ return catWizRow(r,q); });
+  updateGroupCheckboxStates();
+}
+function catWizRow(r,q){
+  if(r.kind==='pl'){
+    const row=document.createElement('div');
+    row.className='cat-row chan-group';
+    row.dataset.playlist=r.name;
+    row.style.gridTemplateColumns='30px 1fr 70px 50px';
+    row.innerHTML='<div class="cat-check"><input type="checkbox" class="cat-cb group-cb"></div>'
+      +'<div class="cat-name" style="display:flex;align-items:center;gap:6px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r.name)+'</span></div>'
+      +'<div style="text-align:center"></div><div></div>';
+    row.addEventListener('click',function(e){
       if(e.target.classList.contains('cat-cb')||e.target.closest('.cat-cb')) return;
       if(q) return;
-      const pname=row.dataset.playlist;
+      const pname=r.name;
       if(openPlays.has(pname)) openPlays.delete(pname); else openPlays.add(pname);
       renderCatList();
     });
+    row.querySelector('.group-cb').addEventListener('change',function(){ toggleGroupCats(r.name,this.checked); });
+    return row;
+  }
+  const c=r.c;
+  const key=catKey(c);
+  const sel=catSel.has(key);
+  const isFetched=!!c._fetched;
+  let fetchBtnHtml='';
+  if(impPage!=='import'){
+    fetchBtnHtml='<button class="cat-fetch-btn'+(isFetched?' disabled':'')+'" '+(isFetched?'disabled':'')+' title="'+(isFetched?'Fetched':'Fetch channels')+'" onclick="event.stopPropagation();fetchSingleCategoryCount(\''+c.type+'\',\''+c.id+'\',\''+r.name+'\',this)"><i data-lucide="'+(isFetched?'database-check':'database-arrow-down')+'" width="13" height="13"></i></button>';
+  }
+  const realCount=(c._previewCount!==undefined)?c._previewCount:c.count;
+  const cntHtml='<span style="color:var(--muted);font-size:11px">'+(realCount!==undefined&&realCount>0?realCount.toLocaleString():'\u2013')+'</span>';
+  const row=document.createElement('div');
+  row.className='cat-row ed-ch-row'+(sel?' selected':'');
+  row.dataset.key=key;
+  row.style.gridTemplateColumns='24px 30px 1fr 70px 50px';
+  row.style.paddingLeft='34px';
+  row.innerHTML='<div style="text-align:center"><input type="checkbox" class="cat-cb"'+(sel?' checked':'')+'></div>'
+    +'<div style="text-align:center;color:var(--muted);font-size:11px">'+(r.ci+1)+'</div>'
+    +'<div class="cat-name">'+esc(c.name)+(c.censored?' 🔞':'')+'</div>'
+    +'<div style="text-align:center">'+cntHtml+'</div>'
+    +'<div style="text-align:center">'+fetchBtnHtml+'</div>';
+  row.addEventListener('click',function(e){
+    if(e.target.classList.contains('cat-cb')||e.target.closest('.cat-fetch-btn')) return;
+    const cb=this.querySelector('.cat-cb');
+    const on=!catSel.has(key);
+    toggleCat(key,on);
+    if(cb) cb.checked=on;
   });
-  body.querySelectorAll('.group-cb').forEach(cb=>{
-    cb.addEventListener('change',function(){ toggleGroupCats(cb.dataset.playlist,cb.checked); });
-  });
-  body.querySelectorAll('.ed-ch-row').forEach(row=>{
-    row.addEventListener('click',e=>{
-      if(e.target.classList.contains('cat-cb')||e.target.closest('.cat-fetch-btn')) return;
-      const key=row.dataset.key;
-      const cb=row.querySelector('.cat-cb');
-      const on=!catSel.has(key);
-      toggleCat(key,on);
-      if(cb) cb.checked=on;
-    });
-    const cb=row.querySelector('.cat-cb');
-    if(cb) cb.addEventListener('change',e=>{ toggleCat(row.dataset.key,e.target.checked); });
-  });
-  updateGroupCheckboxStates();
-  if(window.lucide) lucide.createIcons();
+  row.querySelector('.cat-cb').addEventListener('change',function(e){ toggleCat(key,e.target.checked); });
+  return row;
 }
 function toggleGroupCats(name,checked){
   (catFilteredByPlaylist[name]||[]).forEach(function(c){
@@ -3765,10 +3904,11 @@ const payload={
       showToast('success','✓ Saved '+(savedCnt===1?names[0]:savedCnt+' playlists')+' to their own files',4500);
       window._activeFilename=firstTarget.replace(/\.json$/,'');
       rememberActivePlaylist(window._activeFilename,names[0]);
-      if(names[0]&&_snap3Store[names[0]]) playerCats[names[0]]=_snap3Store[names[0]];
+if(names[0]&&_snap3Store[names[0]]) playerCats[names[0]]=_snap3Store[names[0]];
       setActivePlaylist(names[0]);
       updateSidebarCounts();
       loadPlaylists();
+      location.reload();
     }
     else showToast('warning','Nothing to save — no resolved channels yet',4500);
   }catch(e){ showToast('error','✗ Failed to save playlists to files',5000); }
@@ -3862,6 +4002,7 @@ function applyChFilter(){
 }
 function renderChanList(){
   const body=el('ch-list-body');
+  const scroller=el('ch-scroll');
   const empty=el('ch-empty');
   if(!body) return;
   const names=Object.keys(chFilteredByPlaylist);
@@ -3872,126 +4013,167 @@ function renderChanList(){
   });
   if(!names.length||!anyFetched){
     body.innerHTML='';
-    if(empty){ empty.style.display='block'; empty.textContent=(impPage==='checker'||impPage==='load-playlist'?(_chUnlocked?'No channels found, fetch a category first':'No channel fetched yet'):'Nothing here yet — pick categories on the Category Import step and press Next'); }
+    if(empty){
+      empty.style.display='block';
+      empty.textContent=(impPage==='checker'||impPage==='load-playlist'?(_chUnlocked?'No channels found, fetch a category first':'No channel fetched yet'):'Nothing here yet — pick categories on the Category Import step and press Next');
+    }
     updateChCounts();
     return;
   }
   if(empty) empty.style.display='none';
   const q=(el('ch-search').value||'').toLowerCase().trim();
-  let html='';
+  const rows=[];
   names.forEach(function(name){
-    const pl=_snap3Store[name];
     const cats=chFilteredByPlaylist[name]||[];
     if(!cats.length) return;
     const open=q?true:chOpenPlays.has(name);
-    html+='<div class="ed-cat-acc">'
-      +'<div class="cat-row chan-group" data-playlist="'+esc(name)+'" style="grid-template-columns:30px 1fr 70px">'
-      +'<div class="cat-check"><input type="checkbox" class="cat-cb group-cb" data-playlist="'+esc(name)+'"></div>'
-      +'<div class="cat-name" style="display:flex;align-items:center;gap:6px;min-width:0">'
-      +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(name)+'</span></div>'
-      +'<div style="text-align:center"></div>'
-      +'</div>';
-    if(open){
-      cats.forEach(function(c,cidx){
-        const ck=catKey(c);
-        const subOpen=q?true:chOpenCats.has(ck);
-        const chs=c._channels||[];
-        const visChs=(chFilteredChans[ck]||chs).slice().sort(function(a,b){ return (a.url?1:0)-(b.url?1:0); });
-var chRows='';
-        if(subOpen){
-          if(chanTab==='series'){
-            chRows=buildSeriesRows(name,c,visChs,q);
-          }else{
-            chRows=visChs.map(function(ch,i){
-              return plainChannelRow(name,c,ch);
-            }).join('');
+    rows.push({kind:'pl',name:name});
+    if(!open) return;
+    cats.forEach(function(c){
+      const ck=catKey(c);
+      const subOpen=q?true:chOpenCats.has(ck);
+      rows.push({kind:'cat',name:name,c:c});
+      if(!subOpen) return;
+      const chs=c._channels||[];
+      const visChs=(chFilteredChans[ck]||chs).slice().sort(function(a,b){ return (a.url?1:0)-(b.url?1:0); });
+      if(!visChs.length){ rows.push({kind:'none'}); return; }
+      if(chanTab==='series'){
+        const groups=[];
+        const map={};
+        visChs.forEach(function(ch){
+          const sname=deriveSeriesName(ch);
+          let g=map[sname];
+          if(!g){ g={name:sname,chs:[]}; map[sname]=g; groups.push(g); }
+          g.chs.push(ch);
+        });
+        groups.forEach(function(g){
+          const first=g.chs[0];
+          const sid=String((first&&(first.series_id||first.id))||'');
+          if(g.chs.length===1&&!first.season_num){ rows.push({kind:'ch',name:name,c:c,ch:first}); return; }
+          const gkey=ck+'\u0002'+sid;
+          const gopen=q?true:chOpenShows.has(gkey);
+          rows.push({kind:'show',name:name,c:c,sid:sid,g:g,open:gopen});
+          if(gopen){
+            const sorted=g.chs.slice().sort(function(a,b){ return (a.season_num||1)-(b.season_num||1)||(a.episode_num||1)-(b.episode_num||1); });
+            sorted.forEach(function(ch){ rows.push({kind:'ch',name:name,c:c,ch:ch}); });
           }
-          if(!visChs.length) chRows='<div style="padding:10px 24px 10px 70px;color:var(--muted);font-size:12px">No channels</div>';
-        }
-        html+='<div class="cat-row chan-group ch-cat-group" data-pl="'+esc(name)+'" data-catid="'+esc(String(c.id))+'" style="grid-template-columns:24px 30px 1fr 70px;padding-left:36px;border-top:1px solid var(--surface-3)">'
-          +'<div class="cat-check"><input type="checkbox" class="cat-cb group-cb ch-gcb" data-pl="'+esc(name)+'" data-catid="'+esc(String(c.id))+'"></div>'
-          +'<div style="text-align:center"></div>'
-          +'<div class="cat-name" style="display:flex;align-items:center;gap:6px;min-width:0">'
-          +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.name)+'</span></div>'
-          +'<div style="text-align:center"></div>'
-          +'</div>'
-          +chRows;
-      });
-    }
-    html+='</div>';
-  });
-  body.innerHTML=html;
-  body.querySelectorAll('.chan-group[data-playlist]').forEach(row=>{
-    const name=row.dataset.playlist;
-    const header=row;
-    header.addEventListener('click',e=>{
-      if(e.target.classList.contains('cat-cb')||e.target.closest('.cat-cb')) return;
-      if(q) return;
-      if(chOpenPlays.has(name)) chOpenPlays.delete(name); else chOpenPlays.add(name);
-      renderChanList();
+        });
+      }else{
+        visChs.forEach(function(ch){ rows.push({kind:'ch',name:name,c:c,ch:ch}); });
+      }
     });
   });
-  body.querySelectorAll('.group-cb[data-playlist]').forEach(cb=>{
-    cb.addEventListener('change',function(){ toggleChGroup(cb.dataset.playlist,cb.checked); });
-  });
-  body.querySelectorAll('.ch-cat-group').forEach(row=>{
-    row.addEventListener('click',e=>{
+  virtOpen('chanlist', scroller, body, rows, ROW_WIZ, function(i,r){ return chWizRow(r,q); });
+  updateChGroupStates();
+  updateChCatStates();
+}
+function chWizRow(r,q){
+  if(r.kind==='pl'){
+    const row=document.createElement('div');
+    row.className='cat-row chan-group';
+    row.dataset.playlist=r.name;
+    row.style.gridTemplateColumns='30px 1fr 70px';
+    row.innerHTML='<div class="cat-check"><input type="checkbox" class="cat-cb group-cb"></div>'
+      +'<div class="cat-name" style="display:flex;align-items:center;gap:6px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r.name)+'</span></div>'
+      +'<div style="text-align:center"></div>';
+    row.addEventListener('click',function(e){
+      if(e.target.classList.contains('cat-cb')||e.target.closest('.cat-cb')) return;
+      if(q) return;
+      if(chOpenPlays.has(r.name)) chOpenPlays.delete(r.name); else chOpenPlays.add(r.name);
+      renderChanList();
+    });
+    row.querySelector('.group-cb').addEventListener('change',function(){ toggleChGroup(r.name,this.checked); });
+    return row;
+  }
+  if(r.kind==='cat'){
+    const row=document.createElement('div');
+    row.className='cat-row chan-group ch-cat-group';
+    row.dataset.pl=r.name;
+    row.dataset.catid=String(r.c.id);
+    row.style.gridTemplateColumns='24px 30px 1fr 70px';
+    row.style.paddingLeft='36px';
+    row.style.borderTop='1px solid var(--surface-3)';
+    row.innerHTML='<div class="cat-check"><input type="checkbox" class="cat-cb group-cb ch-gcb"></div>'
+      +'<div style="text-align:center"></div>'
+      +'<div class="cat-name" style="display:flex;align-items:center;gap:6px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r.c.name)+'</span></div>'
+      +'<div style="text-align:center"></div>';
+    row.addEventListener('click',function(e){
       if(e.target.classList.contains('cat-cb')||e.target.closest('.cat-fetch-btn')) return;
       if(q) return;
-      const pl=row.dataset.pl;
-      const cid=row.dataset.catid;
-      const c=(_snap3Store[pl]&&_snap3Store[pl][chanTab]||[]).find(function(x){ return String(x.id)===String(cid); });
-      if(!c) return;
-      const ck=catKey(c);
+      const ck=catKey(r.c);
       if(chOpenCats.has(ck)) chOpenCats.delete(ck); else chOpenCats.add(ck);
       renderChanList();
     });
-  });
-  body.querySelectorAll('.ch-gcb').forEach(cb=>{
-    cb.addEventListener('change',function(){ toggleChCat(cb.dataset.pl,cb.dataset.catid,cb.checked); });
-  });
-  body.querySelectorAll('.ed-ch-row').forEach(row=>{
-    row.addEventListener('click',e=>{
-      if(e.target.classList.contains('cat-cb')) return;
-      const pl=row.dataset.pl;
-      const cid=row.dataset.catid;
-      const ci=+row.dataset.ci;
-      const c=(_snap3Store[pl]&&_snap3Store[pl][chanTab]||[]).find(function(x){ return String(x.id)===String(cid); });
-      if(!c) return;
-      const on=!chSel.has(chKey(c,ci));
-      toggleCh(c,ci,on);
-      const cb=row.querySelector('.cat-cb'); if(cb) cb.checked=on;
-    });
-    const cb=row.querySelector('.cat-cb');
-    if(cb) cb.addEventListener('change',e=>{
-      const pl=row.dataset.pl;
-      const cid=row.dataset.catid;
-      const ci=+row.dataset.ci;
-      const c=(_snap3Store[pl]&&_snap3Store[pl][chanTab]||[]).find(function(x){ return String(x.id)===String(cid); });
-      if(!c) return;
-      toggleCh(c,ci,e.target.checked);
-    });
-  });
-  body.querySelectorAll('.ed-series-grp').forEach(row=>{
-    row.addEventListener('click',e=>{
+    row.querySelector('.ch-gcb').addEventListener('change',function(){ toggleChCat(r.name,String(r.c.id),this.checked); });
+    return row;
+  }
+  if(r.kind==='show'){
+    const g=r.g;
+    const sid=r.sid;
+    const gkey=catKey(r.c)+'\u0002'+sid;
+    const open=r.open;
+    const sorted=g.chs.slice().sort(function(a,b){ return (a.season_num||1)-(b.season_num||1)||(a.episode_num||1)-(b.episode_num||1); });
+    const resolved=sorted.filter(function(x){ return x.url; }).length;
+    const row=document.createElement('div');
+    row.className='cat-row chan-group ed-series-grp'+(open?' open':'');
+    row.dataset.pl=r.name;
+    row.dataset.catid=String(r.c.id);
+    row.dataset.sid=sid;
+    row.style.gridTemplateColumns='24px 30px 1fr 80px';
+    row.style.paddingLeft='70px';
+    row.style.borderTop='1px solid var(--surface-3)';
+    row.innerHTML='<div class="cat-check"><input type="checkbox" class="cat-cb series-cb"></div>'
+      +'<div style="text-align:center;color:var(--muted)"><i data-lucide="'+(open?'chevron-down':'chevron-right')+'" width="13" height="13" style="pointer-events:none"></i></div>'
+      +'<div class="cat-name" style="display:flex;align-items:center;gap:6px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(g.name)+'</span><span style="color:var(--faint);font-size:11px;flex:none">'+g.chs.length+' ep</span></div>'
+      +'<div style="text-align:center">'+(resolved?'<span style="color:#22c55e;font-size:11px">✓&nbsp;'+resolved+'</span>':'')+'</div>';
+    row.addEventListener('click',function(e){
       if(e.target.classList.contains('cat-cb')||e.target.closest('.cat-fetch-btn')) return;
       if(q) return;
-      const pl=row.dataset.pl;
-      const cid=row.dataset.catid;
-      const sid=row.dataset.sid;
-      const c=(_snap3Store[pl]&&_snap3Store[pl][chanTab]||[]).find(function(x){ return String(x.id)===String(cid); });
-      if(!c) return;
-      const gkey=catKey(c)+'\u0002'+sid;
       if(chOpenShows.has(gkey)) chOpenShows.delete(gkey); else chOpenShows.add(gkey);
       renderChanList();
     });
+    row.querySelector('.series-cb').addEventListener('change',function(){ toggleSeriesShow(r.name,String(r.c.id),sid,this.checked); });
+    return row;
+  }
+  if(r.kind==='none'){
+    const row=document.createElement('div');
+    row.style.padding='10px 24px 10px 70px';
+    row.style.color='var(--muted)';
+    row.style.fontSize='12px';
+    row.textContent='No channels';
+    return row;
+  }
+  const c=r.c;
+  const ci=(c._channels||[]).indexOf(r.ch);
+  const key=chKey(c,ci);
+  const sel=chSel.has(key);
+  let badgeHtml='';
+  if(impPage!=='import'){
+    if(r.ch.url){
+      badgeHtml='<button class="cat-fetch-btn disabled" disabled title="Ready"><i data-lucide="database-check" width="13" height="13"></i></button>';
+    }else{
+      badgeHtml='<button class="cat-fetch-btn" title="Fetch" onclick="event.stopPropagation();resolveSingleChannel(\''+esc(r.name)+'\',\''+esc(String(c.id))+'\',\''+ci+'\',this)"><i data-lucide="database-arrow-down" width="13" height="13"></i></button>';
+    }
+  }
+  const row=document.createElement('div');
+  row.className='cat-row ed-ch-row'+(sel?' selected':'');
+  row.dataset.pl=r.name;
+  row.dataset.catid=String(c.id);
+  row.dataset.ci=String(ci);
+  row.style.gridTemplateColumns='24px 30px 1fr 50px';
+  row.style.paddingLeft='70px';
+  row.innerHTML='<div style="text-align:center"><input type="checkbox" class="cat-cb"'+(sel?' checked':'')+'></div>'
+    +'<div style="text-align:center;color:var(--muted);font-size:11px">'+(ci+1)+'</div>'
+    +'<div class="cat-name">'+esc(r.ch.name)+'</div>'
+    +'<div style="text-align:center">'+badgeHtml+'</div>';
+  row.addEventListener('click',function(e){
+    if(e.target.classList.contains('cat-cb')) return;
+    const on=!chSel.has(key);
+    toggleCh(c,ci,on);
+    const cb=this.querySelector('.cat-cb'); if(cb) cb.checked=on;
   });
-  body.querySelectorAll('.series-cb').forEach(cb=>{
-    cb.addEventListener('change',function(){ toggleSeriesShow(cb.dataset.pl,cb.dataset.catid,cb.dataset.sid,cb.checked); });
-  });
-  updateChGroupStates();
-  updateChCatStates();
-  if(window.lucide) lucide.createIcons();
+  row.querySelector('.cat-cb').addEventListener('change',function(e){ toggleCh(c,ci,e.target.checked); });
+  return row;
 }
 function deriveSeriesName(ch){
   if(ch&&ch.series_name&&String(ch.series_name).trim()) return String(ch.series_name).trim();
@@ -4103,9 +4285,11 @@ function updateChGroupStates(){
 function updateChCatStates(){
   const body=el('ch-list-body');
   if(!body) return;
-  body.querySelectorAll('.ch-gcb').forEach(cb=>{
-    const plName=cb.dataset.pl;
-    const catId=cb.dataset.catid;
+body.querySelectorAll('.ch-gcb').forEach(cb=>{
+    const row=cb.closest('.ch-cat-group');
+    if(!row) return;
+    const plName=row.dataset.pl;
+    const catId=row.dataset.catid;
     const c=(_snap3Store[plName]&&_snap3Store[plName][chanTab]||[]).find(function(x){ return String(x.id)===String(catId); });
     const chs=c?(c._channels||[]):[];
     let sel=0;
@@ -4305,28 +4489,41 @@ async function resolveSeriesShows(groups,totalJobs,btn){
   if(window.renderPane) renderPane('series');
 }
 function deleteSelChannels(){
-  const total=chSel.size;
+  let total=0;
+  const targets=[];
+  Object.keys(chFilteredByPlaylist).forEach(function(name){
+    (chFilteredByPlaylist[name]||[]).forEach(function(c){
+      const ck=catKey(c);
+      const orig=c._channels||[];
+      const wasSel=new Set();
+      orig.forEach(function(ch,i){ if(chSel.has(chKey(c,i))) wasSel.add(i); });
+      const delIdx=new Set();
+      (chFilteredChans[ck]||[]).forEach(function(ch){
+        const idx=orig.indexOf(ch);
+        if(idx>=0&&wasSel.has(idx)) delIdx.add(idx);
+      });
+      if(delIdx.size){ targets.push({name:name,c:c,ck:ck,delIdx:delIdx,wasSel:wasSel}); total+=delIdx.size; }
+    });
+  });
   if(!total){ showToast('info','Select channels to delete',3000); return; }
   if(!confirm('Delete '+total+' selected channel'+(total===1?'':'s')+'?')) return;
   let removed=0;
-  Object.keys(_snap3Store).forEach(function(name){
-    let rm=0;
-    ['live','vod','series'].forEach(function(type){
-      (_snap3Store[name][type]||[]).forEach(function(c){
-        const chs=c._channels||[];
-        if(!chs.length) return;
-        const kept=chs.filter(function(ch,i){ return !chSel.has(chKey(c,i)); });
-        if(kept.length!==chs.length){
-          c._channels=kept;
-          c.count=kept.length;
-          removed+=chs.length-kept.length;
-          rm+=chs.length-kept.length;
-        }
-      });
+  targets.forEach(function(t){
+    const c=t.c;
+    const orig=c._channels||[];
+    const newArr=[]; const survSel=[];
+    orig.forEach(function(ch,i){
+      if(t.delIdx.has(i)) return;
+      newArr.push(ch);
+      survSel.push(t.wasSel.has(i));
     });
-    if(rm>0) _snap3Dirty.add(name);
+    c._channels=newArr;
+    c.count=newArr.length;
+    for(const k of chSel){ if(k.startsWith(t.ck+'\u0003')) chSel.delete(k); }
+    newArr.forEach(function(ch,ni){ if(survSel[ni]) chSel.add(chKey(c,ni)); });
+    removed+=t.delIdx.size;
+    _snap3Dirty.add(t.name);
   });
-  chSel.clear();
   buildCombinedCats();
   applyChFilter(); updateSaveBtnState(); updateChCounts(); updateSidebarCounts();
   showToast('success','✓ Deleted '+removed+' channel'+(removed===1?'':'s'),3000);
