@@ -1898,7 +1898,22 @@ def api_delete_playlist(pl_id):
 def api_get_playlist_channels(pl_id):
     fp = _find_playlist_file(pl_id)
     if not fp:
-        return jsonify({"error": "Playlist not found"}), 404
+        try:
+            fav_fp = _playlist_filepath("Favorites")
+            if os.path.normcase(os.path.abspath(_playlist_filepath(pl_id))) == os.path.normcase(os.path.abspath(fav_fp)):
+                os.makedirs(PLAYLIST_DIR, exist_ok=True)
+                with open(fav_fp, "w", encoding="utf-8") as f:
+                    json.dump({
+                        "name": "Favorites",
+                        "source": "portal",
+                        "updated": time.time(),
+                        "categories": {"live": [], "vod": [], "series": []},
+                    }, f, indent=2)
+                fp = fav_fp
+        except Exception:
+            fp = None
+        if not fp:
+            return jsonify({"error": "Playlist not found"}), 404
     try:
         with open(fp, "r") as f:
             data = json.load(f)
@@ -2407,6 +2422,8 @@ def add_category_to_favorites():
         return jsonify({"ok": False, "error": "Missing cat_name or channels"}), 400
 
     fp = _playlist_filepath("Favorites")
+    if not os.path.isfile(fp):
+        return jsonify({"ok": False, "error": "Open Favorites first"}), 404
     series_name = data.get("series_name", "") or data.get("series_id", "") or ""
     series_id = data.get("series_id", "") or ""
     sample = channels[0] or {}
@@ -2423,16 +2440,17 @@ def save_favorites():
     if not categories or not isinstance(categories, dict):
         return jsonify({"ok": False, "error": "Missing categories"}), 400
 
-    fp = os.path.join(PLAYLIST_DIR, "Favorites.json")
-    os.makedirs(PLAYLIST_DIR, exist_ok=True)
+    fp = _playlist_filepath("Favorites")
+    if not os.path.isfile(fp):
+        return jsonify({"ok": False, "error": "Open Favorites first"}), 404
 
-    fav = {}
-    if os.path.isfile(fp):
-        with open(fp, "r") as f:
-            fav = json.load(f)
+    with open(fp, "r") as f:
+        fav = json.load(f)
+    if not isinstance(fav, dict):
+        fav = {}
 
-    fav["name"] = fav.get("name", "Favorites")
-    fav["source"] = fav.get("source", "portal")
+    fav["name"] = "Favorites"
+    fav["source"] = "portal"
     fav["updated"] = time.time()
     fav["categories"] = {
         "live": categories.get("live", []),

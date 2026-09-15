@@ -587,6 +587,7 @@ button{font:inherit}
         </div>
       </div>
 <div class="dd-item" onclick="showView('settings');toggleUserDD()"><i data-lucide="settings" width="15" height="15"></i>Settings</div>
+      <div class="dd-item" onclick="showView('empty');toggleUserDD()"><i data-lucide="file-plus-2" width="15" height="15"></i>Empty</div>
       <div class="dd-item" onclick="showView('changelog');toggleUserDD()"><i data-lucide="scroll-text" width="15" height="15"></i>Changelog <span class="dd-right">v1.0.0</span></div>
 <div class="dd-item"><i data-lucide="palette" width="15" height="15"></i>Theme <span class="dd-right">Dark</span></div>
     </div>
@@ -597,23 +598,22 @@ button{font:inherit}
       <div class="sb-search-dd" id="sb-search-dd" style="display:none"></div>
     </div>
 
-    <nav class="nav-scroll">
+<nav class="nav-scroll">
       <div class="sec-label">Library</div>
       <div class="nav" onclick="showView('player',this)"><i data-lucide="tv" width="16" height="16"></i><span class="nav-lbl">Live</span><span class="count" id="cnt-live">0</span></div>
       <div class="nav" onclick="showView('vod',this)"><i data-lucide="film" width="16" height="16"></i><span class="nav-lbl">VOD</span><span class="count" id="cnt-vod">0</span></div>
       <div class="nav" onclick="showView('series',this)"><i data-lucide="clapperboard" width="16" height="16"></i><span class="nav-lbl">Series</span><span class="count" id="cnt-series">0</span></div>
-      <div class="nav" onclick="showView('favorites',this)"><i data-lucide="star" width="16" height="16"></i><span class="nav-lbl">Favorites</span><span class="count" id="cnt-fav">0</span></div>
 
       <div class="divider"></div>
       <div class="sec-label">Manage</div>
       <div class="nav active" onclick="showView('home',this)"><i data-lucide="home" width="16" height="16"></i><span class="nav-lbl">Home</span></div>
+      <div class="nav" onclick="choosePlaylistActivate('Favorites','Favorites')"><i data-lucide="star" width="16" height="16"></i><span class="nav-lbl">Favorites</span><span class="count" id="cnt-fav">0</span></div>
       <div class="nav" onclick="showView('trash',this)"><i data-lucide="list" width="16" height="16"></i><span class="nav-lbl">Playlists</span></div>
-      <div class="nav" onclick="showView('empty',this)"><i data-lucide="file-plus-2" width="16" height="16"></i><span class="nav-lbl">Empty</span></div>
     </nav>
 
     <div class="sb-footer">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)">Playlist</span>
+<div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="sec-label" style="padding:0">Playlist</span>
       </div>
       <div id="sb-footer-name" style="font-size:13px;font-weight:700;color:var(--white);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">My Home</div>
       <span id="sb-expiry-label" style="color:var(--faint);font-size:10px">Expires: —</span>
@@ -1792,9 +1792,10 @@ function showView(id, el){
   if(t){
     activePaneType=t;
     renderPane(t);
-  }else{
+}else{
     if(activePaneType){ const p=activePaneType; activePaneType=null; setPaneIdle(p); }
   }
+  if(id==='home'){ renderHomeRecents(); renderHomePlaylists(); }
 }
 /* ── player panes (live / vod / series) ── */
 const TYPE_META={live:{view:'player',px:'pl',label:'channels',cap:'Select a channel to begin playback'},vod:{view:'vod',px:'vo',label:'movies',cap:'Select a movie to begin playback'},series:{view:'series',px:'se',label:'episodes',cap:'Select an episode to begin playback'}};
@@ -1812,6 +1813,8 @@ function setActivePlaylist(name){
     const slbl=tEl(t,'se-label'); if(slbl) slbl.textContent='All Series';
   });
   renderPane('live'); renderPane('vod'); renderPane('series');
+  renderHomeRecents();
+  renderHomePlaylists();
 }
 function chInitials(name){
   const n=(name||'?').trim();
@@ -2109,6 +2112,7 @@ if(isTS&&typeof mpegts!=='undefined'){
   }
   _streamStatus[t]=null;
   checkStreamStatus(t,url);
+  recordRecentWatched(t,item,ch);
   if(t!=='live'&&ch.__resume>1){
     const rt=ch.__resume; ch.__resume=0;
     const apply=function(){ try{ vid.currentTime=rt; updateSeekBar(t); }catch(e){} };
@@ -2412,6 +2416,7 @@ async function choosePlaylistActivate(name,id){
   window._activeFilename=id;
   rememberActivePlaylist(id,name||id);
   try{
+    if(name==='Favorites') delete playerCats[name];
     if(!playerCats[name]){
       const jr=await fetch('/api/playlists/'+encodeURIComponent(id)+'/channels');
       const jd=await jr.json();
@@ -3257,8 +3262,8 @@ async function loadAllPlaylists(btnEl){
     const r=await fetch('/api/playlists');
     const d=await r.json();
     const list=d.playlists||[];
-    const loadable=list.filter(function(p){
-      return (p.portal_url&&p.mac)||p.name==='Favorites';
+const loadable=list.filter(function(p){
+      return (p.portal_url&&p.mac)&&p.name!=='Favorites';
     });
     if(!loadable.length){ showToast('info','No loadable playlists found',3000); applyCatFilter(); applyChFilter(); return; }
     const chosen=[];
@@ -4557,7 +4562,7 @@ async function restoreActivePlaylist(){
   try{
     const r=await fetch('/api/playlists');
     const d=await r.json();
-    const pls=d.playlists||[];
+    const pls=(d.playlists||[]).filter(function(p){ return p.name!=='Favorites'&&p.id!=='Favorites'; });
     let p=null;
     if(rec&&rec.id) p=pls.find(x=>x.id===rec.id)||null;
     if(!p&&rec&&rec.name) p=pls.find(x=>x.name===rec.name||x.list_name===rec.name)||null;
@@ -4756,6 +4761,10 @@ function onSidebarSearchResultClick(globalIdx){
   const inp = document.getElementById('sb-search-input');
   if(inp) inp.value = '';
 
+  playSearchItem(item);
+}
+
+function playSearchItem(item){
   const t = item.type;
   const targetCh = item.ch;
   const plName = item.playlistName;
@@ -4794,10 +4803,178 @@ function onSidebarSearchResultClick(globalIdx){
     pls[t].page = Math.floor(idx / pls[t].perPage) + 1;
     renderPane(t);
     playItem(t, idx);
-  } else {
+} else {
     showToast('info', 'Selected: ' + targetCh.name, 3000);
   }
 }
+
+/* ── home recently watched ── */
+const _RW_KEY='mud_recent_watched';
+let _rwList=null;
+let _rwCards=[];
+function rwLoad(){
+  if(_rwList) return _rwList;
+  try{ _rwList=JSON.parse(localStorage.getItem(_RW_KEY))||[]; }catch(e){ _rwList=[]; }
+  if(!Array.isArray(_rwList)) _rwList=[];
+  return _rwList;
+}
+function rwSave(){
+  try{ localStorage.setItem(_RW_KEY,JSON.stringify(_rwList||[])); }catch(e){}
+}
+function recordRecentWatched(t,item,ch){
+  if(!ch) return;
+  let name=ch.name||'?';
+  let sub=(item&&item.group)||'All';
+  if(t==='series'){
+    name=deriveSeriesName(ch);
+    sub=ch.season_num?('S'+ch.season_num):'';
+    if(ch.episode_num) sub+=(sub?' · E':'E')+(ch.episode_num);
+    if(!ch.season_num&&!ch.episode_num) sub=(item&&item.group)||'Series';
+  }else if(t==='vod'){
+    sub='Movie';
+  }
+  const ent={t:t,name:name,sub:sub,pl:(pls[t]&&pls[t].name)||''};
+  let arr=rwLoad();
+  const i=arr.findIndex(function(x){ return x.t===ent.t&&x.name===ent.name&&x.pl===ent.pl; });
+  if(i>=0) arr.splice(i,1);
+  arr.unshift(ent);
+  if(arr.length>21) arr.length=21;
+  _rwList=arr;
+  rwSave();
+  renderHomeRecents();
+}
+function rwTargetPls(pref){
+  const out=[];
+  const active=(pls.live&&pls.live.name)||window._activeFilename||_activePlaylistName;
+  function add(k){ if(playerCats[k]&&out.indexOf(playerCats[k])===-1) out.push(playerCats[k]); }
+  if(pref) add(pref);
+  if(active) add(active);
+  Object.keys(playerCats).forEach(add);
+  return out;
+}
+function rwFallbackCards(){
+  const cards=[];
+  const order=rwTargetPls('');
+  if(!order.length) return cards;
+  function addFirst(t,n,subFn){
+    let got=0;
+    const seen={};
+    for(let i=0;i<order.length&&got<n;i++){
+      const pl=order[i];
+      ((pl[t]||[])).forEach(function(cat){
+        ((cat._channels||[])).forEach(function(ch){
+          if(got>=n) return;
+          if(t==='series'){
+            const sn=deriveSeriesName(ch);
+            if(seen[sn]) return;
+            seen[sn]=true;
+            cards.push({t:t,name:sn,sub:'Series',pl:pl.name||''}); got++;
+          }else{
+            cards.push({t:t,name:ch.name||'?',sub:subFn(cat),pl:pl.name||''}); got++;
+          }
+        });
+      });
+    }
+  }
+  addFirst('live',3,function(c){ return c.name||'Live'; });
+  addFirst('vod',2,function(){ return 'Movie'; });
+  addFirst('series',2,function(){ return 'Series'; });
+  return cards;
+}
+function rwFindChannel(t,name,plPref){
+  const order=rwTargetPls(plPref);
+  for(let i=0;i<order.length;i++){
+    const pl=order[i];
+    const cats=pl[t]||[];
+    for(let j=0;j<cats.length;j++){
+      const cat=cats[j];
+      const chans=cat._channels||[];
+      for(let k=0;k<chans.length;k++){
+        const ch=chans[k];
+        if(t==='series'){
+          if(deriveSeriesName(ch)===name) return {ch:ch,group:cat.name||'All',pl:pl.name||''};
+        }else if(String(ch.name||'')===name){
+          return {ch:ch,group:cat.name||'All',pl:pl.name||''};
+        }
+      }
+    }
+  }
+  return null;
+}
+function renderHomeRecents(){
+  const row=document.querySelector('#view-home .row-scroll');
+  if(!row) return;
+  let cards=rwLoad().slice();
+  if(!cards.length) cards=rwFallbackCards();
+  cards=cards.slice(0,7);
+  _rwCards=cards;
+  row.innerHTML=cards.map(function(c,i){
+    const ini=chInitials(c.name);
+    return '<div class="poster" onclick="homeCardGo('+i+')"><div class="art">'+esc(ini)+'</div><div class="pt">'+esc(c.name)+'</div><div class="ps">'+esc(c.sub)+'</div></div>';
+  }).join('');
+}
+function homeCardGo(i){
+  const c=_rwCards[i];
+  if(!c) return;
+  const found=rwFindChannel(c.t,c.name,c.pl);
+  if(!found){ showToast('info','Not found: '+c.name,3000); return; }
+  playSearchItem({ch:found.ch,group:found.group,playlistName:found.pl,type:c.t,seriesShow:(c.t==='series'?c.name:undefined)});
+}
+
+/* ── home all playlists ── */
+function plTypeLabel(p){
+  const src=p.source||'';
+  if(src==='m3u') return 'M3U · File';
+  const url=String(p.portal_url||'');
+  if(/:(\d{2,5})(\/|$)/.test(url)) return 'Xtream';
+  if(/\/c\//.test(url)) return 'Stalker';
+  return 'Portal';
+}
+function plIcoName(p){
+  const src=p.source||'';
+  if(src==='m3u') return 'file-text';
+  const url=String(p.portal_url||'');
+  if(/:(\d{2,5})(\/|$)/.test(url)) return 'satellite-dish';
+  return 'server';
+}
+function plCount(n){
+  n=Number(n)||0;
+  if(n>=1000){ const k=n/1000; return (k>=10?Math.round(k):(k.toFixed(1).replace(/\.0$/,'')))+'k'; }
+  return String(n);
+}
+function renderHomePlaylists(){
+  const grid=document.querySelector('#view-home .pl-grid');
+  if(!grid) return;
+  fetch('/api/playlists').then(function(r){ return r.json(); }).then(function(d){
+    const arr=(d.playlists||[]).filter(function(p){ return p.name!=='Favorites'&&p.id!=='Favorites'; });
+    if(!arr.length){
+      grid.innerHTML='<div style="grid-column:1/-1;padding:48px 0;text-align:center;color:var(--faint);font-size:12px">No playlists yet.</div>';
+      return;
+    }
+    grid.innerHTML=arr.map(function(p){
+      const name=p.list_name||p.name||p.id||'Playlist';
+      const cts=p.counts||{live:0,vod:0,series:0};
+      return '<div class="pl-card" data-pl-id="'+esc(p.id||'')+'" data-pl-name="'+esc(p.name||'')+'">'
+        +'<div class="pl-top"><div class="pl-ico"><i data-lucide="'+plIcoName(p)+'" width="20" height="20"></i></div>'
+        +'<div><div class="pl-name">'+esc(name)+'</div><div class="pl-type">'+esc(plTypeLabel(p))+'</div></div></div>'
+        +'<div class="pl-stats">'
+        +'<div class="pl-stat"><div class="n">'+plCount(cts.live||0)+'</div><div class="l">Live</div></div>'
+        +'<div class="pl-stat"><div class="n">'+plCount(cts.vod||0)+'</div><div class="l">VOD</div></div>'
+        +'<div class="pl-stat"><div class="n">'+plCount(cts.series||0)+'</div><div class="l">Series</div></div>'
+        +'</div></div>';
+    }).join('');
+    if(window.lucide) lucide.createIcons(grid);
+  }).catch(function(){});
+}
+function homePlaylistGo(id,name,el){
+  if(!id) return;
+  choosePlaylistActivate(name||id,id);
+}
+document.addEventListener('click', function(e){
+  const card=e.target.closest('#view-home .pl-grid .pl-card');
+  if(!card) return;
+  homePlaylistGo(card.dataset.plId||'',card.dataset.plName||'');
+});
 
 document.addEventListener('click', function(e){
   const dd = document.getElementById('sb-search-dd');
@@ -4822,6 +4999,8 @@ attachPlSearchListeners();
 updatePlSelectAll();
 ['live','vod','series'].forEach(function(t){ wireSeek(t); wireVideoEvents(t); resetSeekBar(t); updateVolIcon(t); });
 restoreActivePlaylist();
+renderHomeRecents();
+renderHomePlaylists();
 renderPane('live');
 
 function scrollToSlide(idx){
