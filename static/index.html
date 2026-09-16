@@ -607,7 +607,7 @@ button{font:inherit}
       <div class="divider"></div>
       <div class="sec-label">Manage</div>
       <div class="nav active" onclick="showView('home',this)"><i data-lucide="home" width="16" height="16"></i><span class="nav-lbl">Home</span></div>
-      <div class="nav" onclick="choosePlaylistActivate('Favorites','Favorites')"><i data-lucide="star" width="16" height="16"></i><span class="nav-lbl">Favorites</span><span class="count" id="cnt-fav">0</span></div>
+      <div class="nav" onclick="choosePlaylistActivate('Favorites','Favorites')"><i data-lucide="star" width="16" height="16"></i><span class="nav-lbl">Favorites</span></div>
       <div class="nav" onclick="showView('trash',this)"><i data-lucide="list" width="16" height="16"></i><span class="nav-lbl">Playlists</span></div>
     </nav>
 
@@ -671,7 +671,7 @@ button{font:inherit}
             <span class="time t-elapsed">00:00</span>
             <div class="track track-seek"><div class="fill"></div><div class="knob"></div></div>
             <span class="time t-total">LIVE</span>
-            <button class="ctrl ctrl-vol" onclick="toggleVolPop('live')"><i data-lucide="volume-2" width="18" height="18"></i></button>
+            <button class="ctrl ctrl-vol"><i data-lucide="volume-2" width="18" height="18"></i></button>
             <div class="vol-pop"><input type="range" class="vol-range" min="0" max="100" value="100" oninput="setVol('live',this.value)"></div>
             <button class="ctrl"><i data-lucide="captions" width="18" height="18"></i></button>
 <button class="ctrl" onclick="openUrlModal('live')"><i data-lucide="settings" width="18" height="18"></i></button>
@@ -727,7 +727,7 @@ button{font:inherit}
             <span class="time t-elapsed">00:00</span>
             <div class="track track-seek"><div class="fill"></div><div class="knob"></div></div>
             <span class="time t-total">—:—</span>
-            <button class="ctrl ctrl-vol" onclick="toggleVolPop('vod')"><i data-lucide="volume-2" width="18" height="18"></i></button>
+            <button class="ctrl ctrl-vol"><i data-lucide="volume-2" width="18" height="18"></i></button>
             <div class="vol-pop"><input type="range" class="vol-range" min="0" max="100" value="100" oninput="setVol('vod',this.value)"></div>
             <button class="ctrl"><i data-lucide="captions" width="18" height="18"></i></button>
 <button class="ctrl" onclick="openUrlModal('vod')"><i data-lucide="settings" width="18" height="18"></i></button>
@@ -790,7 +790,7 @@ button{font:inherit}
             <span class="time t-elapsed">00:00</span>
             <div class="track track-seek"><div class="fill"></div><div class="knob"></div></div>
             <span class="time t-total">—:—</span>
-            <button class="ctrl ctrl-vol" onclick="toggleVolPop('series')"><i data-lucide="volume-2" width="18" height="18"></i></button>
+            <button class="ctrl ctrl-vol"><i data-lucide="volume-2" width="18" height="18"></i></button>
             <div class="vol-pop"><input type="range" class="vol-range" min="0" max="100" value="100" oninput="setVol('series',this.value)"></div>
             <button class="ctrl"><i data-lucide="captions" width="18" height="18"></i></button>
 <button class="ctrl" onclick="openUrlModal('series')"><i data-lucide="settings" width="18" height="18"></i></button>
@@ -1406,6 +1406,113 @@ button{font:inherit}
 </div>
     </div>
 
+    <!-- Favorites Editor -->
+    <div class="view imp-view" id="view-favedit">
+      <div class="topbar"><div class="view-title">Edit Favorites</div></div>
+
+      <div class="imp-scroll-nav" id="fav-scroll-nav">
+        <button class="nav-dot active" data-slide="0" onclick="favSlide(0)" title="Categories"></button>
+        <button class="nav-dot" data-slide="1" onclick="favSlide(1)" title="Channels"></button>
+      </div>
+
+      <div class="imp-snap-wrapper" id="fav-snap-wrapper">
+
+        <div class="snap-slide" id="fav-slide-0">
+          <div class="snap-section">
+            <div class="card-full" id="fav-card-step2" style="display:flex">
+              <div class="sec-label" style="padding:5px 20px;border-bottom:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center">
+                Category Import
+                <span class="mini-toggle" id="fav-ct-tabs" style="margin:0 0 0 auto">
+                  <button class="active" data-ct="live" onclick="favSwitchCatTab('live')"><i data-lucide="tv" width="13" height="13"></i> Live <span class="pane-count" id="fav-ctb-live">0</span></button>
+                  <button data-ct="vod" onclick="favSwitchCatTab('vod')"><i data-lucide="film" width="13" height="13"></i> VOD <span class="pane-count" id="fav-ctb-vod">0</span></button>
+                  <button data-ct="series" onclick="favSwitchCatTab('series')"><i data-lucide="clapperboard" width="13" height="13"></i> Series <span class="pane-count" id="fav-ctb-series">0</span></button>
+                </span>
+              </div>
+              <div class="card-body" style="padding:0;display:flex;flex-direction:column;overflow:hidden">
+                <div class="imp-cat-picker" id="fav-cat-picker" style="display:flex;flex:1;flex-direction:column;overflow:hidden;padding:12px 20px 10px;min-height:0">
+                  <div class="cat-toolbar">
+                    <div class="cat-search-wrap field" style="margin-bottom:0">
+                      <i data-lucide="search" width="13" height="13"></i>
+                      <input type="text" id="fav-cat-search" placeholder="Search categories…" style="padding-left:32px" oninput="favOnCatSearch()">
+                    </div>
+                    <button class="btn-sec" id="fav-cat-del-btn" onclick="favDelSelCats()">Delete</button>
+                    <button class="action primary btn-ico" id="fav-cat-merge-btn" onclick="favMergeCats()" style="margin-left:auto"><i data-lucide="git-merge" width="14" height="14"></i> Merge</button>
+                  </div>
+                  <div class="cat-select-bar">
+                    <label>
+                      <input type="checkbox" id="fav-cat-select-all" onchange="favToggleCatAll(this.checked)">
+                      Select all visible &nbsp;<span id="fav-cat-visible-count" style="color:var(--text);font-weight:600">0</span>
+                    </label>
+                    <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="fav-cat-filter-info"></span>
+                  </div>
+                  <div class="imp-cat-list-wrap" id="fav-cat-list-wrap" style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--stage);margin-bottom:0">
+                    <div class="imp-list-header" id="fav-cat-list-header" style="grid-template-columns:30px 1fr 70px 50px;flex-shrink:0">
+                      <div></div><div>Category Name</div><div style="text-align:center">Items</div><div style="text-align:center">Status</div>
+                    </div>
+                    <div class="imp-list-scroll" id="fav-cat-scroll" style="flex:1;overflow-y:auto">
+                      <div id="fav-cat-list-body"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer" style="display:flex;gap:0 10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
+                <button class="action primary btn-ico" id="fav-cat-next-btn" onclick="favNextCats()">
+                  <i data-lucide="arrow-right" width="14" height="14"></i>
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="snap-slide" id="fav-slide-1">
+          <div class="snap-section">
+            <div class="card-full">
+              <div class="sec-label" style="padding:5px 20px;border-bottom:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center">
+                Channels
+                <span class="mini-toggle" id="fav-ch-tabs" style="margin:0 0 0 auto">
+                  <button class="active" data-ch="live" onclick="favSwitchChTab('live')"><i data-lucide="tv" width="13" height="13"></i> Live <span class="pane-count" id="fav-chb-live">0</span></button>
+                  <button data-ch="vod" onclick="favSwitchChTab('vod')"><i data-lucide="film" width="13" height="13"></i> VOD <span class="pane-count" id="fav-chb-vod">0</span></button>
+                  <button data-ch="series" onclick="favSwitchChTab('series')"><i data-lucide="clapperboard" width="13" height="13"></i> Series <span class="pane-count" id="fav-chb-series">0</span></button>
+                </span>
+              </div>
+              <div class="card-body" style="padding:0;display:flex;flex-direction:column;overflow:hidden">
+                <div style="display:flex;flex:1;flex-direction:column;overflow:hidden;padding:12px 20px 10px;min-height:0">
+                  <div class="cat-toolbar">
+                    <div class="cat-search-wrap field" style="margin-bottom:0">
+                      <i data-lucide="search" width="13" height="13"></i>
+                      <input type="text" id="fav-ch-search" placeholder="Search channels…" style="padding-left:32px" oninput="favOnChSearch()">
+                    </div>
+                    <button class="btn-sec" id="fav-ch-del-btn" onclick="favDelSelChans()">Delete</button>
+                  </div>
+                  <div class="cat-select-bar">
+                    <label>
+                      <input type="checkbox" id="fav-ch-select-all" onchange="favToggleChAll(this.checked)">
+                      Select all visible &nbsp;<span id="fav-ch-visible-count" style="color:var(--text);font-weight:600">0</span>
+                    </label>
+                    <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="fav-ch-filter-info"></span>
+                  </div>
+                  <div style="display:flex;flex-direction:column;flex:1;min-height:0;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--stage);margin-bottom:0">
+                    <div class="imp-list-header" id="fav-ch-list-header" style="grid-template-columns:30px 1fr 70px;flex-shrink:0">
+                      <div></div><div>Channel Name</div><div style="text-align:center">Resolved</div>
+                    </div>
+                    <div class="imp-list-scroll" id="fav-ch-scroll" style="flex:1;overflow-y:auto">
+                      <div id="fav-ch-list-body"></div>
+                      <div id="fav-ch-empty" style="padding:32px;text-align:center;color:var(--muted);font-size:13px">No channels</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer" style="display:flex;gap:0 10px;flex-wrap:wrap;align-items:center;justify-content:flex-end">
+                <button class="action primary btn-ico" id="fav-dl-catlist-btn" onclick="favSave(this)"><i data-lucide="download" width="14" height="14"></i> Update</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
     <!-- Playlist Checker -->
     <div class="view imp-view" id="view-checker">
       <div class="topbar"><div class="view-title">Playlist Checker</div></div>
@@ -1524,7 +1631,9 @@ button{font:inherit}
                 <i data-lucide="search" width="13" height="13"></i>
                 <input type="text" id="chk-ch-search" placeholder="Search channels…" style="padding-left:32px">
               </div>
-              <button class="action primary btn-ico" id="chk-ch-fetch-btn" onclick="resolveSelectedChannels(this)" style="margin-left:auto">Fetch</button>
+              <button class="btn-sec" style="margin-left:auto" onclick="exportChTypeM3u()"><i data-lucide="download" width="14" height="14"></i> Export</button>
+              <button class="btn-sec" onclick="saveChTypeToFavorites()"><i data-lucide="star" width="14" height="14"></i> Favorites</button>
+              <button class="action primary btn-ico" id="chk-ch-fetch-btn" onclick="resolveSelectedChannels(this)">Fetch</button>
             </div>
             <div class="cat-select-bar">
               <label>
@@ -2068,7 +2177,7 @@ async function resolveForPlay(t,item,pl){
   if(!(ch.cmd||ch.series_cmd)) return '';
   try{
     const r=await fetch('/api/resolve-channels',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      portal_url:pl.portal_url,mac:pl.mac,
+portal_url:(ch._portal_url||pl.portal_url),mac:(ch._mac||pl.mac),
       channels:[{id:ch.id||'',name:ch.name||'',cmd:ch.cmd||ch.series_cmd||'',content_type:ch.content_type||(t==='live'?'live':t),cat_id:item.catId||'',cat_name:item.group||'All',series_id:ch.series_id||'',season_num:ch.season_num||0,episode_num:ch.episode_num||0}]
     })});
     const d=await r.json();
@@ -2214,6 +2323,18 @@ async function togglePlay(t){
   showToast('info','Select a channel to begin playback',3000);
 }
 function toggleVolPop(t){ const c=controlsOf(t); if(!c) return; const p=c.querySelector('.vol-pop'); if(!p) return; p.classList.toggle('open'); }
+function wireVolHover(t){
+  const c=controlsOf(t); if(!c) return;
+  const btn=c.querySelector('.ctrl-vol'); if(!btn) return;
+  const pop=c.querySelector('.vol-pop'); if(!pop) return;
+  let timer=null;
+  function open(){ clearTimeout(timer); pop.classList.add('open'); }
+  function deferClose(){ clearTimeout(timer); timer=setTimeout(function(){ pop.classList.remove('open'); },220); }
+  btn.addEventListener('mouseenter',open);
+  pop.addEventListener('mouseenter',open);
+  btn.addEventListener('mouseleave',deferClose);
+  pop.addEventListener('mouseleave',deferClose);
+}
 function setVol(t,val){
   let v=parseFloat(val)/100; if(!isFinite(v)) v=1; if(v<0)v=0; if(v>1)v=1;
   VID_STATE[t].vol=v;
@@ -2317,7 +2438,7 @@ async function openUrlModal(t){
       direct=url||'';
       const ctype=ch.content_type||(t==='live'?'live':t);
       const cmd=String(ch.cmd||ch.series_cmd||'');
-      proxy=location.origin+'/api/proxy_stream?portal_url='+encodeURIComponent(String(pl.portal_url||''))+'&mac='+encodeURIComponent(String(pl.mac||''))+'&cmd='+encodeURIComponent(cmd)+'&type='+encodeURIComponent(ctype);
+      proxy=location.origin+'/api/proxy_stream?portal_url='+encodeURIComponent(String(ch._portal_url||pl.portal_url||''))+'&mac='+encodeURIComponent(String(ch._mac||pl.mac||''))+'&cmd='+encodeURIComponent(cmd)+'&type='+encodeURIComponent(ctype);
     }
   }
   if(sub) sub.textContent=name;
@@ -2394,7 +2515,8 @@ async function loadChoosePlaylists(){
     const d=await r.json();
     const seen={};
     (d.playlists||[]).forEach(function(p){
-      if(!p.portal_url||!p.mac) return;
+      if((p.name||'')==='Favorites'||(p.id||'')==='Favorites') return;
+      if(!(p.name&&p.source&&p.portal_url&&p.mac)) return;
       const name=p.name||p.id||'';
       if(!name) return;
       if(!seen[name]) seen[name]=p;
@@ -2437,7 +2559,7 @@ async function choosePlaylistActivate(name,id){
           cat._channels.push({
             id:ch.id||'',name:ch.name||'',cmd:ch.cmd||'',url:ch.url||'',content_type:t,
             needsResolve:!ch.url&&!!ch.cmd,series_id:ch.series_id||'',season_num:ch.season_num||0,episode_num:ch.episode_num||0,
-            _playlist:name,_portal_url:portal_url,_mac:mac
+            _playlist:name,_portal_url:ch.portal_url||portal_url,_mac:ch.mac||mac
           });
           cat._fetched=true;
         });
@@ -2499,6 +2621,7 @@ async function editPlaylistGo(){
   const item=document.getElementById('import-dd-edit');
   const id=window._activeFilename;
   if(!item||item.classList.contains('gray')||!id) return;
+  if(id==='Favorites'){ favOpen(); return; }
   showView('load-playlist');
   playlistCats={}; cats={live:[],vod:[],series:[]};
   _snap2Imported=new Set(); _snap2Dirty=new Set();
@@ -2526,8 +2649,316 @@ async function editPlaylistGo(){
   updateChCounts();
   updateCatSelCount();
   updatePlSelectAll();
-  scrollToSlide(0);
+scrollToSlide(0);
   if(window.lucide) lucide.createIcons();
+}
+
+/* ── Favorites editor (isolated view, fav-*) ── */
+let favTab='live', favChTab='live';
+let favStore={live:[],vod:[],series:[]};
+let favCatSel=new Set();
+let favChSel=new Set();
+let favCatFiltered=[];
+let favChFiltered=[];
+function favEl(id){ return document.getElementById(id); }
+function favSlide(idx){
+  const s=document.querySelector('#view-favedit #fav-slide-'+idx);
+  if(s) s.scrollIntoView({behavior:'smooth'});
+  const nav=favEl('fav-scroll-nav');
+  if(nav) nav.querySelectorAll('.nav-dot').forEach(function(b){ b.classList.toggle('active',Number(b.dataset.slide)===idx); });
+}
+function favCatKey(c){ return (c.type||'')+'\u0001'+(c.id||c.name||''); }
+function favMergeCats(){
+  const shown=favStore[favTab]||[];
+  const sel=shown.filter(function(c){ return favCatSel.has(favCatKey(c)); });
+  if(sel.length<2){ showToast('warning','Select 2 or more categories to merge',3000); return; }
+  const top=sel[0];
+  const seen={};
+  (top._channels||[]).forEach(function(ch){ seen[favMergeChKey(ch)]=true; });
+  for(let i=1;i<sel.length;i++){
+    (sel[i]._channels||[]).forEach(function(ch){
+      const k=favMergeChKey(ch);
+      if(seen[k]) return;
+      seen[k]=true;
+      top._channels.push(ch);
+    });
+  }
+  favStore[favTab]=shown.filter(function(c){ return !favCatSel.has(favCatKey(c)); });
+  favStore[favTab].push(top);
+  const merged=sel.length;
+  favCatSel.clear();
+  favRefreshCounts();
+  favRenderCats();
+  showToast('success','✓ Merged '+merged+' categories into "'+top.name+'"',3500);
+}
+function favMergeChKey(ch){
+  if(ch.series_id){ return 's\u0001'+ch.series_id+'\u0001'+(ch.season_num||0)+'\u0001'+(ch.episode_num||0); }
+  return 'c\u0001'+(ch.id||ch.name||'');
+}
+function favSeriesNameOf(ch){
+  const nm=String(ch.name||'');
+  const m=nm.replace(/\s+S\d{2,4}\s+E\d{1,4}\s*$/i,'').trim();
+  return m||nm;
+}
+async function favOpen(){
+  const menu=document.getElementById('import-dd-menu');
+  if(menu) menu.style.display='none';
+  showView('favedit');
+  favTab='live'; favChTab='live';
+  favStore={live:[],vod:[],series:[]};
+  favCatSel.clear(); favChSel.clear();
+  favCatFiltered=[]; favChFiltered=[];
+  const a=favEl('fav-cat-search'); if(a) a.value='';
+  const b=favEl('fav-ch-search'); if(b) b.value='';
+  try{
+    const r=await fetch('/api/playlists/Favorites/channels');
+    const jd=await r.json();
+    if(!jd||!jd.channels){ showToast('error','✗ Favorites not found',4000); return; }
+    ['live','vod','series'].forEach(function(t){
+      favStore[t]=(jd.categories&&jd.categories[t]||[]).map(function(cat){
+        return {id:cat.id||'',name:cat.name||'',count:cat.count||0,cached:!!cat.cached,type:t,_channels:[],_fetched:true};
+      });
+    });
+    (jd.channels||[]).forEach(function(ch){
+      const t=ch.content_type||'live';
+      const cat=(favStore[t]||[]).find(function(c){ return String(c.name)===String(ch.group); });
+      if(!cat) return;
+      if(!cat._channels) cat._channels=[];
+      cat._channels.push({
+        id:ch.id||'',name:ch.name||'',cmd:ch.cmd||'',url:ch.url||'',content_type:t,
+        series_id:ch.series_id||'',series_name:ch.series_name||'',season_num:ch.season_num||0,episode_num:ch.episode_num||0,
+        portal_url:ch.portal_url||'',mac:ch.mac||''
+      });
+    });
+    ['live','vod','series'].forEach(function(t){
+      favStore[t]=favStore[t].filter(function(c){ return (c._channels||[]).length>0; });
+    });
+    favRefreshCounts();
+    favSwitchCatTab('live');
+    favSwitchChTab('live');
+    favSlide(0);
+    showToast('success','✓ Favorites loaded',3500);
+  }catch(e){ showToast('error','✗ '+e.message,4000); }
+}
+function favRefreshCounts(){
+  ['live','vod','series'].forEach(function(t){
+    const set=(id,v)=>{ const e=favEl(id); if(e) e.textContent=String(v); };
+    set('fav-ctb-'+t,favStore[t].length);
+    let total=0;
+    (favStore[t]||[]).forEach(function(c){ c.count=(c._channels||[]).length; total+=c.count; });
+    set('fav-chb-'+t,total);
+  });
+}
+function favOnCatSearch(){ favRenderCats(); }
+function favSwitchCatTab(tab){
+  favTab=tab;
+  const tabs=favEl('fav-ct-tabs');
+  if(tabs) tabs.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active',b.dataset.ct===tab); });
+  const s=favEl('fav-cat-search'); if(s) s.value='';
+  favRenderCats();
+}
+function favFilteredCats(){
+  const q=((favEl('fav-cat-search')||{}).value||'').toLowerCase().trim();
+  const words=q.split(/\s+/).filter(Boolean);
+  const arr=favStore[favTab]||[];
+  return arr.filter(function(c){
+    const h=(c.name||'').toLowerCase();
+    return !words.length||words.every(function(w){ return h.includes(w); });
+  });
+}
+function favRenderCats(){
+  const body=favEl('fav-cat-list-body');
+  if(!body) return;
+  favCatFiltered=favFilteredCats();
+  const info=favEl('fav-cat-filter-info');
+  if(info) info.textContent=(favTab.charAt(0).toUpperCase()+favTab.slice(1))+' preview · '+favCatFiltered.length;
+  const vis=favEl('fav-cat-visible-count');
+  if(vis) vis.textContent=String(favCatFiltered.length);
+  if(!favCatFiltered.length){
+    body.innerHTML='<div class="cat-empty">No categories in Favorites</div>';
+    favUpdateCatAll();
+    return;
+  }
+  body.innerHTML='';
+  favCatFiltered.forEach(function(c){
+    const key=favCatKey(c);
+    const sel=favCatSel.has(key);
+    const row=document.createElement('div');
+    row.className='cat-row'+(sel?' selected':'');
+    row.style.gridTemplateColumns='30px 1fr 70px 50px';
+    row.innerHTML='<div class="cat-check"><input type="checkbox" class="cat-cb"'+(sel?' checked':'')+'></div>'
+      +'<div class="cat-name">'+esc(c.name)+'</div>'
+      +'<div style="text-align:center;color:var(--muted);font-size:11px">'+(c.count||0).toLocaleString()+'</div>'
+      +'<div style="text-align:center"><span style="color:var(--success);font-size:11px">✓</span></div>';
+    row.addEventListener('click',function(e){
+      if(e.target.classList.contains('cat-cb')||e.target.closest('.cat-cb')) return;
+      const on=!favCatSel.has(key);
+      favToggleCat(key,on);
+    });
+    row.querySelector('.cat-cb').addEventListener('change',function(){ favToggleCat(key,this.checked); });
+    body.appendChild(row);
+  });
+  favUpdateCatAll();
+}
+function favToggleCat(key,on){
+  if(on) favCatSel.add(key); else favCatSel.delete(key);
+  favRenderCats();
+}
+function favToggleCatAll(checked){
+  favCatFiltered.forEach(function(c){ const k=favCatKey(c); if(checked) favCatSel.add(k); else favCatSel.delete(k); });
+  favRenderCats();
+}
+function favUpdateCatAll(){
+  const cb=favEl('fav-cat-select-all');
+  if(!cb) return;
+  const all=favCatFiltered.length>0&&favCatFiltered.every(function(c){ return favCatSel.has(favCatKey(c)); });
+  cb.checked=!!all;
+}
+function favDelSelCats(){
+  if(!favCatSel.size){ showToast('info','Select categories to delete',3000); return; }
+  favStore[favTab]=favStore[favTab].filter(function(c){ return !favCatSel.has(favCatKey(c)); });
+  favCatSel.clear();
+  favRefreshCounts();
+  favRenderCats();
+  showToast('success','✓ Deleted selected categories',3000);
+}
+function favNextCats(){
+  let selected=0;
+  ['live','vod','series'].forEach(function(t){
+    (favStore[t]||[]).forEach(function(c){ if(favCatSel.has(favCatKey(c))) selected++; });
+  });
+  if(!selected){ showToast('warning','Select at least one category first',3000); return; }
+  favChTab='live';
+  favChSel.clear(); favChFiltered=[];
+  const s=favEl('fav-ch-search'); if(s) s.value='';
+  favSwitchChTab('live');
+  favSlide(1);
+  showToast('success',selected+' categor'+(selected===1?'y':'ies')+' to Channels',3500);
+}
+function favFlattenChans(){
+  const out=[];
+  ['live','vod','series'].forEach(function(t){
+    (favStore[t]||[]).forEach(function(c){
+      if(!favCatSel.has(favCatKey(c))) return;
+      (c._channels||[]).forEach(function(ch){ out.push({cat:c,t:t,ch:ch,_fkey:''}); });
+    });
+  });
+  return out;
+}
+function favChKey(x,i){ return (x.t||'')+'\u0001'+(x.ch.id||'')+'\u0001'+i; }
+function favSwitchChTab(tab){
+  favChTab=tab;
+  const tabs=favEl('fav-ch-tabs');
+  if(tabs) tabs.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active',b.dataset.ch===tab); });
+  const s=favEl('fav-ch-search'); if(s) s.value='';
+  favRenderChans();
+}
+function favOnChSearch(){ favRenderChans(); }
+function favRenderChans(){
+  const body=favEl('fav-ch-list-body');
+  if(!body) return;
+  const q=((favEl('fav-ch-search')||{}).value||'').toLowerCase().trim();
+  const words=q.split(/\s+/).filter(Boolean);
+  const arr=favFlattenChans().filter(function(x){ return x.t===favChTab; });
+  favChFiltered=arr.filter(function(x){
+    const h=(x.ch.name||'').toLowerCase();
+    return !words.length||words.every(function(w){ return h.includes(w); });
+  });
+  favChFiltered.forEach(function(x,i){ x._fkey=favChKey(x,i); });
+  const info=favEl('fav-ch-filter-info');
+  if(info) info.textContent=(favChTab.charAt(0).toUpperCase()+favChTab.slice(1))+' · '+favChFiltered.length+' channels';
+  const vis=favEl('fav-ch-visible-count');
+  if(vis) vis.textContent=String(favChFiltered.length);
+  const empty=favEl('fav-ch-empty');
+  if(empty) empty.style.display=favChFiltered.length?'none':'';
+  if(!favChFiltered.length){ body.innerHTML=''; favUpdateChAll(); return; }
+  body.innerHTML='';
+  favChFiltered.forEach(function(x){
+    const sel=favChSel.has(x._fkey);
+    const hasUrl=!!x.ch.url;
+    const row=document.createElement('div');
+    row.className='cat-row'+(sel?' selected':'');
+    row.style.gridTemplateColumns='30px 1fr 70px';
+    row.innerHTML='<div class="cat-check"><input type="checkbox" class="cat-cb"'+(sel?' checked':'')+'></div>'
+      +'<div class="cat-name" title="'+esc(x.ch.name||'')+'">'+esc(x.ch.name||'')+'</div>'
+      +'<div style="text-align:center"><span style="color:'+(hasUrl?'var(--success)':'var(--muted)')+';font-size:11px">'+(hasUrl?'✓':'–')+'</span></div>';
+    row.addEventListener('click',function(e){
+      if(e.target.classList.contains('cat-cb')||e.target.closest('.cat-cb')) return;
+      const on=!favChSel.has(x._fkey);
+      favToggleCh(x._fkey,on);
+    });
+    row.querySelector('.cat-cb').addEventListener('change',function(){ favToggleCh(x._fkey,this.checked); });
+    body.appendChild(row);
+  });
+  favUpdateChAll();
+}
+function favToggleCh(key,on){
+  if(on) favChSel.add(key); else favChSel.delete(key);
+  favRenderChans();
+}
+function favToggleChAll(checked){
+  favChFiltered.forEach(function(x){ if(checked) favChSel.add(x._fkey); else favChSel.delete(x._fkey); });
+  favRenderChans();
+}
+function favUpdateChAll(){
+  const cb=favEl('fav-ch-select-all');
+  if(!cb) return;
+  const all=favChFiltered.length>0&&favChFiltered.every(function(x){ return favChSel.has(x._fkey); });
+  cb.checked=!!all;
+}
+function favDelSelChans(){
+  if(!favChSel.size){ showToast('info','Select channels to delete',3000); return; }
+  favChFiltered.forEach(function(x){
+    if(!favChSel.has(x._fkey)) return;
+    const idx=(x.cat._channels||[]).indexOf(x.ch);
+    if(idx>-1) x.cat._channels.splice(idx,1);
+  });
+  favChSel.clear();
+  favRefreshCounts();
+  favRenderChans();
+  showToast('success','✓ Deleted selected channels',3000);
+}
+async function favSave(btn){
+  const body={name:'Favorites',portal_url:'',mac:'',erase:true,categories:{live:[],vod:[],series:[]}};
+  ['live','vod'].forEach(function(t){
+    (favStore[t]||[]).forEach(function(c){
+      const chs=(c._channels||[]).filter(function(ch){ return ch.url||ch.cmd; }).map(function(ch){
+        return {id:ch.id||'',name:ch.name||'',cmd:ch.cmd||'',url:ch.url||'',content_type:ch.content_type||t,
+          series_id:ch.series_id||'',season_num:ch.season_num||0,episode_num:ch.episode_num||0,
+          portal_url:ch.portal_url||'',mac:ch.mac||''};
+      });
+      if(chs.length) body.categories[t].push({id:c.id||'',name:c.name||'',channels:chs});
+    });
+  });
+  (favStore.series||[]).forEach(function(c){
+    const bySid={};
+    (c._channels||[]).forEach(function(ch){
+      if(!ch.url&&!ch.cmd) return;
+      const sid=String(ch.series_id||ch.id||'');
+      if(!bySid[sid]) bySid[sid]={sid:sid,name:ch.series_name||favSeriesNameOf(ch),id:ch.series_id||'',eps:[]};
+      bySid[sid].eps.push({id:ch.id||'',name:ch.name||'',cmd:ch.cmd||'',url:ch.url||'',content_type:'series',
+        series_id:ch.series_id||ch.id||'',series_name:ch.series_name||bySid[sid].name,
+        season_num:ch.season_num||1,episode_num:ch.episode_num||1,
+        portal_url:ch.portal_url||'',mac:ch.mac||''});
+    });
+    Object.keys(bySid).forEach(function(sid){
+      const g=bySid[sid];
+      if(!g.eps.length) return;
+      body.categories.series.push({id:c.id||'',name:c.name||'',series_name:g.name,series_id:g.id,channels:g.eps});
+    });
+  });
+  if(btn) btn.disabled=true;
+  try{
+    const r=await fetch('/api/playlists/Favorites/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(d.ok){
+      delete playerCats['Favorites'];
+      updateSidebarCounts();
+      loadPlaylists();
+      showToast('success','✓ Favorites saved',4000);
+    }else showToast('error','✗ '+(d.error||'Could not save Favorites'),5000);
+  }catch(e){ showToast('error','✗ '+e.message,4000); }
+  finally{ if(btn) btn.disabled=false; }
 }
 document.addEventListener('click',function(e){
   const menu=document.getElementById('import-dd-menu');
@@ -3189,7 +3620,7 @@ async function loadPlaylistIntoApp(id,name,portal_url,mac){
     ['live','vod','series'].forEach(function(t){
       pl[t]=(jd.categories&&jd.categories[t]||[]).map(function(cat){
         return {id:cat.id||'',name:cat.name||'',count:cat.count||0,cached:!!cat.cached,_channels:[],_fetched:false,type:t,_playlist:name,_portal_url:portal_url||jd.portal_url,_mac:mac||jd.mac};
-      });
+});
     });
     (jd.channels||[]).forEach(function(ch){
       const t=ch.content_type||'live';
@@ -3199,7 +3630,7 @@ async function loadPlaylistIntoApp(id,name,portal_url,mac){
       cat._channels.push({
         id:ch.id||'',name:ch.name||'',cmd:ch.cmd||'',url:ch.url||'',content_type:t,
         needsResolve:!ch.url&&!!ch.cmd,series_id:ch.series_id||'',season_num:ch.season_num||0,episode_num:ch.episode_num||0,
-        _playlist:name,_portal_url:portal_url||jd.portal_url,_mac:mac||jd.mac
+        _playlist:name,_portal_url:ch.portal_url||portal_url||jd.portal_url,_mac:ch.mac||mac||jd.mac
       });
       cat._fetched=true;
     });
@@ -3412,7 +3843,7 @@ updateSaveBtnState();
     updateChCounts();
     updateCatSelCount();
     updatePlSelectAll();
-    scrollToSlide(1);
+scrollToSlide(1);
   }
 }
 async function goNextCategories(){
@@ -4445,7 +4876,62 @@ async function resolveSeriesShows(groups,totalJobs,btn){
   if(allResolved) showToast('success','✓ All series episodes resolved',4000);
   else if(failed) showToast('error','✓ '+succeeded+' resolved, '+failed+' failed — click Fetch to retry',5000);
   else showToast('success','✓ '+succeeded+' episode'+(succeeded===1?'':'s')+' resolved',4000);
-  if(window.renderPane) renderPane('series');
+if(window.renderPane) renderPane('series');
+}
+function m3uAttr(s){
+  return String(s||'').replace(/"/g,'').replace(/\r|\n/g,' ');
+}
+async function exportChTypeM3u(){
+  const type=chanTab;
+  const lines=['#EXTM3U'];
+  let total=0;
+  Object.keys(_snap3Store).forEach(function(name){
+    const pl=_snap3Store[name];
+    (pl[type]||[]).forEach(function(c){
+      (c._channels||[]).forEach(function(ch){
+        if(!ch.url) return;
+        lines.push('#EXTINF:-1 tvg-logo="" group-title="'+m3uAttr(c.name||name)+'",'+m3uAttr(ch.name||'Channel'));
+        lines.push(ch.url);
+        total++;
+      });
+    });
+  });
+  if(!total){ showToast('info','No resolved '+type+' channels to export',3000); return; }
+  const blob=new Blob([lines.join('\n')],{type:'audio/x-mpegurl'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=type+'_export.m3u';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('success','✓ Exported '+total+' '+type+' channel'+(total===1?'':'s')+' to '+type+'_export.m3u',4000);
+}
+async function saveChTypeToFavorites(){
+  const type=chanTab;
+  const cats=[];
+  let total=0;
+  Object.keys(_snap3Store).forEach(function(name){
+    const pl=_snap3Store[name];
+    (pl[type]||[]).forEach(function(c){
+      const chs=[];
+      (c._channels||[]).forEach(function(ch){
+        if(!ch.url) return;
+        if(type==='series'){
+          chs.push({portal_url:pl.portal_url||'',mac:pl.mac||'',season_num:ch.season_num||1,episode_num:ch.episode_num||1,cmd:ch.cmd||'',url:ch.url||'',series_id:ch.series_id||ch.id||'',series_name:ch.series_name||''});
+        }else{
+          chs.push({id:ch.id||'',portal_url:pl.portal_url||'',mac:pl.mac||'',name:ch.name||'',cmd:ch.cmd||'',url:ch.url||''});
+        }
+      });
+      if(!chs.length) return;
+      cats.push({id:c.id||'',name:c.name||'',channels:chs});
+      total+=chs.length;
+    });
+  });
+  if(!total){ showToast('info','No resolved '+type+' channels to favorite',3000); return; }
+  try{
+    const r=await fetch('/api/playlists/favorites/merge-type',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:type,categories:cats})});
+    const d=await r.json();
+    if(d.ok) showToast('success','✓ Added '+d.added+' new, updated '+d.replaced+' in Favorites',4500);
+    else if(d.error) showToast('error','✗ '+d.error,5000);
+    else showToast('error','✗ Could not save to Favorites',5000);
+  }catch(e){ showToast('error','✗ '+e.message,5000); }
 }
 function deleteSelChannels(){
   let total=0;
@@ -4593,8 +5079,8 @@ async function restoreActivePlaylist(){
           if(!cat._channels) cat._channels=[];
           cat._channels.push({
             id:ch.id||'',name:ch.name||'',cmd:ch.cmd||'',url:ch.url||'',content_type:t,
-            needsResolve:!ch.url&&!!ch.cmd,series_id:ch.series_id||'',season_num:ch.season_num||0,episode_num:ch.episode_num||0,
-            _playlist:name,_portal_url:portal_url,_mac:mac
+needsResolve:!ch.url&&!!ch.cmd,series_id:ch.series_id||'',season_num:ch.season_num||0,episode_num:ch.episode_num||0,
+            _playlist:name,_portal_url:ch.portal_url||portal_url,_mac:ch.mac||mac
           });
           cat._fetched=true;
         });
@@ -4997,7 +5483,7 @@ attachCatSearchListeners();
 attachChSearchListeners();
 attachPlSearchListeners();
 updatePlSelectAll();
-['live','vod','series'].forEach(function(t){ wireSeek(t); wireVideoEvents(t); resetSeekBar(t); updateVolIcon(t); });
+['live','vod','series'].forEach(function(t){ wireSeek(t); wireVideoEvents(t); resetSeekBar(t); updateVolIcon(t); wireVolHover(t); });
 restoreActivePlaylist();
 renderHomeRecents();
 renderHomePlaylists();

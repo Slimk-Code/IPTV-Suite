@@ -1742,6 +1742,10 @@ def _scan_json_playlists():
         try:
             with open(fp, "r") as f:
                 data = json.load(f)
+            if fn[:-5] == "Favorites":
+                continue
+            if not (data.get("name") and data.get("source") and data.get("portal_url") and data.get("mac")):
+                continue
             if "channels" in data:
                 ch_count = len(data.get("channels", []))
             else:
@@ -2228,6 +2232,9 @@ def _load_or_new_playlist(fp, portal_url="", mac="", name=""):
         data.setdefault("categories", {})
         for ct in ("live", "vod", "series"):
             data["categories"].setdefault(ct, [])
+    if os.path.basename(fp).lower() == "favorites.json":
+        data.pop("portal_url", None)
+        data.pop("mac", None)
     return data
 
 
@@ -2451,6 +2458,8 @@ def save_favorites():
 
     fav["name"] = "Favorites"
     fav["source"] = "portal"
+    fav.pop("portal_url", None)
+    fav.pop("mac", None)
     fav["updated"] = time.time()
     fav["categories"] = {
         "live": categories.get("live", []),
@@ -2462,6 +2471,73 @@ def save_favorites():
         json.dump(fav, f, indent=2)
 
     return jsonify({"ok": True})
+
+def _normalize_favorites_file(fp):
+    try:
+        with open(fp, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception:
+        return
+    data.pop("portal_url", None)
+    data.pop("mac", None)
+    keep_ch = ("id", "portal_url", "mac", "name", "cmd", "url")
+    for cat in data.get("categories", {}).get("live", []):
+        arm = [c for c in cat.get("Channel", []) if isinstance(c, dict)]
+        for c in arm:
+            for k in list(c.keys()):
+                if k not in keep_ch:
+                    c.pop(k, None)
+        cat["Channel"] = arm
+    for cat in data.get("categories", {}).get("vod", []):
+        arm = [c for c in cat.get("Movie", []) if isinstance(c, dict)]
+        for c in arm:
+            for k in list(c.keys()):
+                if k not in keep_ch:
+                    c.pop(k, None)
+        cat["Movie"] = arm
+    keep_ep = ("portal_url", "mac", "season_num", "episode_num", "cmd", "url")
+    for cat in data.get("categories", {}).get("series", []):
+        entries = [s for s in cat.get("series", []) if isinstance(s, dict)]
+        for s in entries:
+            eps = [e for e in s.get("episode", []) if isinstance(e, dict)]
+            for e in eps:
+                for k in list(e.keys()):
+                    if k not in keep_ep:
+                        e.pop(k, None)
+            s["episode"] = eps
+        cat["series"] = entries
+    data["updated"] = time.time()
+    os.makedirs(PLAYLIST_DIR, exist_ok=True)
+    with open(fp, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+@app.route("/api/playlists/favorites/merge-type", methods=["POST"])
+def merge_type_to_favorites():
+    data = request.get_json(silent=True) or {}
+    pl_type = data.get("type", "live")
+    categories = data.get("categories") or []
+    if pl_type not in ("live", "vod", "series"):
+        return jsonify({"ok": False, "error": "Bad type"}), 400
+    if not categories:
+        return jsonify({"ok": False, "error": "No categories"}), 400
+    fp = _playlist_filepath("Favorites")
+    if not os.path.isfile(fp):
+        return jsonify({"ok": False, "error": "Open Favorites first"}), 404
+    added, replaced = 0, 0
+    for cat in categories:
+        chs = cat.get("channels") or []
+        if not chs:
+            continue
+        sample = chs[0] or {}
+        res = _merge_channels_into_file(
+            fp, pl_type, cat.get("name", ""), cat.get("id", ""), chs,
+            series_name="", series_id="",
+            portal_url=sample.get("portal_url", ""), mac=sample.get("mac", ""),
+        )
+        added += res.get("added", 0)
+        replaced += res.get("replaced", 0)
+    _normalize_favorites_file(fp)
+    return jsonify({"ok": True, "added": added, "replaced": replaced})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)
